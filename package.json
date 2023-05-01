@@ -1,0 +1,35 @@
+{
+  "name": "@lando/setup-lando",
+  "description": "GitHub Action to setup Lando on GitHub Actions.",
+  "version": "2.0.0",
+  "author": "Mike Pirog @pirog",
+  "main": "index.js",
+  "license": "GPL-3.0",
+  "repository": "https://github.com/lando/setup-lando",
+  "bugs": "https://github.com/lando/setup-lando/issues",
+  "homepage": "https://github.com/lando/setup-lando",
+  "keywords": [
+    "lando",
+    "Github Actions"
+  ],
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "execa": "^4.0.3",
+    "pkg": "^5.8.1"
+  },
+  "devDependencies": {
+    "@babel/eslint-parser": "^7.16.0",
+    "@vercel/ncc": "^0.24.1",
+    "eslint": "^7.32.0",
+    "eslint-config-google": "^0.14.0",
+    "version-bump-prompt": "^6.1.0"
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "prepare": "ncc build index.js -o dist --source-map --license licenses.txt",
+    "release": "yarn prepare && bump --tag --all --push package.json && git tag --force --annotate --message 'moving v2 tag' v2 && git push origin v2 --force"
+  }
+}

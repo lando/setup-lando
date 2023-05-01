@@ -1,0 +1,37 @@
+name: "Setup Lando"
+description: "GitHub Action to setup Lando on GitHub Actions."
+branding:
+  icon: zap
+  color: purple
+
+inputs:
+  lando-version:
+    description: "The version of Lando to install."
+    required: false
+  lando-version-file:
+    description: "A file containing the version to use."
+    required: false
+  architecture:
+    description: "The architecture to use. Defaults to system architecture."
+    required: false
+  config:
+    description: "A list of . delimited config."
+    required: false
+  config-file:
+    description: "The path to a Lando global config file to use."
+    required: false
+  debug:
+    description: "Toggle debug output."
+    required: false
+    default: false
+  os:
+    description: "The OS to use. Defaults to system OS."
+    required: false
+
+outputs:
+  lando:
+    description: "The path to the installed version of Lando."
+
+runs:
+  using: "node16"
+  main: "dist/index.js"
