@@ -26,10 +26,6 @@ const main = async () => {
   // start by getting the inputs
   const inputs = getInputs();
 
-  // reset some inputs to tests things
-  // inputs.landoVersionFile = '.tool-versions';
-  inputs.landoVersion = 'edge';
-
   // show a warning if both version inputs are set
   if (inputs.landoVersion && inputs.landoVersionFile) {
     core.warning('Both lando-version and lando-version-file inputs are specified, only lando-version will be used');
