@@ -14425,8 +14425,9 @@ const main = async () => {
     // determine url of lando version to install
     const downloadUrl = getDownloadUrl(version, inputs);
     core.debug(`going to download version ${version} from ${downloadUrl}`);
-    core.startGroup('Download information')
-    core.info({version, url: downloadUrl});
+    core.startGroup('Download information');
+    core.info(`version: ${version}`);
+    core.info(`url: ${downloadUrl}`);
     core.endGroup();
 
     // ensure needed RUNNER_ vars are set
