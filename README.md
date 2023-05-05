@@ -74,6 +74,26 @@ outputs:
 
 > **NOTE:** The above config is meant purely for illustration.
 
+**Everything, everywhere, all at once:**
+
+```yaml
+- name: Setup Lando
+  uses: lando/setup-lando@v2
+  with:
+    architecture: x64
+    config: |
+      core.engine=docker-colima
+      core.telemetry=false
+      plugins.@lando/php=/home/runner/work/php/php
+    config-file: config.yaml
+    debug: true
+    lando-version: 3.14.0
+    lando-version-file: .tool-versions
+    os: macOS
+    telemetry: false
+    token: ${{ github.token }}
+```
+
 ## Changelog
 
 We try to log all changes big and small in both [THE CHANGELOG](https://github.com/lando/setup-lando/blob/main/CHANGELOG.md) and the [release notes](https://github.com/lando/setup-lando/releases).
