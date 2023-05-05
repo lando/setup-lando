@@ -19,6 +19,15 @@ All inputs are optional. If you do nothing the latest `stable` Lando will be ins
 | `config` | A list of `.` delimited config. If set these have primacy over values in `config-file` | `null` | `engineConfig.port=2376` |
 | `config-file` | The path to a Lando global config file to use. | `null` | `/config/lando-global.yml` |
 
+## Outputs
+
+```yaml
+outputs:
+  lando-path:
+    description: "The path to the installed version of Lando."
+    value: ${{ steps.setup-lando.outputs.lando-path }}
+```
+
 ##  Usage
 
 ### Basic Usage
