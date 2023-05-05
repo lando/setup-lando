@@ -7,15 +7,18 @@ const get = require('lodash.get');
 const io = require('@actions/io');
 const os = require('os');
 const path = require('path');
+const set = require('lodash.set');
 const tc = require('@actions/tool-cache');
 
 const {execSync} = require('child_process');
 const {GitHub, getOctokitOptions} = require('@actions/github/lib/utils');
 const {paginateRest} = require('@octokit/plugin-paginate-rest');
 
+const getConfigFile = require('./lib/get-config-file');
 const getDownloadUrl = require('./lib/get-download-url');
 const getInputs = require('./lib/get-inputs');
 const getFileVersion = require('./lib/get-file-version');
+const getObjectKeys = require('./lib/get-object-keys');
 const resolveVersionSpec = require('./lib/resolve-version-spec');
 
 // const sleep = ms => {
@@ -35,7 +38,7 @@ const main = async () => {
   const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
   core.debug(`rolling with "${spec}" as version spec`);
 
-  // get a pagination vibed octokit so we can get release data
+  // get a pagination vibed octokit so we can get ALL release data
   const Octokit = GitHub.plugin(paginateRest);
   const octokit = new Octokit(getOctokitOptions(inputs.token));
 
@@ -63,13 +66,6 @@ const main = async () => {
     // @NOTE: this is just to ensure we can run this locally
     if (!get(process, 'env.RUNNER_TEMP', false)) process.env.RUNNER_TEMP = os.tmpdir();
     if (!get(process, 'env.RUNNER_TOOL_CACHE', false)) process.env.RUNNER_TOOL_CACHE = os.tmpdir();
-
-    // @TODO:
-    // determine lando config to set?
-    // load in file if set, warn if file does not exist
-    // merge multiline config over config
-    // set the config as needed, also set some sort of githubactions thing
-    // query the config again to make sure it is set?
 
     // download lando
     // @NOTE: separate try catch here because we dont get a great error message from download tool
@@ -104,9 +100,37 @@ const main = async () => {
     core.addPath(toolDir);
     core.setOutput('lando-path', landoPath);
 
-    // test invoke
-    await exec.exec('lando', ['version']);
+    // if we have any config then lets set that
+    if (inputs.configFile || inputs.config) {
+      // start with either the config file or an empty object
+      const config = getConfigFile(inputs.getConfigFile) || {};
+      // if we have config then loop through that and set
+      if (inputs.config) {
+        inputs.config.forEach(line => {
+          const key = line.split('=')[0];
+          const value = line.split('=')[1];
+          set(config, key, value);
+        });
+      }
 
+      // set config info
+      core.startGroup('Configuration information');
+      getObjectKeys(config).forEach(key => core.info(`${key}: ${get(config, key)}`));
+      core.endGroup();
+    }
+
+    // @TODO:
+    // determine lando config to set?
+    // load in file if set, warn if file does not exist
+    // merge multiline config over config
+    // set the config as needed, also set some sort of githubactions thing
+    // query the config again to make sure it is set?
+
+    // await io.mkdirP('path/to/make');
+
+    // get version
+    await exec.exec('lando', ['version']);
+    // get config if appropriate
   // catch unexpected
   } catch (error) {
     core.setFailed(error.message);
