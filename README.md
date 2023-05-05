@@ -3,7 +3,7 @@
 This action installs Lando in GitHub Actions. With it you can:
 
 * Install using a version-spec-ish eg `3`, `3.12`, `3.x`, `3.14.0`
-* Install using convenience aliases eg `stable`, `4-latest`, `main` `3-edge`
+* Install using convenience aliases eg `stable`, `4-latest`, `dev` `3-edge`
 * Set [global Lando config](https://docs.lando.dev/core/global.html) configuration
 
 > **NOTE:** If you are using a self-hosted or custom runner you may need to install the needed Lando dependenices eg Docker and Docker Compose for Lando to work correctly!
@@ -39,7 +39,7 @@ outputs:
 
 ### Advanced Usage
 
-**Version examples**
+**Version examples:**
 
 ```yaml
 - name: Setup Lando
