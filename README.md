@@ -4,7 +4,6 @@ This action installs Lando in GitHub Actions. With it you can:
 
 * Install using a version-spec-ish eg `3`, `3.12`, `3.x`, `3.14.0`
 * Install using convenience aliases eg `stable`, `4-latest`, `main` `3-edge`
-* Install and compile directly from a source `ref`
 * Set [global Lando config](https://docs.lando.dev/core/global.html) configuration
 
 > **NOTE:** If you are using a self-hosted or custom runner you may need to install the needed Lando dependenices eg Docker and Docker Compose for Lando to work correctly!
@@ -28,6 +27,33 @@ All inputs are optional. If you do nothing the latest `stable` Lando will be ins
 - name: Setup Lando
   uses: lando/setup-lando@v2
 ```
+
+### Advanced Usage
+
+**Version spec and config file:**
+
+```yaml
+- name: Setup Lando
+  uses: lando/setup-lando@v2
+  with:
+    lando-version: ">2"
+    config-file: config.yaml
+```
+
+**Version file and config list:**
+
+```yaml
+- name: Setup Lando
+  uses: lando/setup-lando@v2
+  with:
+    lando-version-file: .tool-versions
+    config: |
+      core.engine=docker-colima
+      core.telemetry=false
+      plugins.@lando/php=/home/runner/work/php/php
+```
+
+> **NOTE:** The above config is meant purely for illustration.
 
 ## Changelog
 
