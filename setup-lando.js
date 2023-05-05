@@ -123,10 +123,8 @@ const main = async () => {
     await exec.exec('lando', ['version']);
     // get config
     await exec.exec('cat', [gcf]);
-    // print full config?
-    core.startGroup('Lando information');
-    await exec.exec('lando', ['config']);
-    core.endGroup();
+    // if debug then print the entire lando config
+    if (core.isDebug()) await exec.exec('lando', ['config']);
 
   // catch unexpected
   } catch (error) {
