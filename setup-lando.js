@@ -98,7 +98,7 @@ const main = async () => {
     core.debug(`lando installed at ${landoPath}`);
 
     // start with either the config file or an empty object
-    const config = getConfigFile(inputs.configFile) || {};
+    let config = getConfigFile(inputs.configFile) || {};
     // if we have config then loop through that and set
     if (inputs.config) config = mergeConfig(config, inputs.config);
 
