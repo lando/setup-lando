@@ -15,7 +15,7 @@ All inputs are optional. If you do nothing the latest `stable` Lando will be ins
 | Name | Description | Default | Example |
 |---|---|---|---|
 | `lando-version` | The version of Lando to install. If set this has primacy over `lando-version-file`. | `stable` | `3.14.0` |
-| `lando-version-file` | The AppStore Connect API Issuer. | `.lando-version` | `.tool-versions` |
+| `lando-version-file` | A file that contains the version of Lando to install. | `.lando-version` | `.tool-versions` |
 | `config` | A list of `.` delimited config. If set these have primacy over values in `config-file` | `null` | `engineConfig.port=2376` |
 | `config-file` | The path to a Lando global config file to use. | `null` | `/config/lando-global.yml` |
 
