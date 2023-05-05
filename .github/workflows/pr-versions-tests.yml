@@ -1,0 +1,51 @@
+name: PR Version Tests
+
+on:
+  pull_request:
+
+jobs:
+  setup-lando-os-test:
+    runs-on: ${{ matrix.os }}
+    env:
+      term: xterm
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-22.04
+        node-version:
+          - '16'
+        lando-version:
+          - '3.x'
+          - '>2'
+          - '3'
+          - '3.14'
+          - '3.14.0'
+          - '3-stable'
+          - '3-edge'
+          - '3-latest'
+          - '3-dev'
+          - 'stable'
+          - 'edge'
+          - 'latest'
+          - 'dev'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install node ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: yarn
+      - name: Install Yarn dependencies and prepare
+        run: |
+          yarn install --prefer-offline --frozen-lockfile
+          yarn prepare
+
+      - name: Setup Lando version ${{ matrix.lando-version }}
+        uses: ./
+        with:
+          lando-version: ${{ matrix.lando-version }}

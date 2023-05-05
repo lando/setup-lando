@@ -11,9 +11,11 @@ inputs:
   lando-version-file:
     description: "A file containing the version to use."
     required: false
+    default: ".lando-version"
   architecture:
     description: "The architecture to use. Defaults to system architecture."
     required: false
+    default: ${{ runner.arch }}
   config:
     description: "A list of . delimited config."
     required: false
@@ -27,6 +29,11 @@ inputs:
   os:
     description: "The OS to use. Defaults to system OS."
     required: false
+    default: ${{ runner.os }}
+  token:
+    description: "The GITHUB_TOKEN."
+    required: false
+    default: ${{ github.token }}
 
 outputs:
   lando:
