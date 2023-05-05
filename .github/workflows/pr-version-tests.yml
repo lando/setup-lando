@@ -1,4 +1,4 @@
-name: PR Version Tests
+name: PR OS Tests
 
 on:
   pull_request:
@@ -12,23 +12,11 @@ jobs:
       fail-fast: false
       matrix:
         os:
+          - macos-12
           - ubuntu-22.04
+          - windows-2022
         node-version:
           - '16'
-        lando-version:
-          - '3.x'
-          - '>2'
-          - '3'
-          - '3.14'
-          - '3.14.0'
-          - '3-stable'
-          - '3-edge'
-          - '3-latest'
-          - '3-dev'
-          - 'stable'
-          - 'edge'
-          - 'latest'
-          - 'dev'
 
     steps:
       - name: Checkout code
@@ -45,8 +33,6 @@ jobs:
           yarn install --prefer-offline --frozen-lockfile
           yarn prepare
 
-      - name: Setup Lando version ${{ matrix.lando-version }}
+      - name: Setup Lando version
         uses: ./
         id: setup-lando
-        with:
-          lando-version: ${{ matrix.lando-version }}
