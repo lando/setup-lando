@@ -103,7 +103,7 @@ const main = async () => {
     // if we have any config then lets set that
     if (inputs.configFile || inputs.config) {
       // start with either the config file or an empty object
-      const config = getConfigFile(inputs.getConfigFile) || {};
+      const config = getConfigFile(inputs.configFile) || {};
       // if we have config then loop through that and set
       if (inputs.config) {
         inputs.config.forEach(line => {
