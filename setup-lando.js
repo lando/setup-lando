@@ -54,6 +54,7 @@ const main = async () => {
     const downloadUrl = getDownloadUrl(version, inputs);
     core.debug(`going to download version ${version} from ${downloadUrl}`);
     core.startGroup('Download information');
+    core.info(`spec: ${spec}`);
     core.info(`version: ${version}`);
     core.info(`url: ${downloadUrl}`);
     core.endGroup();
