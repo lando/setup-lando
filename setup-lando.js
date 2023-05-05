@@ -7,7 +7,6 @@ const get = require('lodash.get');
 const io = require('@actions/io');
 const os = require('os');
 const path = require('path');
-const set = require('lodash.set');
 const tc = require('@actions/tool-cache');
 const yaml = require('js-yaml');
 
@@ -21,6 +20,7 @@ const getGCFPath = require('./lib/get-gcf-path');
 const getInputs = require('./lib/get-inputs');
 const getFileVersion = require('./lib/get-file-version');
 const getObjectKeys = require('./lib/get-object-keys');
+const mergeConfig = require('./lib/merge-config');
 const resolveVersionSpec = require('./lib/resolve-version-spec');
 
 const main = async () => {
@@ -80,42 +80,41 @@ const main = async () => {
       landoPath = `${landoPath}.exe`;
     }
 
-    // make executable
-    fs.chmodSync(landoPath, '755');
-
     // reset version information, we do this to get the source of truth on what we've downloaded
+    fs.chmodSync(landoPath, '755');
     const output = execSync(`${landoPath} version`, {maxBuffer: 1024 * 1024 * 10, encoding: 'utf-8'});
     version = output.split(' ').length === 2 ? output.split(' ')[1] : output.split(' ')[0];
-    core.debug(`downloaded lando is version ${version}`);
+    const lmv = version.split('.')[0];
+    core.debug(`downloaded lando is version ${version}, major version ${lmv}`);
 
     // move into the tool cache and compute path
     const targetFile = inputs.os === 'Windows' ? 'lando.exe' : 'lando';
     const toolDir = await tc.cacheFile(landoPath, targetFile, 'lando', version);
     landoPath = path.join(toolDir, targetFile);
-    core.debug(`lando installed at ${landoPath}`);
 
     // set the path and outputs
     core.addPath(toolDir);
     core.setOutput('lando-path', landoPath);
+    core.debug(`lando installed at ${landoPath}`);
 
     // start with either the config file or an empty object
     const config = getConfigFile(inputs.configFile) || {};
     // if we have config then loop through that and set
-    if (inputs.config) {
-      inputs.config.forEach(line => {
-        const key = line.split('=')[0];
-        const value = line.split('=')[1];
-        set(config, key, value);
-      });
-    }
+    if (inputs.config) config = mergeConfig(config, inputs.config);
+
+    // if telemetry is off on v3 then add in more config
+    if (!inputs.telemetry && lmv === 3) config = mergeConfig(config, [['stats[0].report', false], 'stats[0].url=https://metrics.lando.dev']);
+    // or if telemetry is off on v3 then add in more config
+    else if (!inputs.telemetry && lmv === 4) config = mergeConfig(config, [['core.telemetry', false]]);
 
     // set config info
     core.startGroup('Configuration information');
     getObjectKeys(config).forEach(key => core.info(`${key}: ${get(config, key)}`));
     core.endGroup();
 
+    // get major version of lando
     // write the config file to disk
-    const gcf = getGCFPath();
+    const gcf = getGCFPath(lmv);
     await io.mkdirP(path.dirname(gcf));
     fs.writeFileSync(gcf, yaml.dump(config));
 
@@ -123,8 +122,17 @@ const main = async () => {
     await exec.exec('lando', ['version']);
     // get config
     await exec.exec('cat', [gcf]);
+
+    // if we have telemetry off on v3 we need to turn report errors off
+    if (!inputs.telemetry && lmv === 3) {
+      const reportFile = path.join(path.dirname(gcf), 'cache', 'report_errors');
+      await io.mkdirP(path.dirname(reportFile));
+      fs.writeFileSync(reportFile, 'false');
+      await exec.exec('cat', [reportFile]);
+    }
+
     // if debug then print the entire lando config
-    if (core.isDebug()) await exec.exec('lando', ['config']);
+    if (core.isDebug() || inputs.debug) await exec.exec('lando', ['config']);
 
   // catch unexpected
   } catch (error) {
