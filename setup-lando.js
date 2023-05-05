@@ -4,6 +4,7 @@ const core = require('@actions/core');
 const exec = require('@actions/exec');
 const fs = require('fs');
 const get = require('lodash.get');
+const io = require('@actions/io');
 const os = require('os');
 const path = require('path');
 const tc = require('@actions/tool-cache');
@@ -56,6 +57,9 @@ const main = async () => {
     // determine url of lando version to install
     const downloadUrl = getDownloadUrl(version, inputs);
     core.debug(`going to download version ${version} from ${downloadUrl}`);
+    core.startGroup('Download information')
+    core.info({version, url: downloadUrl});
+    core.endGroup();
 
     // ensure needed RUNNER_ vars are set
     // @NOTE: this is just to ensure we can run this locally
@@ -78,6 +82,12 @@ const main = async () => {
       throw new Error(`Unable to download Lando ${version} from ${downloadUrl}. ${error.message}`);
     }
 
+    // if on windows we need to move and rename so it ends in exe
+    if (inputs.os === 'Windows') {
+      await io.cp(landoPath, `${landoPath}.exe`, {force: true});
+      landoPath = `${landoPath}.exe`;
+    }
+
     // make executable
     fs.chmodSync(landoPath, '755');
 
@@ -97,7 +107,7 @@ const main = async () => {
     core.setOutput('lando-path', landoPath);
 
     // test invoke
-    await exec.exec('lando', ['config']);
+    await exec.exec('lando', ['version']);
 
   // catch unexpected
   } catch (error) {
