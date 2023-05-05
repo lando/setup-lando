@@ -103,9 +103,9 @@ const main = async () => {
     if (inputs.config) config = mergeConfig(config, inputs.config);
 
     // if telemetry is off on v3 then add in more config
-    if (!inputs.telemetry && lmv === 3) config = mergeConfig(config, [['stats[0].report', false], 'stats[0].url=https://metrics.lando.dev']);
+    if (!inputs.telemetry && lmv === 'v3') config = mergeConfig(config, [['stats[0].report', false], 'stats[0].url=https://metrics.lando.dev']);
     // or if telemetry is off on v3 then add in more config
-    else if (!inputs.telemetry && lmv === 4) config = mergeConfig(config, [['core.telemetry', false]]);
+    else if (!inputs.telemetry && lmv === 'v4') config = mergeConfig(config, [['core.telemetry', false]]);
 
     // set config info
     core.startGroup('Configuration information');
@@ -124,7 +124,7 @@ const main = async () => {
     await exec.exec('cat', [gcf]);
 
     // if we have telemetry off on v3 we need to turn report errors off
-    if (!inputs.telemetry && lmv === 3) {
+    if (!inputs.telemetry && lmv === 'v3') {
       const reportFile = path.join(path.dirname(gcf), 'cache', 'report_errors');
       await io.mkdirP(path.dirname(reportFile));
       fs.writeFileSync(reportFile, 'false');
