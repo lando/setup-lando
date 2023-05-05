@@ -30,6 +30,10 @@ inputs:
     description: "The OS to use. Defaults to system OS."
     required: false
     default: ${{ runner.os }}
+  telemetry:
+    description: "To send telemetry or not."
+    required: false
+    default: true
   token:
     description: "The GITHUB_TOKEN."
     required: false
