@@ -30,6 +30,16 @@ All inputs are optional. If you do nothing the latest `stable` Lando will be ins
 
 ### Advanced Usage
 
+**Version examples**
+
+```yaml
+- name: Setup Lando
+  uses: lando/setup-lando@v2
+  with:
+    lando-version: stable | edge | dev | latest | 3 | 3.14.0 | 3.11
+```
+
+
 **Version spec and config file:**
 
 ```yaml
