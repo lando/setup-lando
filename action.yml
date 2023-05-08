@@ -26,6 +26,10 @@ inputs:
     description: "Toggle debug output."
     required: false
     default: false
+  dependency-check:
+    description: "The seriousness of dependency check failure."
+    required: false
+    default: error
   os:
     description: "The OS to use. Defaults to system OS."
     required: false

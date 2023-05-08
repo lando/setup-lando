@@ -46,7 +46,6 @@ const main = async () => {
     core.debug(`found ${releases.length} valid releases`);
 
     // attempt to resolve the spec
-    // @TODO: what about installing from source?
     let version = resolveVersionSpec(spec, releases);
     // throw error if we cannot resolve a version
     if (!version) throw new Error(`Could not resolve "${spec}" into an installable version of Lando`);
@@ -104,7 +103,7 @@ const main = async () => {
 
     // if telemetry is off on v3 then add in more config
     if (!inputs.telemetry && lmv === 'v3') config = mergeConfig(config, [['stats[0].report', false], 'stats[0].url=https://metrics.lando.dev']);
-    // or if telemetry is off on v3 then add in more config
+    // or if telemetry is off on v4 then add in more config
     else if (!inputs.telemetry && lmv === 'v4') config = mergeConfig(config, [['core.telemetry', false]]);
 
     // set config info
@@ -112,7 +111,6 @@ const main = async () => {
     getObjectKeys(config).forEach(key => core.info(`${key}: ${get(config, key)}`));
     core.endGroup();
 
-    // get major version of lando
     // write the config file to disk
     const gcf = getGCFPath(lmv);
     await io.mkdirP(path.dirname(gcf));
@@ -120,7 +118,7 @@ const main = async () => {
 
     // get version
     await exec.exec('lando', ['version']);
-    // get config
+    // cat config
     await exec.exec('cat', [gcf]);
 
     // if we have telemetry off on v3 we need to turn report errors off
@@ -130,6 +128,22 @@ const main = async () => {
       fs.writeFileSync(reportFile, 'false');
       await exec.exec('cat', [reportFile]);
     }
+
+    // do v3 dependency checks if warn or error
+    if (lmv === 'v3' && ['warn', 'error'].includes(inputs.dependencyCheck)) {
+      const docker = await exec.exec('docker', ['info'], {ignoreReturnCode: true});
+      const dockerCompose = await exec.exec('docker-compose', ['--version'], {ignoreReturnCode: true});
+      const func = inputs.dependencyCheck === 'warn' ? core.warning : core.setFailed;
+      const suffix = 'See: https://docs.lando.dev/getting-started/installation.html';
+      if (docker !== 0 ) {
+        func(`Something is wrong with Docker! Make sure Docker is installed correctly and running. ${suffix}`);
+      }
+      if (dockerCompose !== 0 ) {
+        func(`Something is wrong with Docker Compose! Make sure Docker Compose 1.x is installed correctly. ${suffix}`);
+      }
+    }
+
+    // @TODO: v4 dep checking?
 
     // if debug then print the entire lando config
     if (core.isDebug() || inputs.debug) await exec.exec('lando', ['config']);
