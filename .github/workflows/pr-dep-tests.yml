@@ -1,0 +1,43 @@
+name: PR Dep Tests
+
+on:
+  pull_request:
+
+jobs:
+  setup-lando-os-test:
+    runs-on: ${{ matrix.os }}
+    env:
+      term: xterm
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-2022
+        dep-check:
+          - error
+          - warn
+          - false
+          - bogussssss
+        node-version:
+          - '16'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install node ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: yarn
+      - name: Install Yarn dependencies and prepare
+        run: |
+          yarn install --prefer-offline --frozen-lockfile
+          yarn prepare
+
+      - name: Setup Lando version
+        uses: ./
+        with:
+          debug: true
+          dependency-check: ${{ matrix.dependency-check }}
