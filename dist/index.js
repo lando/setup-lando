@@ -190,7 +190,7 @@ const getOS = () => {
 
 const getDepCheck = () => {
   if (!['warn', 'error'].includes(core.getInput('dependency-check'))) return false;
-  else core.getInput('dependency-check');
+  else return core.getInput('dependency-check');
 };
 
 module.exports = () => ({
@@ -19739,20 +19739,16 @@ const main = async () => {
     }
 
     // do v3 dependency checks if warn or error
-    core.debug(inputs.dependencyCheck);
-    core.debug(lmv);
     if (lmv === 'v3' && ['warn', 'error'].includes(inputs.dependencyCheck)) {
-      core.debug('attempting v3 dep check');
-      const opts = {silent: false, ignoreReturnCode: false};
-      const docker = await exec.exec('docker2', ['info'], opts);
-      const dockerCompose = await exec.exec('docker-compose2', ['--version', '|', 'grep', '1.29.'], opts);
+      const docker = await exec.exec('docker', ['info'], {ignoreReturnCode: true});
+      const dockerCompose = await exec.exec('docker-compose', ['--version'], {ignoreReturnCode: true});
       const func = inputs.dependencyCheck === 'warn' ? core.warning : core.setFailed;
       const suffix = 'See: https://docs.lando.dev/getting-started/installation.html';
       if (docker !== 0 ) {
-        func(`Something wrong with Docker! Make sure Docker is installed correctly and running. ${suffix}`);
+        func(`Something is wrong with Docker! Make sure Docker is installed correctly and running. ${suffix}`);
       }
       if (dockerCompose !== 0 ) {
-        func(`Something wrong with Docker Compose! Make sure Docker Compose 1.x is installed correctly. ${suffix}`);
+        func(`Something is wrong with Docker Compose! Make sure Docker Compose 1.x is installed correctly. ${suffix}`);
       }
     }
 
