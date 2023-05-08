@@ -132,14 +132,14 @@ const main = async () => {
     // do v3 dependency checks if warn or error
     if (lmv === 'v3' && ['warn', 'error'].includes(inputs.dependencyCheck)) {
       const docker = await exec.exec('docker', ['info'], {ignoreReturnCode: true});
-      const dockerCompose = await exec.exec('docker-compose', ['--version', '|', 'grep', '2.29.'], {ignoreReturnCode: true});
+      const dockerCompose = await exec.exec('docker-compose', ['--version'], {ignoreReturnCode: true});
       const func = inputs.dependencyCheck === 'warn' ? core.warning : core.setFailed;
       const suffix = 'See: https://docs.lando.dev/getting-started/installation.html';
       if (docker !== 0 ) {
-        func(`Something wrong with Docker! Make sure Docker is installed correctly and running. ${suffix}`);
+        func(`Something is wrong with Docker! Make sure Docker is installed correctly and running. ${suffix}`);
       }
       if (dockerCompose !== 0 ) {
-        func(`Something wrong with Docker Compose! Make sure Docker Compose 1.x is installed correctly. ${suffix}`);
+        func(`Something is wrong with Docker Compose! Make sure Docker Compose 1.x is installed correctly. ${suffix}`);
       }
     }
 
