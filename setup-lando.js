@@ -130,8 +130,6 @@ const main = async () => {
     }
 
     // do v3 dependency checks if warn or error
-    core.info(inputs.dependencyCheck);
-    core.info(lmv);
     if (lmv === 'v3' && ['warn', 'error'].includes(inputs.dependencyCheck)) {
       core.debug('attempting v3 dep check');
       const opts = {silent: false, ignoreReturnCode: false};
