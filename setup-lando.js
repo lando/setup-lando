@@ -137,7 +137,7 @@ const main = async () => {
       const opts = {silent: false, ignoreReturnCode: false};
       const docker = await exec.exec('docker2', ['info'], opts);
       const dockerCompose = await exec.exec('docker-compose2', ['--version', '|', 'grep', '1.29.'], opts);
-      const func = inputs.dependencyCheck === 'warn' ? core.warn : core.setFailed;
+      const func = inputs.dependencyCheck === 'warn' ? core.warning : core.setFailed;
       const suffix = 'See: https://docs.lando.dev/getting-started/installation.html';
       if (docker !== 0 ) {
         func(`Something wrong with Docker! Make sure Docker is installed correctly and running. ${suffix}`);

@@ -152,9 +152,9 @@ const getOClifHome = () => {
   }
 };
 
-module.exports = (mlv = 3) => {
+module.exports = (lmv = 'v3') => {
   // if this is lando 3 then
-  if (mlv === 3) return path.join(getOClifHome(), '.lando', 'config.yml');
+  if (lmv === 'v3') return path.join(getOClifHome(), '.lando', 'config.yml');
   // otherwise we assume lando 4
   return path.join(getOClifBase(), 'config.yaml');
 };
@@ -188,6 +188,11 @@ const getOS = () => {
   return get(process, 'env.RUNNER_OS', 'unknown');
 };
 
+const getDepCheck = () => {
+  if (!['warn', 'error'].includes(core.getInput('dependency-check'))) return false;
+  else core.getInput('dependency-check');
+};
+
 module.exports = () => ({
   // primary inputs
   landoVersion: core.getInput('lando-version'),
@@ -198,8 +203,10 @@ module.exports = () => ({
 
   // other inputs
   architecture: core.getInput('architecture') || getArch(),
+  dependencyCheck: getDepCheck(),
   debug: process.env.GITHUB_ACTIONS ? core.getBooleanInput('debug') : true,
   os: core.getInput('os') || getOS(),
+  telemetry: process.env.GITHUB_ACTIONS ? core.getBooleanInput('telemetry') : true,
 });
 
 
@@ -230,6 +237,31 @@ module.exports = (data, {prefix = '', expandArrays = true, separator = '.'} = {}
     // otherwise cycle through again
     return [...keys, ...module.exports(data[key], {expandArrays, prefix: `${prefix}${key}${separator}`})];
   }, []);
+};
+
+
+/***/ }),
+
+/***/ 6718:
+/***/ ((module, __unused_webpack_exports, __webpack_require__) => {
+
+"use strict";
+
+
+const set = __webpack_require__(1552);
+
+module.exports = (config = {}, pairs = []) => {
+  // go through pairs and set into config
+  pairs.forEach(line => {
+    if (Array.isArray(line)) set(config, line[0], line[1]);
+    else if (typeof line === 'string') {
+      const key = line.split('=')[0];
+      const value = line.split('=')[1];
+      set(config, key, value);
+    }
+  });
+
+  return config;
 };
 
 
@@ -19584,7 +19616,6 @@ const get = __webpack_require__(9197);
 const io = __webpack_require__(7436);
 const os = __webpack_require__(2087);
 const path = __webpack_require__(5622);
-const set = __webpack_require__(1552);
 const tc = __webpack_require__(7784);
 const yaml = __webpack_require__(1917);
 
@@ -19598,6 +19629,7 @@ const getGCFPath = __webpack_require__(4510);
 const getInputs = __webpack_require__(7428);
 const getFileVersion = __webpack_require__(1603);
 const getObjectKeys = __webpack_require__(5993);
+const mergeConfig = __webpack_require__(6718);
 const resolveVersionSpec = __webpack_require__(5374);
 
 const main = async () => {
@@ -19623,7 +19655,6 @@ const main = async () => {
     core.debug(`found ${releases.length} valid releases`);
 
     // attempt to resolve the spec
-    // @TODO: what about installing from source?
     let version = resolveVersionSpec(spec, releases);
     // throw error if we cannot resolve a version
     if (!version) throw new Error(`Could not resolve "${spec}" into an installable version of Lando`);
@@ -19657,34 +19688,32 @@ const main = async () => {
       landoPath = `${landoPath}.exe`;
     }
 
-    // make executable
-    fs.chmodSync(landoPath, '755');
-
     // reset version information, we do this to get the source of truth on what we've downloaded
+    fs.chmodSync(landoPath, '755');
     const output = execSync(`${landoPath} version`, {maxBuffer: 1024 * 1024 * 10, encoding: 'utf-8'});
     version = output.split(' ').length === 2 ? output.split(' ')[1] : output.split(' ')[0];
-    core.debug(`downloaded lando is version ${version}`);
+    const lmv = version.split('.')[0];
+    core.debug(`downloaded lando is version ${version}, major version ${lmv}`);
 
     // move into the tool cache and compute path
     const targetFile = inputs.os === 'Windows' ? 'lando.exe' : 'lando';
     const toolDir = await tc.cacheFile(landoPath, targetFile, 'lando', version);
     landoPath = path.join(toolDir, targetFile);
-    core.debug(`lando installed at ${landoPath}`);
 
     // set the path and outputs
     core.addPath(toolDir);
     core.setOutput('lando-path', landoPath);
+    core.debug(`lando installed at ${landoPath}`);
 
     // start with either the config file or an empty object
-    const config = getConfigFile(inputs.configFile) || {};
+    let config = getConfigFile(inputs.configFile) || {};
     // if we have config then loop through that and set
-    if (inputs.config) {
-      inputs.config.forEach(line => {
-        const key = line.split('=')[0];
-        const value = line.split('=')[1];
-        set(config, key, value);
-      });
-    }
+    if (inputs.config) config = mergeConfig(config, inputs.config);
+
+    // if telemetry is off on v3 then add in more config
+    if (!inputs.telemetry && lmv === 'v3') config = mergeConfig(config, [['stats[0].report', false], 'stats[0].url=https://metrics.lando.dev']);
+    // or if telemetry is off on v4 then add in more config
+    else if (!inputs.telemetry && lmv === 'v4') config = mergeConfig(config, [['core.telemetry', false]]);
 
     // set config info
     core.startGroup('Configuration information');
@@ -19692,16 +19721,45 @@ const main = async () => {
     core.endGroup();
 
     // write the config file to disk
-    const gcf = getGCFPath();
+    const gcf = getGCFPath(lmv);
     await io.mkdirP(path.dirname(gcf));
     fs.writeFileSync(gcf, yaml.dump(config));
 
     // get version
     await exec.exec('lando', ['version']);
-    // get config
+    // cat config
     await exec.exec('cat', [gcf]);
+
+    // if we have telemetry off on v3 we need to turn report errors off
+    if (!inputs.telemetry && lmv === 'v3') {
+      const reportFile = path.join(path.dirname(gcf), 'cache', 'report_errors');
+      await io.mkdirP(path.dirname(reportFile));
+      fs.writeFileSync(reportFile, 'false');
+      await exec.exec('cat', [reportFile]);
+    }
+
+    // do v3 dependency checks if warn or error
+    core.debug(inputs.dependencyCheck);
+    core.debug(lmv);
+    if (lmv === 'v3' && ['warn', 'error'].includes(inputs.dependencyCheck)) {
+      core.debug('attempting v3 dep check');
+      const opts = {silent: false, ignoreReturnCode: false};
+      const docker = await exec.exec('docker2', ['info'], opts);
+      const dockerCompose = await exec.exec('docker-compose2', ['--version', '|', 'grep', '1.29.'], opts);
+      const func = inputs.dependencyCheck === 'warn' ? core.warning : core.setFailed;
+      const suffix = 'See: https://docs.lando.dev/getting-started/installation.html';
+      if (docker !== 0 ) {
+        func(`Something wrong with Docker! Make sure Docker is installed correctly and running. ${suffix}`);
+      }
+      if (dockerCompose !== 0 ) {
+        func(`Something wrong with Docker Compose! Make sure Docker Compose 1.x is installed correctly. ${suffix}`);
+      }
+    }
+
+    // @TODO: v4 dep checking?
+
     // if debug then print the entire lando config
-    if (core.isDebug()) await exec.exec('lando', ['config']);
+    if (core.isDebug() || inputs.debug) await exec.exec('lando', ['config']);
 
   // catch unexpected
   } catch (error) {
