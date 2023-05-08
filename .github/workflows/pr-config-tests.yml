@@ -46,3 +46,4 @@ jobs:
             captains.enterprise-nx01=archer
           debug: true
           telemetry: ${{ matrix.telemetry }}
+          dependency-check: false

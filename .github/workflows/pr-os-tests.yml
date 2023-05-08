@@ -35,3 +35,5 @@ jobs:
 
       - name: Setup Lando version
         uses: ./
+        with:
+          dependency-check: false
