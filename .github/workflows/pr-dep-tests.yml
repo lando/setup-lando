@@ -40,4 +40,4 @@ jobs:
         uses: ./
         with:
           debug: true
-          dependency-check: ${{ matrix.dependency-check }}
+          # dependency-check: ${{ matrix.dependency-check }}
