@@ -132,7 +132,7 @@ const main = async () => {
     // do v3 dependency checks if warn or error
     if (lmv === 'v3' && ['warn', 'error'].includes(inputs.dependencyCheck)) {
       core.debug('attempting v3 dep check');
-      const opts = {silent: false, ignoreReturnCode: false};
+      const opts = {silent: true, ignoreReturnCode: true};
       const docker = await exec.exec('docker2', ['info'], opts);
       const dockerCompose = await exec.exec('docker-compose2', ['--version', '|', 'grep', '1.29.'], opts);
       const func = inputs.dependencyCheck === 'warn' ? core.warning : core.setFailed;
