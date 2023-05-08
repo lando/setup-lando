@@ -5,3 +5,4 @@
 ## v2.0.0-beta.2 - [May 5, 2023](https://github.com/lando/setup-lando/releases/tag/v2.0.0-beta.2)
 
 * Added logic around `telemetry`
+* Added `v3` `depedency-check` logix

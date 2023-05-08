@@ -87,6 +87,7 @@ outputs:
       plugins.@lando/php=/home/runner/work/php/php
     config-file: config.yaml
     debug: true
+    dependency-check: error|warn|false
     lando-version: 3.14.0
     lando-version-file: .tool-versions
     os: macOS
