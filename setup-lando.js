@@ -131,10 +131,9 @@ const main = async () => {
 
     // do v3 dependency checks if warn or error
     if (lmv === 'v3' && ['warn', 'error'].includes(inputs.dependencyCheck)) {
-      core.debug('attempting v3 dep check');
       const opts = {silent: true, ignoreReturnCode: true};
       const docker = await exec.exec('docker', ['info2'], opts);
-      const dockerCompose = await exec.exec('docker-compose2', ['--version', '|', 'grep', '1.29.'], opts);
+      const dockerCompose = await exec.exec('docker-compose', ['--version', '|', 'grep', '2.29.'], opts);
       const func = inputs.dependencyCheck === 'warn' ? core.warning : core.setFailed;
       const suffix = 'See: https://docs.lando.dev/getting-started/installation.html';
       if (docker !== 0 ) {
