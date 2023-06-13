@@ -29,6 +29,8 @@ jobs:
           - 'edge'
           - 'latest'
           - 'dev'
+          - 'pm-preview'
+          - 'https://github.com/lando/cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0'
 
     steps:
       - name: Checkout code

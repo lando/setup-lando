@@ -45,7 +45,7 @@ outputs:
 - name: Setup Lando
   uses: lando/setup-lando@v2
   with:
-    lando-version: stable | edge | dev | latest | 3 | 3.14.0 | 3.11
+    lando-version: stable | edge | dev | latest | 3 | 3.14.0 | 3.11 | pm-preview | https://url.to.my.lando.cli
 ```
 
 
