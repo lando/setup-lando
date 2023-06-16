@@ -1,4 +1,4 @@
-name: PR Config Tests
+name: Config Tests
 
 on:
   pull_request:
