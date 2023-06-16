@@ -1,4 +1,4 @@
-name: PR Dep Tests
+name: Dep Tests
 
 on:
   pull_request:
