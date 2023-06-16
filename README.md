@@ -101,9 +101,7 @@ We try to log all changes big and small in both [THE CHANGELOG](https://github.c
 
 ## Releasing
 
-Create a release and publish to [GitHub Actions Marketplace](https://docs.github.com/en/enterprise-cloud@latest/actions/creating-actions/publishing-actions-in-github-marketplace).
-
-Note that the release tag must be a [semantic version](https://semver.org/).
+Create a release and publish to [GitHub Actions Marketplace](https://docs.github.com/en/enterprise-cloud@latest/actions/creating-actions/publishing-actions-in-github-marketplace). Note that the release tag must be a [semantic version](https://semver.org/).
 
 ## Contributors
 
