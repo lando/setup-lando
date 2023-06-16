@@ -24,7 +24,7 @@ const mergeConfig = require('./lib/merge-config');
 const resolveVersionSpec = require('./lib/resolve-version-spec');
 
 const main = async () => {
-  // start by getting the inputs
+  // start by getting the inputs and stuff
   const inputs = getInputs();
 
   // show a warning if both version inputs are set

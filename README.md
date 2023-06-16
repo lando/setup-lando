@@ -101,13 +101,9 @@ We try to log all changes big and small in both [THE CHANGELOG](https://github.c
 
 ## Releasing
 
-1. Correctly compile, bump versions, tag things and push to GitHub
+Create a release and publish to [GitHub Actions Marketplace](https://docs.github.com/en/enterprise-cloud@latest/actions/creating-actions/publishing-actions-in-github-marketplace).
 
-  ```bash
-  yarn release
-  ```
-
-2. Publish to [GitHub Actions Marketplace](https://docs.github.com/en/enterprise-cloud@latest/actions/creating-actions/publishing-actions-in-github-marketplace)
+Note that the release tag must be a [semantic version](https://semver.org/).
 
 ## Contributors
 
