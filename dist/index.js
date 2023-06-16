@@ -55,26 +55,30 @@ exports.gitHubReleases = ['stable', 'edge', '4-stable', '4-edge', '3-stable', '3
 "use strict";
 
 
+const isValidUrl = __webpack_require__(6769);
 const {s3Releases} = __webpack_require__(6709);
 
 const s3Base = 'https://files.lando.dev/cli';
 const gitHubBase = 'https://github.com/lando/cli/releases/download';
 
 module.exports = (version, {os, architecture} = {}) => {
-  // start by building the lando file string
+  // if version is actually a downlaod url then just return that right away
+  if (isValidUrl(version)) return version;
+
+  // otherwise start by building the lando file string
   const parts = ['lando'];
   parts.push(os === 'Windows' ? 'win' : os.toLowerCase());
   parts.push(architecture.toLowerCase());
 
   // if version is a dev release from s3
   if (s3Releases.includes(version)) parts.push(version.split('-').length === 2 ? version.split('-')[1] : version.split('-')[0]);
-  // otherwise append the version and url from github
+  // otherwise append the version
   else parts.push(version);
   // and add special handling for windows
   const filename = os === 'Windows' ? `${parts.join('-')}.exe` : parts.join('-');
 
   // return the correct filename
-  return s3Releases.includes(version) ? `${s3Base}/${filename}` : `${gitHubBase}/${version}/${filename}`;
+  return s3Releases.includes(version) || version.includes('preview') ? `${s3Base}/${filename}` : `${gitHubBase}/${version}/${filename}`;
 };
 
 
@@ -195,7 +199,7 @@ const getDepCheck = () => {
 
 module.exports = () => ({
   // primary inputs
-  landoVersion: core.getInput('lando-version'),
+  landoVersion: String(core.getInput('lando-version')),
   landoVersionFile: core.getInput('lando-version-file'),
   config: core.getMultilineInput('config'),
   configFile: core.getInput('config-file'),
@@ -242,6 +246,24 @@ module.exports = (data, {prefix = '', expandArrays = true, separator = '.'} = {}
 
 /***/ }),
 
+/***/ 6769:
+/***/ ((module) => {
+
+"use strict";
+
+
+module.exports = url => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+
+/***/ }),
+
 /***/ 6718:
 /***/ ((module, __unused_webpack_exports, __webpack_require__) => {
 
@@ -276,11 +298,16 @@ module.exports = (config = {}, pairs = []) => {
 const core = __webpack_require__(2186);
 const tc = __webpack_require__(7784);
 
+const isValidUrl = __webpack_require__(6769);
 const {s3Releases, gitHubReleases} = __webpack_require__(6709);
 
 module.exports = (spec, releases = [], dmv = 3) => {
   // start by returning any special "dev" aliases
   if (s3Releases.includes(spec)) return spec;
+  // also return any spec that include "preview"
+  if (spec.includes('preview')) return spec;
+  // also return any url specs
+  if (isValidUrl(spec)) return spec;
 
   // then attempt to resolve special "convenience" aliases to actual versions
   if (gitHubReleases.includes(spec)) {
@@ -19633,7 +19660,7 @@ const mergeConfig = __webpack_require__(6718);
 const resolveVersionSpec = __webpack_require__(5374);
 
 const main = async () => {
-  // start by getting the inputs
+  // start by getting the inputs and stuff
   const inputs = getInputs();
 
   // show a warning if both version inputs are set
