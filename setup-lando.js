@@ -32,6 +32,9 @@ const main = async () => {
     core.warning('Both lando-version and lando-version-file inputs are specified, only lando-version will be used');
   }
 
+  // set downstream lando debugging if applicable and if DEBUG is not manually set already
+  if ((core.isDebug() || inputs.debug) && !get(process, 'env.DEBUG', false)) process.env.DEBUG='lando*';
+
   // determine lando version spec to install
   const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
   core.debug(`rolling with "${spec}" as version spec`);
@@ -61,6 +64,7 @@ const main = async () => {
 
     // ensure needed RUNNER_ vars are set
     // @NOTE: this is just to ensure we can run this locally
+    if (!get(process, 'env.RUNNER_DEBUG', false)) process.env.RUNNER_DEBUG = core.isDebug();
     if (!get(process, 'env.RUNNER_TEMP', false)) process.env.RUNNER_TEMP = os.tmpdir();
     if (!get(process, 'env.RUNNER_TOOL_CACHE', false)) process.env.RUNNER_TOOL_CACHE = os.tmpdir();
 
