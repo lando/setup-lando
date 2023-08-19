@@ -38,7 +38,7 @@ const main = async () => {
     core.warning('Both lando-version and lando-version-file inputs are specified, only lando-version will be used');
   }
 
-  inputs.landoVersion = './bin/lando';
+  // inputs.landoVersion = './bin/lando';
 
   // determine lando version spec to install
   const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
@@ -109,18 +109,12 @@ const main = async () => {
     else if (!inputs.telemetry && lmv === 'v4') config = mergeConfig(config, [['core.telemetry', false]]);
 
     // if debug i son then lets set that in the config file unless its already been set
-  //  if (core.isDebug() || inputs.debug) {
-
-
-  //   // only set DEBUG="lando*" if DEBUG hasnt already been set
-  //   // @TODO: ideally we can get rid of this in favor of better/more unified debug activitation
-  //   if (!get(process, 'env.DEBUG', false)) core.exportVariable('envVar', 'Val');
-  //   process.env.DEBUG='lando*';
-
-
-
-  // @NOTE: we use proces.env.DEBUG instead of core.exportVariable because we dont want to pollute downstream steps?
-
+    //  if (core.isDebug() || inputs.debug) {
+    //   // only set DEBUG="lando*" if DEBUG hasnt already been set
+    //   // @TODO: ideally we can get rid of this in favor of better/more unified debug activitation
+    //   if (!get(process, 'env.DEBUG', false)) core.exportVariable('envVar', 'Val');
+    //   process.env.DEBUG='lando*';
+    // @NOTE: we use proces.env.DEBUG instead of core.exportVariable because we dont want to pollute downstream steps?
 
     // set config info
     core.startGroup('Configuration information');
