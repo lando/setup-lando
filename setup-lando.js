@@ -38,8 +38,6 @@ const main = async () => {
     core.warning('Both lando-version and lando-version-file inputs are specified, only lando-version will be used');
   }
 
-  // inputs.landoVersion = './bin/lando';
-
   // determine lando version spec to install
   const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
   core.debug(`rolling with "${spec}" as version spec`);
@@ -58,22 +56,26 @@ const main = async () => {
     // throw error if we cannot resolve a version
     if (!version) throw new Error(`Could not resolve "${spec}" into an installable version of Lando`);
 
-    // determine url of lando version to install
-    const downloadUrl = getDownloadUrl(version, inputs);
-    core.debug(`going to download version ${version} from ${downloadUrl}`);
-    core.startGroup('Download information');
-    core.info(`spec: ${spec}`);
-    core.info(`version: ${version}`);
-    core.info(`url: ${downloadUrl}`);
-    core.endGroup();
+    // start by assuming that version is just the path to some locally installed version of lando
+    let landoPath = version;
 
-    // download lando
-    // @NOTE: separate try catch here because we dont get a great error message from download tool
-    let landoPath;
-    try {
-      landoPath = await tc.downloadTool(downloadUrl);
-    } catch (error) {
-      throw new Error(`Unable to download Lando ${version} from ${downloadUrl}. ${error.message}`);
+    // if that assumption is wrong then we need to attempt a download
+    if (!fs.existsSync(landoPath)) {
+      // determine url of lando version to install
+      const downloadUrl = getDownloadUrl(version, inputs);
+      core.debug(`going to download version ${version} from ${downloadUrl}`);
+      core.startGroup('Download information');
+      core.info(`spec: ${spec}`);
+      core.info(`version: ${version}`);
+      core.info(`url: ${downloadUrl}`);
+      core.endGroup();
+
+      // download lando
+      try {
+        landoPath = await tc.downloadTool(downloadUrl);
+      } catch (error) {
+        throw new Error(`Unable to download Lando ${version} from ${downloadUrl}. ${error.message}`);
+      }
     }
 
     // if on windows we need to move and rename so it ends in exe if it doesnt already
@@ -87,7 +89,7 @@ const main = async () => {
     const output = execSync(`${landoPath} version`, {maxBuffer: 1024 * 1024 * 10, encoding: 'utf-8'});
     version = output.split(' ').length === 2 ? output.split(' ')[1] : output.split(' ')[0];
     const lmv = version.split('.')[0];
-    core.debug(`downloaded lando is version ${version}, major version ${lmv}`);
+    core.debug(`using lando version ${version}, major version ${lmv}`);
 
     // move into the tool cache and compute path
     const targetFile = inputs.os === 'Windows' ? 'lando.exe' : 'lando';
