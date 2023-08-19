@@ -42,6 +42,7 @@ const main = async () => {
 
   // determine lando version spec to install
   const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
+  core.debug(`rolling with "${spec}" as version spec`);
 
   // get a pagination vibed octokit so we can get ALL release data
   const Octokit = GitHub.plugin(paginateRest);

@@ -31,7 +31,7 @@ jobs:
           - 'dev'
           - 'pm-preview'
           - 'https://github.com/lando/cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0'
-          - './bin/lando'
+          - '/home/runner/work/setup-lando/setup-lando/bin/lando'
 
     steps:
       - name: Checkout code
