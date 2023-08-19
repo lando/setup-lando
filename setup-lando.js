@@ -24,6 +24,12 @@ const mergeConfig = require('./lib/merge-config');
 const resolveVersionSpec = require('./lib/resolve-version-spec');
 
 const main = async () => {
+  // ensure needed RUNNER_ vars are set
+  // @NOTE: this is just to ensure we can run this locally
+  if (!get(process, 'env.RUNNER_DEBUG', false)) process.env.RUNNER_DEBUG = core.isDebug();
+  if (!get(process, 'env.RUNNER_TEMP', false)) process.env.RUNNER_TEMP = os.tmpdir();
+  if (!get(process, 'env.RUNNER_TOOL_CACHE', false)) process.env.RUNNER_TOOL_CACHE = os.tmpdir();
+
   // start by getting the inputs and stuff
   const inputs = getInputs();
 
@@ -32,12 +38,10 @@ const main = async () => {
     core.warning('Both lando-version and lando-version-file inputs are specified, only lando-version will be used');
   }
 
-  // set downstream lando debugging if applicable and if DEBUG is not manually set already
-  if ((core.isDebug() || inputs.debug) && !get(process, 'env.DEBUG', false)) process.env.DEBUG='lando*';
+  inputs.landoVersion = './bin/lando';
 
   // determine lando version spec to install
   const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
-  core.debug(`rolling with "${spec}" as version spec`);
 
   // get a pagination vibed octokit so we can get ALL release data
   const Octokit = GitHub.plugin(paginateRest);
@@ -62,12 +66,6 @@ const main = async () => {
     core.info(`url: ${downloadUrl}`);
     core.endGroup();
 
-    // ensure needed RUNNER_ vars are set
-    // @NOTE: this is just to ensure we can run this locally
-    if (!get(process, 'env.RUNNER_DEBUG', false)) process.env.RUNNER_DEBUG = core.isDebug();
-    if (!get(process, 'env.RUNNER_TEMP', false)) process.env.RUNNER_TEMP = os.tmpdir();
-    if (!get(process, 'env.RUNNER_TOOL_CACHE', false)) process.env.RUNNER_TOOL_CACHE = os.tmpdir();
-
     // download lando
     // @NOTE: separate try catch here because we dont get a great error message from download tool
     let landoPath;
@@ -77,8 +75,8 @@ const main = async () => {
       throw new Error(`Unable to download Lando ${version} from ${downloadUrl}. ${error.message}`);
     }
 
-    // if on windows we need to move and rename so it ends in exe
-    if (inputs.os === 'Windows') {
+    // if on windows we need to move and rename so it ends in exe if it doesnt already
+    if (inputs.os === 'Windows' && path.extname(landoPath) === '') {
       await io.cp(landoPath, `${landoPath}.exe`, {force: true});
       landoPath = `${landoPath}.exe`;
     }
@@ -109,6 +107,20 @@ const main = async () => {
     if (!inputs.telemetry && lmv === 'v3') config = mergeConfig(config, [['stats[0].report', false], 'stats[0].url=https://metrics.lando.dev']);
     // or if telemetry is off on v4 then add in more config
     else if (!inputs.telemetry && lmv === 'v4') config = mergeConfig(config, [['core.telemetry', false]]);
+
+    // if debug i son then lets set that in the config file unless its already been set
+  //  if (core.isDebug() || inputs.debug) {
+
+
+  //   // only set DEBUG="lando*" if DEBUG hasnt already been set
+  //   // @TODO: ideally we can get rid of this in favor of better/more unified debug activitation
+  //   if (!get(process, 'env.DEBUG', false)) core.exportVariable('envVar', 'Val');
+  //   process.env.DEBUG='lando*';
+
+
+
+  // @NOTE: we use proces.env.DEBUG instead of core.exportVariable because we dont want to pollute downstream steps?
+
 
     // set config info
     core.startGroup('Configuration information');
