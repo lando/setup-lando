@@ -16,16 +16,13 @@ const yaml = __webpack_require__(1917);
 module.exports = file => {
   // if no file then return empty config
   if (!file) return;
-
   // if file is not absolute then prepend some bases as needed
   if (!path.isAbsolute(file)) file = path.join(process.env.GITHUB_WORKSPACE || process.cwd(), file);
-
   // if the file does not exist then notify and return
   if (!fs.existsSync(file)) {
     core.notice(`Could not locate a config file at ${file}`);
     return;
   }
-
   // otherwise return the config values
   try {
     return yaml.load(fs.readFileSync(file));
@@ -183,6 +180,18 @@ const getArch = () => {
   return get(process, 'env.RUNNER_ARCH', 'unknown');
 };
 
+const getDepCheck = () => {
+  if (!['warn', 'error'].includes(core.getInput('dependency-check'))) return false;
+  else return core.getInput('dependency-check');
+};
+
+const getDebug = () => {
+  // GITHUB ACTIONS logix
+  if (process.env.GITHUB_ACTIONS) return core.getBooleanInput('debug') || process.env['RUNNER_DEBUG'] === '1' || false;
+  // otherwise we assume this is running locally eg for dev/test so just set to true as that is a sensible thing
+  return true;
+};
+
 const getOS = () => {
   if (!get(process, 'env.RUNNER_OS', false)) {
     if (process.platform === 'win32') process.env.RUNNER_OS = 'Windows';
@@ -190,11 +199,6 @@ const getOS = () => {
     else process.env.RUNNER_OS = 'Linux';
   }
   return get(process, 'env.RUNNER_OS', 'unknown');
-};
-
-const getDepCheck = () => {
-  if (!['warn', 'error'].includes(core.getInput('dependency-check'))) return false;
-  else return core.getInput('dependency-check');
 };
 
 module.exports = () => ({
@@ -208,7 +212,7 @@ module.exports = () => ({
   // other inputs
   architecture: core.getInput('architecture') || getArch(),
   dependencyCheck: getDepCheck(),
-  debug: process.env.GITHUB_ACTIONS ? core.getBooleanInput('debug') : true,
+  debug: getDebug(),
   os: core.getInput('os') || getOS(),
   telemetry: process.env.GITHUB_ACTIONS ? core.getBooleanInput('telemetry') : true,
 });
@@ -296,13 +300,25 @@ module.exports = (config = {}, pairs = []) => {
 
 
 const core = __webpack_require__(2186);
+const fs = __webpack_require__(5747);
+const path = __webpack_require__(5622);
 const tc = __webpack_require__(7784);
 
 const isValidUrl = __webpack_require__(6769);
 const {s3Releases, gitHubReleases} = __webpack_require__(6709);
 
 module.exports = (spec, releases = [], dmv = 3) => {
-  // start by returning any special "dev" aliases
+  // if spec is a file that exists relative to GITHUB_WORKSPACE then set spec to absolute path based on that
+  if (!path.isAbsolute(spec) && fs.existsSync(path.join(process.env['GITHUB_WORKSPACE'], spec))) {
+    spec = path.join(process.env['GITHUB_WORKSPACE'], spec);
+  // or ditto if its relative to cwd
+  } else if (!path.isAbsolute(spec) && fs.existsSync(path.join(process.cwd(), spec))) {
+    spec = path.join(process.cwd(), spec);
+  }
+
+  // if we have a file that exists on the filesystem then return that
+  if (fs.existsSync(spec)) return spec;
+  // then continue by returning any special "dev" aliases
   if (s3Releases.includes(spec)) return spec;
   // also return any spec that include "preview"
   if (spec.includes('preview')) return spec;
@@ -15466,14 +15482,42 @@ var MAX_SAFE_INTEGER = Number.MAX_SAFE_INTEGER ||
 // Max safe segment length for coercion.
 var MAX_SAFE_COMPONENT_LENGTH = 16
 
+var MAX_SAFE_BUILD_LENGTH = MAX_LENGTH - 6
+
 // The actual regexps go on exports.re
 var re = exports.re = []
+var safeRe = exports.safeRe = []
 var src = exports.src = []
 var t = exports.tokens = {}
 var R = 0
 
 function tok (n) {
   t[n] = R++
+}
+
+var LETTERDASHNUMBER = '[a-zA-Z0-9-]'
+
+// Replace some greedy regex tokens to prevent regex dos issues. These regex are
+// used internally via the safeRe object since all inputs in this library get
+// normalized first to trim and collapse all extra whitespace. The original
+// regexes are exported for userland consumption and lower level usage. A
+// future breaking change could export the safer regex only with a note that
+// all input should have extra whitespace removed.
+var safeRegexReplacements = [
+  ['\\s', 1],
+  ['\\d', MAX_LENGTH],
+  [LETTERDASHNUMBER, MAX_SAFE_BUILD_LENGTH],
+]
+
+function makeSafeRe (value) {
+  for (var i = 0; i < safeRegexReplacements.length; i++) {
+    var token = safeRegexReplacements[i][0]
+    var max = safeRegexReplacements[i][1]
+    value = value
+      .split(token + '*').join(token + '{0,' + max + '}')
+      .split(token + '+').join(token + '{1,' + max + '}')
+  }
+  return value
 }
 
 // The following Regular Expressions can be used for tokenizing,
@@ -15485,14 +15529,14 @@ function tok (n) {
 tok('NUMERICIDENTIFIER')
 src[t.NUMERICIDENTIFIER] = '0|[1-9]\\d*'
 tok('NUMERICIDENTIFIERLOOSE')
-src[t.NUMERICIDENTIFIERLOOSE] = '[0-9]+'
+src[t.NUMERICIDENTIFIERLOOSE] = '\\d+'
 
 // ## Non-numeric Identifier
 // Zero or more digits, followed by a letter or hyphen, and then zero or
 // more letters, digits, or hyphens.
 
 tok('NONNUMERICIDENTIFIER')
-src[t.NONNUMERICIDENTIFIER] = '\\d*[a-zA-Z-][a-zA-Z0-9-]*'
+src[t.NONNUMERICIDENTIFIER] = '\\d*[a-zA-Z-]' + LETTERDASHNUMBER + '*'
 
 // ## Main Version
 // Three dot-separated numeric identifiers.
@@ -15534,7 +15578,7 @@ src[t.PRERELEASELOOSE] = '(?:-?(' + src[t.PRERELEASEIDENTIFIERLOOSE] +
 // Any combination of digits, letters, or hyphens.
 
 tok('BUILDIDENTIFIER')
-src[t.BUILDIDENTIFIER] = '[0-9A-Za-z-]+'
+src[t.BUILDIDENTIFIER] = LETTERDASHNUMBER + '+'
 
 // ## Build Metadata
 // Plus sign, followed by one or more period-separated build metadata
@@ -15614,6 +15658,7 @@ src[t.COERCE] = '(^|[^\\d])' +
               '(?:$|[^\\d])'
 tok('COERCERTL')
 re[t.COERCERTL] = new RegExp(src[t.COERCE], 'g')
+safeRe[t.COERCERTL] = new RegExp(makeSafeRe(src[t.COERCE]), 'g')
 
 // Tilde ranges.
 // Meaning is "reasonably at or greater than"
@@ -15623,6 +15668,7 @@ src[t.LONETILDE] = '(?:~>?)'
 tok('TILDETRIM')
 src[t.TILDETRIM] = '(\\s*)' + src[t.LONETILDE] + '\\s+'
 re[t.TILDETRIM] = new RegExp(src[t.TILDETRIM], 'g')
+safeRe[t.TILDETRIM] = new RegExp(makeSafeRe(src[t.TILDETRIM]), 'g')
 var tildeTrimReplace = '$1~'
 
 tok('TILDE')
@@ -15638,6 +15684,7 @@ src[t.LONECARET] = '(?:\\^)'
 tok('CARETTRIM')
 src[t.CARETTRIM] = '(\\s*)' + src[t.LONECARET] + '\\s+'
 re[t.CARETTRIM] = new RegExp(src[t.CARETTRIM], 'g')
+safeRe[t.CARETTRIM] = new RegExp(makeSafeRe(src[t.CARETTRIM]), 'g')
 var caretTrimReplace = '$1^'
 
 tok('CARET')
@@ -15659,6 +15706,7 @@ src[t.COMPARATORTRIM] = '(\\s*)' + src[t.GTLT] +
 
 // this one has to use the /g flag
 re[t.COMPARATORTRIM] = new RegExp(src[t.COMPARATORTRIM], 'g')
+safeRe[t.COMPARATORTRIM] = new RegExp(makeSafeRe(src[t.COMPARATORTRIM]), 'g')
 var comparatorTrimReplace = '$1$2$3'
 
 // Something like `1.2.3 - 1.2.4`
@@ -15687,6 +15735,14 @@ for (var i = 0; i < R; i++) {
   debug(i, src[i])
   if (!re[i]) {
     re[i] = new RegExp(src[i])
+
+    // Replace all greedy whitespace to prevent regex dos issues. These regex are
+    // used internally via the safeRe object since all inputs in this library get
+    // normalized first to trim and collapse all extra whitespace. The original
+    // regexes are exported for userland consumption and lower level usage. A
+    // future breaking change could export the safer regex only with a note that
+    // all input should have extra whitespace removed.
+    safeRe[i] = new RegExp(makeSafeRe(src[i]))
   }
 }
 
@@ -15711,7 +15767,7 @@ function parse (version, options) {
     return null
   }
 
-  var r = options.loose ? re[t.LOOSE] : re[t.FULL]
+  var r = options.loose ? safeRe[t.LOOSE] : safeRe[t.FULL]
   if (!r.test(version)) {
     return null
   }
@@ -15766,7 +15822,7 @@ function SemVer (version, options) {
   this.options = options
   this.loose = !!options.loose
 
-  var m = version.trim().match(options.loose ? re[t.LOOSE] : re[t.FULL])
+  var m = version.trim().match(options.loose ? safeRe[t.LOOSE] : safeRe[t.FULL])
 
   if (!m) {
     throw new TypeError('Invalid Version: ' + version)
@@ -16211,6 +16267,7 @@ function Comparator (comp, options) {
     return new Comparator(comp, options)
   }
 
+  comp = comp.trim().split(/\s+/).join(' ')
   debug('comparator', comp, options)
   this.options = options
   this.loose = !!options.loose
@@ -16227,7 +16284,7 @@ function Comparator (comp, options) {
 
 var ANY = {}
 Comparator.prototype.parse = function (comp) {
-  var r = this.options.loose ? re[t.COMPARATORLOOSE] : re[t.COMPARATOR]
+  var r = this.options.loose ? safeRe[t.COMPARATORLOOSE] : safeRe[t.COMPARATOR]
   var m = comp.match(r)
 
   if (!m) {
@@ -16351,9 +16408,16 @@ function Range (range, options) {
   this.loose = !!options.loose
   this.includePrerelease = !!options.includePrerelease
 
-  // First, split based on boolean or ||
+  // First reduce all whitespace as much as possible so we do not have to rely
+  // on potentially slow regexes like \s*. This is then stored and used for
+  // future error messages as well.
   this.raw = range
-  this.set = range.split(/\s*\|\|\s*/).map(function (range) {
+    .trim()
+    .split(/\s+/)
+    .join(' ')
+
+  // First, split based on boolean or ||
+  this.set = this.raw.split('||').map(function (range) {
     return this.parseRange(range.trim())
   }, this).filter(function (c) {
     // throw out any that are not relevant for whatever reason
@@ -16361,7 +16425,7 @@ function Range (range, options) {
   })
 
   if (!this.set.length) {
-    throw new TypeError('Invalid SemVer Range: ' + range)
+    throw new TypeError('Invalid SemVer Range: ' + this.raw)
   }
 
   this.format()
@@ -16380,20 +16444,19 @@ Range.prototype.toString = function () {
 
 Range.prototype.parseRange = function (range) {
   var loose = this.options.loose
-  range = range.trim()
   // `1.2.3 - 1.2.4` => `>=1.2.3 <=1.2.4`
-  var hr = loose ? re[t.HYPHENRANGELOOSE] : re[t.HYPHENRANGE]
+  var hr = loose ? safeRe[t.HYPHENRANGELOOSE] : safeRe[t.HYPHENRANGE]
   range = range.replace(hr, hyphenReplace)
   debug('hyphen replace', range)
   // `> 1.2.3 < 1.2.5` => `>1.2.3 <1.2.5`
-  range = range.replace(re[t.COMPARATORTRIM], comparatorTrimReplace)
-  debug('comparator trim', range, re[t.COMPARATORTRIM])
+  range = range.replace(safeRe[t.COMPARATORTRIM], comparatorTrimReplace)
+  debug('comparator trim', range, safeRe[t.COMPARATORTRIM])
 
   // `~ 1.2.3` => `~1.2.3`
-  range = range.replace(re[t.TILDETRIM], tildeTrimReplace)
+  range = range.replace(safeRe[t.TILDETRIM], tildeTrimReplace)
 
   // `^ 1.2.3` => `^1.2.3`
-  range = range.replace(re[t.CARETTRIM], caretTrimReplace)
+  range = range.replace(safeRe[t.CARETTRIM], caretTrimReplace)
 
   // normalize spaces
   range = range.split(/\s+/).join(' ')
@@ -16401,7 +16464,7 @@ Range.prototype.parseRange = function (range) {
   // At this point, the range is completely trimmed and
   // ready to be split into comparators.
 
-  var compRe = loose ? re[t.COMPARATORLOOSE] : re[t.COMPARATOR]
+  var compRe = loose ? safeRe[t.COMPARATORLOOSE] : safeRe[t.COMPARATOR]
   var set = range.split(' ').map(function (comp) {
     return parseComparator(comp, this.options)
   }, this).join(' ').split(/\s+/)
@@ -16501,7 +16564,7 @@ function replaceTildes (comp, options) {
 }
 
 function replaceTilde (comp, options) {
-  var r = options.loose ? re[t.TILDELOOSE] : re[t.TILDE]
+  var r = options.loose ? safeRe[t.TILDELOOSE] : safeRe[t.TILDE]
   return comp.replace(r, function (_, M, m, p, pr) {
     debug('tilde', comp, _, M, m, p, pr)
     var ret
@@ -16542,7 +16605,7 @@ function replaceCarets (comp, options) {
 
 function replaceCaret (comp, options) {
   debug('caret', comp, options)
-  var r = options.loose ? re[t.CARETLOOSE] : re[t.CARET]
+  var r = options.loose ? safeRe[t.CARETLOOSE] : safeRe[t.CARET]
   return comp.replace(r, function (_, M, m, p, pr) {
     debug('caret', comp, _, M, m, p, pr)
     var ret
@@ -16601,7 +16664,7 @@ function replaceXRanges (comp, options) {
 
 function replaceXRange (comp, options) {
   comp = comp.trim()
-  var r = options.loose ? re[t.XRANGELOOSE] : re[t.XRANGE]
+  var r = options.loose ? safeRe[t.XRANGELOOSE] : safeRe[t.XRANGE]
   return comp.replace(r, function (ret, gtlt, M, m, p, pr) {
     debug('xRange', comp, ret, gtlt, M, m, p, pr)
     var xM = isX(M)
@@ -16676,7 +16739,7 @@ function replaceXRange (comp, options) {
 function replaceStars (comp, options) {
   debug('replaceStars', comp, options)
   // Looseness is ignored here.  star is always as loose as it gets!
-  return comp.trim().replace(re[t.STAR], '')
+  return comp.trim().replace(safeRe[t.STAR], '')
 }
 
 // This function is passed to string.replace(re[t.HYPHENRANGE])
@@ -17002,7 +17065,7 @@ function coerce (version, options) {
 
   var match = null
   if (!options.rtl) {
-    match = version.match(re[t.COERCE])
+    match = version.match(safeRe[t.COERCE])
   } else {
     // Find the right-most coercible string that does not share
     // a terminus with a more left-ward coercible string.
@@ -17013,17 +17076,17 @@ function coerce (version, options) {
     // Stop when we get a match that ends at the string end, since no
     // coercible string can be more right-ward without the same terminus.
     var next
-    while ((next = re[t.COERCERTL].exec(version)) &&
+    while ((next = safeRe[t.COERCERTL].exec(version)) &&
       (!match || match.index + match[0].length !== version.length)
     ) {
       if (!match ||
           next.index + next[0].length !== match.index + match[0].length) {
         match = next
       }
-      re[t.COERCERTL].lastIndex = next.index + next[1].length + next[2].length
+      safeRe[t.COERCERTL].lastIndex = next.index + next[1].length + next[2].length
     }
     // leave it in a clean state
-    re[t.COERCERTL].lastIndex = -1
+    safeRe[t.COERCERTL].lastIndex = -1
   }
 
   if (match === null) {
@@ -19660,6 +19723,12 @@ const mergeConfig = __webpack_require__(6718);
 const resolveVersionSpec = __webpack_require__(5374);
 
 const main = async () => {
+  // ensure needed RUNNER_ vars are set
+  // @NOTE: this is just to ensure we can run this locally
+  if (!get(process, 'env.RUNNER_DEBUG', false)) process.env.RUNNER_DEBUG = core.isDebug();
+  if (!get(process, 'env.RUNNER_TEMP', false)) process.env.RUNNER_TEMP = os.tmpdir();
+  if (!get(process, 'env.RUNNER_TOOL_CACHE', false)) process.env.RUNNER_TOOL_CACHE = os.tmpdir();
+
   // start by getting the inputs and stuff
   const inputs = getInputs();
 
@@ -19667,6 +19736,12 @@ const main = async () => {
   if (inputs.landoVersion && inputs.landoVersionFile) {
     core.warning('Both lando-version and lando-version-file inputs are specified, only lando-version will be used');
   }
+
+  // if core debugging or user debug is on then lets set "LANDO_DEBUG=1"
+  // @NOTE: we use core.exportVariable because we want any GHA workflow that uses @lando/setup-lando to not need
+  // to handle their own downstream lando debugging. Of course they can if they want since they migth want something
+  // more targeted or wide than LANDO_DEBUG=1 eg LANDO_DEBUG="*" or LANDO_DEBUG="lando/core*"
+  if (core.isDebug() || inputs.debug) core.exportVariable('LANDO_DEBUG', 1);
 
   // determine lando version spec to install
   const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
@@ -19685,42 +19760,44 @@ const main = async () => {
     let version = resolveVersionSpec(spec, releases);
     // throw error if we cannot resolve a version
     if (!version) throw new Error(`Could not resolve "${spec}" into an installable version of Lando`);
+    core.debug(`found ${releases.length} valid releases`);
 
-    // determine url of lando version to install
-    const downloadUrl = getDownloadUrl(version, inputs);
-    core.debug(`going to download version ${version} from ${downloadUrl}`);
-    core.startGroup('Download information');
+    // start by assuming that version is just the path to some locally installed version of lando
+    let landoPath = version;
+    core.startGroup('Version information');
     core.info(`spec: ${spec}`);
     core.info(`version: ${version}`);
-    core.info(`url: ${downloadUrl}`);
-    core.endGroup();
 
-    // ensure needed RUNNER_ vars are set
-    // @NOTE: this is just to ensure we can run this locally
-    if (!get(process, 'env.RUNNER_TEMP', false)) process.env.RUNNER_TEMP = os.tmpdir();
-    if (!get(process, 'env.RUNNER_TOOL_CACHE', false)) process.env.RUNNER_TOOL_CACHE = os.tmpdir();
+    // if that assumption is wrong then we need to attempt a download
+    if (!fs.existsSync(landoPath)) {
+      // determine url of lando version to install
+      const downloadUrl = getDownloadUrl(version, inputs);
+      core.debug(`going to download version ${version} from ${downloadUrl}`);
+      core.info(`url: ${downloadUrl}`);
 
-    // download lando
-    // @NOTE: separate try catch here because we dont get a great error message from download tool
-    let landoPath;
-    try {
-      landoPath = await tc.downloadTool(downloadUrl);
-    } catch (error) {
-      throw new Error(`Unable to download Lando ${version} from ${downloadUrl}. ${error.message}`);
+      // download lando
+      try {
+        landoPath = await tc.downloadTool(downloadUrl);
+      } catch (error) {
+        throw new Error(`Unable to download Lando ${version} from ${downloadUrl}. ${error.message}`);
+      }
     }
 
-    // if on windows we need to move and rename so it ends in exe
-    if (inputs.os === 'Windows') {
+    // if on windows we need to move and rename so it ends in exe if it doesnt already
+    if (inputs.os === 'Windows' && path.extname(landoPath) === '') {
       await io.cp(landoPath, `${landoPath}.exe`, {force: true});
       landoPath = `${landoPath}.exe`;
     }
+
+    core.info(`path: ${landoPath}`);
+    core.endGroup();
 
     // reset version information, we do this to get the source of truth on what we've downloaded
     fs.chmodSync(landoPath, '755');
     const output = execSync(`${landoPath} version`, {maxBuffer: 1024 * 1024 * 10, encoding: 'utf-8'});
     version = output.split(' ').length === 2 ? output.split(' ')[1] : output.split(' ')[0];
     const lmv = version.split('.')[0];
-    core.debug(`downloaded lando is version ${version}, major version ${lmv}`);
+    core.debug(`using lando version ${version}, major version ${lmv}`);
 
     // move into the tool cache and compute path
     const targetFile = inputs.os === 'Windows' ? 'lando.exe' : 'lando';
