@@ -23,7 +23,7 @@ inputs:
     description: "The path to a Lando global config file to use."
     required: false
   debug:
-    description: "Toggle debug output."
+    description: "Toggle debug output. (deprecated). Use https://github.blog/changelog/2022-05-24-github-actions-re-run-jobs-with-debug-logging/ instead."
     required: false
     default: false
   dependency-check:

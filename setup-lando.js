@@ -24,6 +24,12 @@ const mergeConfig = require('./lib/merge-config');
 const resolveVersionSpec = require('./lib/resolve-version-spec');
 
 const main = async () => {
+  // ensure needed RUNNER_ vars are set
+  // @NOTE: this is just to ensure we can run this locally
+  if (!get(process, 'env.RUNNER_DEBUG', false)) process.env.RUNNER_DEBUG = core.isDebug();
+  if (!get(process, 'env.RUNNER_TEMP', false)) process.env.RUNNER_TEMP = os.tmpdir();
+  if (!get(process, 'env.RUNNER_TOOL_CACHE', false)) process.env.RUNNER_TOOL_CACHE = os.tmpdir();
+
   // start by getting the inputs and stuff
   const inputs = getInputs();
 
@@ -31,6 +37,12 @@ const main = async () => {
   if (inputs.landoVersion && inputs.landoVersionFile) {
     core.warning('Both lando-version and lando-version-file inputs are specified, only lando-version will be used');
   }
+
+  // if core debugging or user debug is on then lets set "LANDO_DEBUG=1"
+  // @NOTE: we use core.exportVariable because we want any GHA workflow that uses @lando/setup-lando to not need
+  // to handle their own downstream lando debugging. Of course they can if they want since they migth want something
+  // more targeted or wide than LANDO_DEBUG=1 eg LANDO_DEBUG="*" or LANDO_DEBUG="lando/core*"
+  if (core.isDebug() || inputs.debug) core.exportVariable('LANDO_DEBUG', 1);
 
   // determine lando version spec to install
   const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
@@ -49,42 +61,44 @@ const main = async () => {
     let version = resolveVersionSpec(spec, releases);
     // throw error if we cannot resolve a version
     if (!version) throw new Error(`Could not resolve "${spec}" into an installable version of Lando`);
+    core.debug(`found ${releases.length} valid releases`);
 
-    // determine url of lando version to install
-    const downloadUrl = getDownloadUrl(version, inputs);
-    core.debug(`going to download version ${version} from ${downloadUrl}`);
-    core.startGroup('Download information');
+    // start by assuming that version is just the path to some locally installed version of lando
+    let landoPath = version;
+    core.startGroup('Version information');
     core.info(`spec: ${spec}`);
     core.info(`version: ${version}`);
-    core.info(`url: ${downloadUrl}`);
-    core.endGroup();
 
-    // ensure needed RUNNER_ vars are set
-    // @NOTE: this is just to ensure we can run this locally
-    if (!get(process, 'env.RUNNER_TEMP', false)) process.env.RUNNER_TEMP = os.tmpdir();
-    if (!get(process, 'env.RUNNER_TOOL_CACHE', false)) process.env.RUNNER_TOOL_CACHE = os.tmpdir();
+    // if that assumption is wrong then we need to attempt a download
+    if (!fs.existsSync(landoPath)) {
+      // determine url of lando version to install
+      const downloadUrl = getDownloadUrl(version, inputs);
+      core.debug(`going to download version ${version} from ${downloadUrl}`);
+      core.info(`url: ${downloadUrl}`);
 
-    // download lando
-    // @NOTE: separate try catch here because we dont get a great error message from download tool
-    let landoPath;
-    try {
-      landoPath = await tc.downloadTool(downloadUrl);
-    } catch (error) {
-      throw new Error(`Unable to download Lando ${version} from ${downloadUrl}. ${error.message}`);
+      // download lando
+      try {
+        landoPath = await tc.downloadTool(downloadUrl);
+      } catch (error) {
+        throw new Error(`Unable to download Lando ${version} from ${downloadUrl}. ${error.message}`);
+      }
     }
 
-    // if on windows we need to move and rename so it ends in exe
-    if (inputs.os === 'Windows') {
+    // if on windows we need to move and rename so it ends in exe if it doesnt already
+    if (inputs.os === 'Windows' && path.extname(landoPath) === '') {
       await io.cp(landoPath, `${landoPath}.exe`, {force: true});
       landoPath = `${landoPath}.exe`;
     }
+
+    core.info(`path: ${landoPath}`);
+    core.endGroup();
 
     // reset version information, we do this to get the source of truth on what we've downloaded
     fs.chmodSync(landoPath, '755');
     const output = execSync(`${landoPath} version`, {maxBuffer: 1024 * 1024 * 10, encoding: 'utf-8'});
     version = output.split(' ').length === 2 ? output.split(' ')[1] : output.split(' ')[0];
     const lmv = version.split('.')[0];
-    core.debug(`downloaded lando is version ${version}, major version ${lmv}`);
+    core.debug(`using lando version ${version}, major version ${lmv}`);
 
     // move into the tool cache and compute path
     const targetFile = inputs.os === 'Windows' ? 'lando.exe' : 'lando';
