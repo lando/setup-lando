@@ -4,7 +4,12 @@ This action installs Lando in GitHub Actions. With it you can:
 
 * Install using a version-spec-ish eg `3`, `3.12`, `3.x`, `3.14.0`
 * Install using convenience aliases eg `stable`, `4-latest`, `dev` `3-edge`
+* Install preview branches eg `pm-preview`
+* Install from a URL eg `https://github.com/lando/cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0`
+* Install from a local file eg `/home/runner/work/setup-lando/setup-lando/bin/lando`
 * Set [global Lando config](https://docs.lando.dev/core/global.html) configuration
+* Toggle `lando` debugging via [GitHub Actions](https://github.blog/changelog/2022-05-24-github-actions-re-run-jobs-with-debug-logging)
+* Verify underlying `engine` and `orchestrator` dependencies are installed and correct
 
 > **NOTE:** If you are using a self-hosted or custom runner you may need to install the needed Lando dependenices eg Docker and Docker Compose for Lando to work correctly!
 
@@ -45,9 +50,22 @@ outputs:
 - name: Setup Lando
   uses: lando/setup-lando@v2
   with:
-    lando-version: stable | edge | dev | latest | 3 | 3.14.0 | 3.11 | pm-preview | https://url.to.my.lando.cli
+    lando-version: stable | edge | dev | latest | 3 | 3.14.0 | 3.11 | pm-preview
 ```
 
+```yaml
+- name: Setup Lando
+  uses: lando/setup-lando@v2
+  with:
+    lando-version: https://url.to.my.lando.cli
+```
+
+```yaml
+- name: Setup Lando
+  uses: lando/setup-lando@v2
+  with:
+    lando-version: /path/to/my/lando/cli
+```
 
 **Version spec and config file:**
 

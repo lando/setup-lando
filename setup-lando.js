@@ -38,6 +38,12 @@ const main = async () => {
     core.warning('Both lando-version and lando-version-file inputs are specified, only lando-version will be used');
   }
 
+  // if core debugging or user debug is on then lets set "LANDO_DEBUG=1"
+  // @NOTE: we use core.exportVariable because we want any GHA workflow that uses @lando/setup-lando to not need
+  // to handle their own downstream lando debugging. Of course they can if they want since they migth want something
+  // more targeted or wide than LANDO_DEBUG=1 eg LANDO_DEBUG="*" or LANDO_DEBUG="lando/core*"
+  if (core.isDebug() || inputs.debug) core.exportVariable('LANDO_DEBUG', 1);
+
   // determine lando version spec to install
   const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
   core.debug(`rolling with "${spec}" as version spec`);
@@ -113,14 +119,6 @@ const main = async () => {
     if (!inputs.telemetry && lmv === 'v3') config = mergeConfig(config, [['stats[0].report', false], 'stats[0].url=https://metrics.lando.dev']);
     // or if telemetry is off on v4 then add in more config
     else if (!inputs.telemetry && lmv === 'v4') config = mergeConfig(config, [['core.telemetry', false]]);
-
-    // if debug i son then lets set that in the config file unless its already been set
-    //  if (core.isDebug() || inputs.debug) {
-    //   // only set DEBUG="lando*" if DEBUG hasnt already been set
-    //   // @TODO: ideally we can get rid of this in favor of better/more unified debug activitation
-    //   if (!get(process, 'env.DEBUG', false)) core.exportVariable('envVar', 'Val');
-    //   process.env.DEBUG='lando*';
-    // @NOTE: we use proces.env.DEBUG instead of core.exportVariable because we dont want to pollute downstream steps?
 
     // set config info
     core.startGroup('Configuration information');

@@ -1,6 +1,7 @@
 ## v2.1.0 - [June 13, 2023](https://github.com/lando/setup-lando/releases/tag/v2.1.0)
 
-* Added support for `debug` toggling via `RUNNER_DEBUG`. See https://github.blog/changelog/2022-05-24-github-actions-re-run-jobs-with-debug-logging.
+* Added `lando-version` support for local file paths
+* Added support for `debug` toggling via https://github.blog/changelog/2022-05-24-github-actions-re-run-jobs-with-debug-logging
 * Deprecated usage of `input.debug` in favor of GHA debugging mechanisms
 
 ## v2.0.0 - [June 13, 2023](https://github.com/lando/setup-lando/releases/tag/v2.0.0)
