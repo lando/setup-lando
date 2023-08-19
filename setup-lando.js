@@ -55,20 +55,20 @@ const main = async () => {
     let version = resolveVersionSpec(spec, releases);
     // throw error if we cannot resolve a version
     if (!version) throw new Error(`Could not resolve "${spec}" into an installable version of Lando`);
+    core.debug(`found ${releases.length} valid releases`);
 
     // start by assuming that version is just the path to some locally installed version of lando
     let landoPath = version;
+    core.startGroup('Version information');
+    core.info(`spec: ${spec}`);
+    core.info(`version: ${version}`);
 
     // if that assumption is wrong then we need to attempt a download
     if (!fs.existsSync(landoPath)) {
       // determine url of lando version to install
       const downloadUrl = getDownloadUrl(version, inputs);
       core.debug(`going to download version ${version} from ${downloadUrl}`);
-      core.startGroup('Download information');
-      core.info(`spec: ${spec}`);
-      core.info(`version: ${version}`);
       core.info(`url: ${downloadUrl}`);
-      core.endGroup();
 
       // download lando
       try {
@@ -83,6 +83,9 @@ const main = async () => {
       await io.cp(landoPath, `${landoPath}.exe`, {force: true});
       landoPath = `${landoPath}.exe`;
     }
+
+    core.info(`path: ${landoPath}`);
+    core.endGroup();
 
     // reset version information, we do this to get the source of truth on what we've downloaded
     fs.chmodSync(landoPath, '755');
