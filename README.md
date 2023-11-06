@@ -8,6 +8,7 @@ This action installs Lando in GitHub Actions. With it you can:
 * Install from a URL eg `https://github.com/lando/cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0`
 * Install from a local file eg `/home/runner/work/setup-lando/setup-lando/bin/lando`
 * Set [global Lando config](https://docs.lando.dev/core/global.html) configuration
+* Specify how, or if, `lando setup` should run
 * Toggle `lando` debugging via [GitHub Actions](https://github.blog/changelog/2022-05-24-github-actions-re-run-jobs-with-debug-logging)
 * Verify underlying `engine` and `orchestrator` dependencies are installed and correct
 
@@ -23,6 +24,9 @@ All inputs are optional. If you do nothing the latest `stable` Lando will be ins
 | `lando-version-file` | A file that contains the version of Lando to install. | `.lando-version` | `.tool-versions` |
 | `config` | A list of `.` delimited config. If set these have primacy over values in `config-file` | `null` | `engineConfig.port=2376` |
 | `config-file` | The path to a Lando global config file to use. | `null` | `/config/lando-global.yml` |
+| `setup` | The lando setup command to run. | `lando setup -y` | `lando setup --skip-common-plugins --plugin @lando/core@~/path/to/core -y` |
+
+* Note that `setup` is only available in Lando 3.21+
 
 ## Outputs
 
@@ -111,6 +115,7 @@ outputs:
     os: macOS
     telemetry: false
     token: ${{ github.token }}
+    setup: lando setup --orchestrator 2.22.0 --plugins @pirog/my-plugin -y
 ```
 
 ## Changelog

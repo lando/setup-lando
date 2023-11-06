@@ -20,18 +20,25 @@ const getGCFPath = require('./lib/get-gcf-path');
 const getInputs = require('./lib/get-inputs');
 const getFileVersion = require('./lib/get-file-version');
 const getObjectKeys = require('./lib/get-object-keys');
+const getSetupCommand = require('./lib/get-setup-command');
 const mergeConfig = require('./lib/merge-config');
+const parseSetupCommand = require('./lib/parse-setup-command');
 const resolveVersionSpec = require('./lib/resolve-version-spec');
 
 const main = async () => {
   // ensure needed RUNNER_ vars are set
   // @NOTE: this is just to ensure we can run this locally
+  if (!get(process, 'env.GITHUB_WORKSPACE', false)) process.env.GITHUB_WORKSPACE = process.cwd();
   if (!get(process, 'env.RUNNER_DEBUG', false)) process.env.RUNNER_DEBUG = core.isDebug();
   if (!get(process, 'env.RUNNER_TEMP', false)) process.env.RUNNER_TEMP = os.tmpdir();
   if (!get(process, 'env.RUNNER_TOOL_CACHE', false)) process.env.RUNNER_TOOL_CACHE = os.tmpdir();
 
+
   // start by getting the inputs and stuff
   const inputs = getInputs();
+
+  inputs.landoVersion = '3-dev';
+  inputs.setup = 'auto';
 
   // show a warning if both version inputs are set
   if (inputs.landoVersion && inputs.landoVersionFile) {
@@ -42,7 +49,7 @@ const main = async () => {
   // @NOTE: we use core.exportVariable because we want any GHA workflow that uses @lando/setup-lando to not need
   // to handle their own downstream lando debugging. Of course they can if they want since they migth want something
   // more targeted or wide than LANDO_DEBUG=1 eg LANDO_DEBUG="*" or LANDO_DEBUG="lando/core*"
-  if (core.isDebug() || inputs.debug) core.exportVariable('LANDO_DEBUG', 1);
+  // if (core.isDebug() || inputs.debug) core.exportVariable('LANDO_DEBUG', 1);
 
   // determine lando version spec to install
   const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
@@ -143,7 +150,17 @@ const main = async () => {
       await exec.exec('cat', [reportFile]);
     }
 
-    // do v3 dependency checks if warn or error
+    // if setup is non-false then we want to try to run it if we can
+    if (getSetupCommand(inputs.setup) !== false) {
+      // print warning if setup command does not exist and leave
+      if (await exec.exec(landoPath, ['setup', '--help'], {ignoreReturnCode: true}) !== 0) {
+        core.warning('lando setup is only available in lando >= 3.21! Skipping!');
+
+      // if we get here then we should be G2G
+      } else await exec.exec(landoPath, parseSetupCommand(getSetupCommand(inputs.setup)));
+    }
+
+    // run v3 dep check
     if (lmv === 'v3' && ['warn', 'error'].includes(inputs.dependencyCheck)) {
       const docker = await exec.exec('docker', ['info'], {ignoreReturnCode: true});
       const dockerCompose = await exec.exec('docker-compose', ['--version'], {ignoreReturnCode: true});
@@ -160,7 +177,7 @@ const main = async () => {
     // @TODO: v4 dep checking?
 
     // if debug then print the entire lando config
-    if (core.isDebug() || inputs.debug) await exec.exec('lando', ['config']);
+    if (core.isDebug() || inputs.debug) await exec.exec(landoPath, ['config']);
 
   // catch unexpected
   } catch (error) {
