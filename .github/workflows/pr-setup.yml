@@ -1,4 +1,4 @@
-name: Config Tests
+name: Setup Tests
 
 on:
   pull_request:
@@ -12,14 +12,32 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - macos-12
+          # - macos-12
           - ubuntu-22.04
-          - windows-2022
-        telemetry:
-          - true
-          - false
+          # - windows-2022
+        lando-version:
+          # - '3.14.0'
+          - '3-dev'
+          # - 'stable'
         node-version:
           - '18'
+        setup-string:
+          - 1
+          - auto
+          - enabled
+          - on
+          - run
+          - true
+          - 0
+          - false
+          - off
+          - disable
+          - disabled
+          - lando setup -y
+          - lando setup --skip-common-plugins --plugin @lando/node --orchestrator 2.21.0 -y
+          # these will fail
+          # - lando.dev something
+          # - oihywpihgklnw
 
     steps:
       - name: Checkout code
@@ -39,11 +57,5 @@ jobs:
       - name: Setup Lando version
         uses: ./
         with:
-          config-file: test-config.yaml
-          config: |
-            pirog=5001
-            captains.enterprise=kirk
-            captains.enterprise-nx01=archer
-          debug: true
-          telemetry: ${{ matrix.telemetry }}
-          dependency-check: false
+          lando-version: ${{ matrix.lando-version }}
+          setup: ${{ matrix.setup-string }}

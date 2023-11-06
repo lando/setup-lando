@@ -20,15 +20,19 @@ const getGCFPath = require('./lib/get-gcf-path');
 const getInputs = require('./lib/get-inputs');
 const getFileVersion = require('./lib/get-file-version');
 const getObjectKeys = require('./lib/get-object-keys');
+const getSetupCommand = require('./lib/get-setup-command');
 const mergeConfig = require('./lib/merge-config');
+const parseSetupCommand = require('./lib/parse-setup-command');
 const resolveVersionSpec = require('./lib/resolve-version-spec');
 
 const main = async () => {
   // ensure needed RUNNER_ vars are set
   // @NOTE: this is just to ensure we can run this locally
+  if (!get(process, 'env.GITHUB_WORKSPACE', false)) process.env.GITHUB_WORKSPACE = process.cwd();
   if (!get(process, 'env.RUNNER_DEBUG', false)) process.env.RUNNER_DEBUG = core.isDebug();
   if (!get(process, 'env.RUNNER_TEMP', false)) process.env.RUNNER_TEMP = os.tmpdir();
   if (!get(process, 'env.RUNNER_TOOL_CACHE', false)) process.env.RUNNER_TOOL_CACHE = os.tmpdir();
+
 
   // start by getting the inputs and stuff
   const inputs = getInputs();
@@ -143,7 +147,21 @@ const main = async () => {
       await exec.exec('cat', [reportFile]);
     }
 
-    // do v3 dependency checks if warn or error
+    // if setup is non-false then we want to try to run it if we can
+    if (getSetupCommand(inputs.setup) !== false) {
+      // print warning if setup command does not exist and leave
+      if (await exec.exec(landoPath, ['setup', '--help'], {ignoreReturnCode: true}) !== 0) {
+        core.warning('lando setup is only available in lando >= 3.21! Skipping!');
+
+      // if we get here then we should be G2G
+      } else await exec.exec(landoPath, parseSetupCommand(getSetupCommand(inputs.setup)));
+    }
+
+    // run v3 dep check
+    // @TODO: validate setup here?
+    // for v3 its just validate orchestratorBin run docker info?
+    // for v4 its run lando status
+    // remove dep check below when done
     if (lmv === 'v3' && ['warn', 'error'].includes(inputs.dependencyCheck)) {
       const docker = await exec.exec('docker', ['info'], {ignoreReturnCode: true});
       const dockerCompose = await exec.exec('docker-compose', ['--version'], {ignoreReturnCode: true});
@@ -160,7 +178,7 @@ const main = async () => {
     // @TODO: v4 dep checking?
 
     // if debug then print the entire lando config
-    if (core.isDebug() || inputs.debug) await exec.exec('lando', ['config']);
+    if (core.isDebug() || inputs.debug) await exec.exec(landoPath, ['config']);
 
   // catch unexpected
   } catch (error) {

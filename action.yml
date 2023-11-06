@@ -34,6 +34,10 @@ inputs:
     description: "The OS to use. Defaults to system OS."
     required: false
     default: ${{ runner.os }}
+  setup:
+    description: "The lando setup configuration"
+    required: false
+    default: auto
   telemetry:
     description: "To send telemetry or not."
     required: false
@@ -48,5 +52,5 @@ outputs:
     description: "The path to the installed version of Lando."
 
 runs:
-  using: "node16"
+  using: "node20"
   main: "dist/index.js"

@@ -8,6 +8,7 @@ This action installs Lando in GitHub Actions. With it you can:
 * Install from a URL eg `https://github.com/lando/cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0`
 * Install from a local file eg `/home/runner/work/setup-lando/setup-lando/bin/lando`
 * Set [global Lando config](https://docs.lando.dev/core/global.html) configuration
+* Specify how, or if, `lando setup` should run
 * Toggle `lando` debugging via [GitHub Actions](https://github.blog/changelog/2022-05-24-github-actions-re-run-jobs-with-debug-logging)
 * Verify underlying `engine` and `orchestrator` dependencies are installed and correct
 
@@ -23,6 +24,9 @@ All inputs are optional. If you do nothing the latest `stable` Lando will be ins
 | `lando-version-file` | A file that contains the version of Lando to install. | `.lando-version` | `.tool-versions` |
 | `config` | A list of `.` delimited config. If set these have primacy over values in `config-file` | `null` | `engineConfig.port=2376` |
 | `config-file` | The path to a Lando global config file to use. | `null` | `/config/lando-global.yml` |
+| `setup` | The lando setup command to run. | `lando setup -y` | `lando setup --skip-common-plugins --plugin @lando/core@~/path/to/core -y` |
+
+* Note that `setup` is only available in Lando 3.21+
 
 ## Outputs
 
@@ -67,7 +71,7 @@ outputs:
     lando-version: /path/to/my/lando/cli
 ```
 
-**Version spec and config file:**
+**Version spec and config file example:**
 
 ```yaml
 - name: Setup Lando
@@ -77,7 +81,20 @@ outputs:
     config-file: config.yaml
 ```
 
-**Version file and config list:**
+**Version file and config list example:**
+
+```yaml
+- name: Setup Lando
+  uses: lando/setup-lando@v2
+  with:
+    lando-version-file: .tool-versions
+    config: |
+      core.engine=docker-colima
+      core.telemetry=false
+      plugins.@lando/php=/home/runner/work/php/php
+```
+
+**Version file and config list example:**
 
 ```yaml
 - name: Setup Lando
@@ -92,7 +109,17 @@ outputs:
 
 > **NOTE:** The above config is meant purely for illustration.
 
-**Everything, everywhere, all at once:**
+**Setup example:**
+
+```yaml
+- name: Setup Lando
+  uses: lando/setup-lando@v2
+  with:
+    lando-version: 3-dev
+    setup: auto | off | disable | lando setup --orchestrator 2.21.0 -y
+```
+
+**Everything, everywhere, all at once example:**
 
 ```yaml
 - name: Setup Lando
@@ -111,6 +138,7 @@ outputs:
     os: macOS
     telemetry: false
     token: ${{ github.token }}
+    setup: lando setup --orchestrator 2.22.0 --plugins @pirog/my-plugin -y
 ```
 
 ## Changelog
