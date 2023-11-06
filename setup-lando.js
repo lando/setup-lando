@@ -158,6 +158,10 @@ const main = async () => {
     }
 
     // run v3 dep check
+    // @TODO: validate setup here?
+    // for v3 its just validate orchestratorBin run docker info?
+    // for v4 its run lando status
+    // remove dep check below when done
     if (lmv === 'v3' && ['warn', 'error'].includes(inputs.dependencyCheck)) {
       const docker = await exec.exec('docker', ['info'], {ignoreReturnCode: true});
       const dockerCompose = await exec.exec('docker-compose', ['--version'], {ignoreReturnCode: true});

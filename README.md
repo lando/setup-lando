@@ -71,7 +71,7 @@ outputs:
     lando-version: /path/to/my/lando/cli
 ```
 
-**Version spec and config file:**
+**Version spec and config file example:**
 
 ```yaml
 - name: Setup Lando
@@ -81,7 +81,20 @@ outputs:
     config-file: config.yaml
 ```
 
-**Version file and config list:**
+**Version file and config list example:**
+
+```yaml
+- name: Setup Lando
+  uses: lando/setup-lando@v2
+  with:
+    lando-version-file: .tool-versions
+    config: |
+      core.engine=docker-colima
+      core.telemetry=false
+      plugins.@lando/php=/home/runner/work/php/php
+```
+
+**Version file and config list example:**
 
 ```yaml
 - name: Setup Lando
@@ -96,7 +109,17 @@ outputs:
 
 > **NOTE:** The above config is meant purely for illustration.
 
-**Everything, everywhere, all at once:**
+**Setup example:**
+
+```yaml
+- name: Setup Lando
+  uses: lando/setup-lando@v2
+  with:
+    lando-version: 3-dev
+    setup: auto | off | disable | lando setup --orchestrator 2.21.0 -y
+```
+
+**Everything, everywhere, all at once example:**
 
 ```yaml
 - name: Setup Lando
