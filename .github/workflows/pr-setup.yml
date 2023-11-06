@@ -34,11 +34,10 @@ jobs:
           - disable
           - disabled
           - lando setup -y
-          - lando setup --skip-common-plugins --plugins @lando/node --orchestrator 2.21.0 -y
+          - lando setup --skip-common-plugins --plugin @lando/node --orchestrator 2.21.0 -y
           # these will fail
           - lando.dev something
           - oihywpihgklnw
-
 
     steps:
       - name: Checkout code
