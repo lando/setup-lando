@@ -37,9 +37,6 @@ const main = async () => {
   // start by getting the inputs and stuff
   const inputs = getInputs();
 
-  inputs.landoVersion = '3-dev';
-  inputs.setup = 'auto';
-
   // show a warning if both version inputs are set
   if (inputs.landoVersion && inputs.landoVersionFile) {
     core.warning('Both lando-version and lando-version-file inputs are specified, only lando-version will be used');
@@ -49,7 +46,7 @@ const main = async () => {
   // @NOTE: we use core.exportVariable because we want any GHA workflow that uses @lando/setup-lando to not need
   // to handle their own downstream lando debugging. Of course they can if they want since they migth want something
   // more targeted or wide than LANDO_DEBUG=1 eg LANDO_DEBUG="*" or LANDO_DEBUG="lando/core*"
-  // if (core.isDebug() || inputs.debug) core.exportVariable('LANDO_DEBUG', 1);
+  if (core.isDebug() || inputs.debug) core.exportVariable('LANDO_DEBUG', 1);
 
   // determine lando version spec to install
   const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';

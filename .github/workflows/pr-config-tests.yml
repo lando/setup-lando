@@ -19,7 +19,7 @@ jobs:
           - true
           - false
         node-version:
-          - '16'
+          - '18'
 
     steps:
       - name: Checkout code
