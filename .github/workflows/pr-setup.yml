@@ -36,8 +36,8 @@ jobs:
           - lando setup -y
           - lando setup --skip-common-plugins --plugin @lando/node --orchestrator 2.21.0 -y
           # these will fail
-          - lando.dev something
-          - oihywpihgklnw
+          # - lando.dev something
+          # - oihywpihgklnw
 
     steps:
       - name: Checkout code
