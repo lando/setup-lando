@@ -16,11 +16,29 @@ jobs:
           - ubuntu-22.04
           # - windows-2022
         lando-version:
-          - '3.14.0'
+          # - '3.14.0'
           - '3-dev'
-          - 'stable'
+          # - 'stable'
         node-version:
           - '18'
+        setup-string:
+          - 1
+          - auto
+          - enabled
+          - on
+          - run
+          - true
+          - 0
+          - false
+          - off
+          - disable
+          - disabled
+          - lando setup -y
+          - lando setup --skip-common-plugins --plugins @lando/node --orchestrator 2.21.0 -y
+          # these will fail
+          - lando.dev something
+          - oihywpihgklnw
+
 
     steps:
       - name: Checkout code
@@ -40,4 +58,5 @@ jobs:
       - name: Setup Lando version
         uses: ./
         with:
-          dependency-check: false
+          lando-version: ${{ matrix.lando-version }}
+          setup: ${{ matrix.setup-string }}
