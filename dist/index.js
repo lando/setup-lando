@@ -251,6 +251,40 @@ module.exports = (data, {prefix = '', expandArrays = true, separator = '.'} = {}
 /***/ }),
 
 /***/ 9383:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const isDisabled = __nccwpck_require__(8342);
+
+module.exports = setup => {
+  // if its jsut disabled then return false
+  if (isDisabled(setup)) return false;
+
+  // if its a truthy value somehow then assume that is auto
+  if (setup === true || setup === 1) setup = 'auto';
+
+  // check to see if auto mode is on
+  if (typeof setup === 'string' &&
+    (setup.toUpperCase() === '1' ||
+    setup.toUpperCase() === 'AUTO' ||
+    setup.toUpperCase() === 'ENABLED' ||
+    setup.toUpperCase() === 'ON' ||
+    setup.toUpperCase() === 'RUN' ||
+    setup.toUpperCase() === 'TRUE'
+    )) {
+    setup = 'lando setup -y';
+  }
+
+  // if we get here we *should* have a string command we can parse
+  return setup;
+};
+
+
+/***/ }),
+
+/***/ 8342:
 /***/ ((module) => {
 
 "use strict";
@@ -315,6 +349,29 @@ module.exports = (config = {}, pairs = []) => {
   });
 
   return config;
+};
+
+
+/***/ }),
+
+/***/ 4340:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const {parseArgsStringToArgv} = __nccwpck_require__(9663);
+
+module.exports = command => {
+  // throw if not a string
+  if (typeof command !== 'string') throw new Error('Setup command must be a string!');
+  // parse string
+  command = parseArgsStringToArgv(command);
+  // validate a few things
+  if (command[0] !== 'lando' || command[1] !== 'setup') throw new Error('Setup command must begin with "lando setup"!');
+  // remove first lando because we only care about the args
+  command.shift();
+  return command;
 };
 
 
@@ -43455,6 +43512,59 @@ module.exports = require("zlib");
 
 /***/ }),
 
+/***/ 9663:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+exports.__esModule = true;
+exports.parseArgsStringToArgv = void 0;
+function parseArgsStringToArgv(value, env, file) {
+    // ([^\s'"]([^\s'"]*(['"])([^\3]*?)\3)+[^\s'"]*) Matches nested quotes until the first space outside of quotes
+    // [^\s'"]+ or Match if not a space ' or "
+    // (['"])([^\5]*?)\5 or Match "quoted text" without quotes
+    // `\3` and `\5` are a backreference to the quote style (' or ") captured
+    var myRegexp = /([^\s'"]([^\s'"]*(['"])([^\3]*?)\3)+[^\s'"]*)|[^\s'"]+|(['"])([^\5]*?)\5/gi;
+    var myString = value;
+    var myArray = [];
+    if (env) {
+        myArray.push(env);
+    }
+    if (file) {
+        myArray.push(file);
+    }
+    var match;
+    do {
+        // Each call to exec returns the next regex match as an array
+        match = myRegexp.exec(myString);
+        if (match !== null) {
+            // Index 1 in the array is the captured group if it exists
+            // Index 0 is the matched text, which we use if no captured group exists
+            myArray.push(firstString(match[1], match[6], match[0]));
+        }
+    } while (match !== null);
+    return myArray;
+}
+exports["default"] = parseArgsStringToArgv;
+exports.parseArgsStringToArgv = parseArgsStringToArgv;
+// Accepts any number of arguments, and returns the first one that is a string
+// (even an empty string)
+function firstString() {
+    var args = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        args[_i] = arguments[_i];
+    }
+    for (var i = 0; i < args.length; i++) {
+        var arg = args[i];
+        if (typeof arg === "string") {
+            return arg;
+        }
+    }
+}
+
+
+/***/ }),
+
 /***/ 2020:
 /***/ ((module) => {
 
@@ -43529,6 +43639,7 @@ const getFileVersion = __nccwpck_require__(1603);
 const getObjectKeys = __nccwpck_require__(5993);
 const getSetupCommand = __nccwpck_require__(9383);
 const mergeConfig = __nccwpck_require__(6718);
+const parseSetupCommand = __nccwpck_require__(4340);
 const resolveVersionSpec = __nccwpck_require__(5374);
 
 const main = async () => {
@@ -43544,6 +43655,7 @@ const main = async () => {
   const inputs = getInputs();
 
   inputs.landoVersion = '3-dev';
+  inputs.setup = 'auto';
 
   // show a warning if both version inputs are set
   if (inputs.landoVersion && inputs.landoVersionFile) {
@@ -43655,16 +43767,15 @@ const main = async () => {
       await exec.exec('cat', [reportFile]);
     }
 
-    // figure out our setup situation
-    const setup = getSetupCommand(inputs.setup);
+    // if setup is non-false then we want to try to run it if we can
+    if (getSetupCommand(inputs.setup) !== false) {
+      // print warning if setup command does not exist and leave
+      if (await exec.exec(landoPath, ['setup', '--help'], {ignoreReturnCode: true}) !== 0) {
+        core.warning('lando setup is only available in lando >= 3.21! Skipping!');
 
-    // run lando setup if we can eg 3.20.4+
-    if (await exec.exec(landoPath, ['setup', '--help'], {ignoreReturnCode: true}) === 0) {
-
+      // if we get here then we should be G2G
+      } else await exec.exec(landoPath, parseSetupCommand(getSetupCommand(inputs.setup)));
     }
-    console.log(setup);
-    process.exit(1)
-
 
     // run v3 dep check
     if (lmv === 'v3' && ['warn', 'error'].includes(inputs.dependencyCheck)) {

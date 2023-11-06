@@ -1,3 +1,9 @@
+## v2.2.0 - [November 6, 2023](https://github.com/lando/setup-lando/releases/tag/v2.2.0)
+
+* Added support for `lando setup` via the `setup` input
+* Bumped action to `node18`
+* Fixed bug where `lando` was being invoked in `PATH` instead of directly
+
 ## v2.1.0 - [June 13, 2023](https://github.com/lando/setup-lando/releases/tag/v2.1.0)
 
 * Added `lando-version` support for local file paths
