@@ -59,3 +59,8 @@ jobs:
           lando-version: ${{ matrix.lando-version }}
           setup: ${{ matrix.setup-string }}
           debug: true
+          telemetry: false
+          config: |
+            setup.skipCommonPlugins=true
+            setup.plugins.@lando/core=latest
+
