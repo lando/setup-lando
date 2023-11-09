@@ -33,7 +33,6 @@ const main = async () => {
   if (!get(process, 'env.RUNNER_TEMP', false)) process.env.RUNNER_TEMP = os.tmpdir();
   if (!get(process, 'env.RUNNER_TOOL_CACHE', false)) process.env.RUNNER_TOOL_CACHE = os.tmpdir();
 
-
   // start by getting the inputs and stuff
   const inputs = getInputs();
 
@@ -100,7 +99,7 @@ const main = async () => {
     // reset version information, we do this to get the source of truth on what we've downloaded
     fs.chmodSync(landoPath, '755');
     const output = execSync(`${landoPath} version`, {maxBuffer: 1024 * 1024 * 10, encoding: 'utf-8'});
-    version = output.split(' ').length === 2 ? output.split(' ')[1] : output.split(' ')[0];
+    version = output.split(' ').length === 2 ? output.split(' ')[1].trim() : output.split(' ')[0].trim();
     const lmv = version.split('.')[0];
     core.debug(`using lando version ${version}, major version ${lmv}`);
 

@@ -1,3 +1,8 @@
+## v2.2.1 - [November 9, 2023](https://github.com/lando/setup-lando/releases/tag/v2.2.1)
+
+* Fixed bug causing `lando version` output to sometimes contain excess characters
+* Fixed bug causing `debug` mode to pollute some intelligence gathering
+
 ## v2.2.0 - [November 6, 2023](https://github.com/lando/setup-lando/releases/tag/v2.2.0)
 
 * Added support for `lando setup` via the `setup` input

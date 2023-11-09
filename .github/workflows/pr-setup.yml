@@ -53,9 +53,9 @@ jobs:
         run: |
           yarn install --prefer-offline --frozen-lockfile
           yarn prepare
-
       - name: Setup Lando version
         uses: ./
         with:
           lando-version: ${{ matrix.lando-version }}
           setup: ${{ matrix.setup-string }}
+          debug: true
