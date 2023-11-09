@@ -41,12 +41,6 @@ const main = async () => {
     core.warning('Both lando-version and lando-version-file inputs are specified, only lando-version will be used');
   }
 
-  // if core debugging or user debug is on then lets set "LANDO_DEBUG=1"
-  // @NOTE: we use core.exportVariable because we want any GHA workflow that uses @lando/setup-lando to not need
-  // to handle their own downstream lando debugging. Of course they can if they want since they migth want something
-  // more targeted or wide than LANDO_DEBUG=1 eg LANDO_DEBUG="*" or LANDO_DEBUG="lando/core*"
-  if (core.isDebug() || inputs.debug) core.exportVariable('LANDO_DEBUG', 1);
-
   // determine lando version spec to install
   const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
   core.debug(`rolling with "${spec}" as version spec`);
@@ -98,7 +92,7 @@ const main = async () => {
 
     // reset version information, we do this to get the source of truth on what we've downloaded
     fs.chmodSync(landoPath, '755');
-    const output = execSync(`${landoPath} version`, {maxBuffer: 1024 * 1024 * 10, encoding: 'utf-8'});
+    const output = execSync(`LANDO_DEBUG=0 ${landoPath} version`, {maxBuffer: 1024 * 1024 * 10, encoding: 'utf-8'});
     version = output.split(' ').length === 2 ? output.split(' ')[1].trim() : output.split(' ')[0].trim();
     const lmv = version.split('.')[0];
     core.debug(`using lando version ${version}, major version ${lmv}`);
@@ -138,11 +132,11 @@ const main = async () => {
     // cat config
     await exec.exec('cat', [gcf]);
 
-    // if we have telemetry off on v3 we need to turn report errors off
-    if (!inputs.telemetry && lmv === 'v3') {
+    // v3 needs a special thing for reporting error value comes from telemetry
+    if (lmv === 'v3') {
       const reportFile = path.join(path.dirname(gcf), 'cache', 'report_errors');
       await io.mkdirP(path.dirname(reportFile));
-      fs.writeFileSync(reportFile, 'false');
+      fs.writeFileSync(reportFile, inputs.telemetry ? 'true' : 'false');
       await exec.exec('cat', [reportFile]);
     }
 
@@ -153,7 +147,11 @@ const main = async () => {
         core.warning('lando setup is only available in lando >= 3.21! Skipping!');
 
       // if we get here then we should be G2G
-      } else await exec.exec(landoPath, parseSetupCommand(getSetupCommand(inputs.setup)));
+      } else {
+        const args = parseSetupCommand(getSetupCommand(inputs.setup));
+        const opts = {env: {...process.env, LANDO_DEBUG: core.isDebug() || inputs.debug}};
+        await exec.exec(landoPath, args, opts);
+      }
     }
 
     // run v3 dep check
@@ -178,6 +176,13 @@ const main = async () => {
 
     // if debug then print the entire lando config
     if (core.isDebug() || inputs.debug) await exec.exec(landoPath, ['config']);
+
+    // if core debugging or user debug is on then lets set "LANDO_DEBUG=1"
+    // @NOTE: we use core.exportVariable because we want any GHA workflow that uses @lando/setup-lando to not need
+    // to handle their own downstream lando debugging. Of course they can if they want since they migth want something
+    // more targeted or wide than LANDO_DEBUG=1 eg LANDO_DEBUG="*" or LANDO_DEBUG="lando/core*"
+    // we set this at the end so we can more selectively control the debug output above
+    if (core.isDebug() || inputs.debug) core.exportVariable('LANDO_DEBUG', 1);
 
   // catch unexpected
   } catch (error) {

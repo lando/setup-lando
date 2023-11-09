@@ -2,6 +2,7 @@
 
 * Fixed bug causing `lando version` output to sometimes contain excess characters
 * Fixed bug causing `debug` mode to pollute some intelligence gathering
+* Fixed bug causing errors to hang the whole thing when telemetry is `true`
 
 ## v2.2.0 - [November 6, 2023](https://github.com/lando/setup-lando/releases/tag/v2.2.0)
 
