@@ -92,7 +92,13 @@ const main = async () => {
 
     // reset version information, we do this to get the source of truth on what we've downloaded
     fs.chmodSync(landoPath, '755');
-    const output = execSync(`LANDO_DEBUG=0 ${landoPath} version`, {maxBuffer: 1024 * 1024 * 10, encoding: 'utf-8'});
+    const output = execSync(`${landoPath} version`, {
+      maxBuffer: 1024 * 1024 * 10,
+      encoding: 'utf-8',
+      env: {...process.env, LANDO_DEBUG: 0},
+    });
+
+    // parse output into version
     version = output.split(' ').length === 2 ? output.split(' ')[1].trim() : output.split(' ')[0].trim();
     const lmv = version.split('.')[0];
     core.debug(`using lando version ${version}, major version ${lmv}`);
