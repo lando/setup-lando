@@ -1,3 +1,8 @@
+## v2.2.2 - [December 7, 2023](https://github.com/lando/setup-lando/releases/tag/v2.2.2)
+
+* Added passthru support for `3-dev-slim` although it just maps to `3-dev` for now
+* Removed `yarn` in favor of `npm`
+
 ## v2.2.1 - [November 9, 2023](https://github.com/lando/setup-lando/releases/tag/v2.2.1)
 
 * Fixed bug causing `lando version` output to sometimes contain excess characters

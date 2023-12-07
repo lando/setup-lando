@@ -36,3 +36,6 @@ coverage/
 .temp
 .cache
 _site
+
+# Yarn
+yarn.lock
