@@ -57,7 +57,7 @@ jobs:
         uses: ./
         with:
           lando-version: ${{ matrix.lando-version }}
-          setup: ${{ matrix.setup-string }}
+          auto-setup: ${{ matrix.setup-string }}
           debug: true
           telemetry: false
           config: |

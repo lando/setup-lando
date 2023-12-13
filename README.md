@@ -20,13 +20,13 @@ All inputs are optional. If you do nothing the latest `stable` Lando will be ins
 
 | Name | Description | Default | Example |
 |---|---|---|---|
+| `auto-setup` | The lando setup command to run. | `lando setup -y` | `lando setup --skip-common-plugins --plugin @lando/core@~/path/to/core -y` |
 | `lando-version` | The version of Lando to install. If set this has primacy over `lando-version-file`. | `stable` | `3.14.0` |
 | `lando-version-file` | A file that contains the version of Lando to install. | `.lando-version` | `.tool-versions` |
 | `config` | A list of `.` delimited config. If set these have primacy over values in `config-file` | `null` | `engineConfig.port=2376` |
 | `config-file` | The path to a Lando global config file to use. | `null` | `/config/lando-global.yml` |
-| `setup` | The lando setup command to run. | `lando setup -y` | `lando setup --skip-common-plugins --plugin @lando/core@~/path/to/core -y` |
 
-* Note that `setup` is only available in Lando 3.21+
+* Note that `auto-setup` is only available in Lando 3 and in Lando 3.21+ specifically.
 
 ## Outputs
 
@@ -116,7 +116,7 @@ outputs:
   uses: lando/setup-lando@v2
   with:
     lando-version: 3-dev
-    setup: auto | off | disable | lando setup --orchestrator 2.21.0 -y
+    auto-setup: auto | off | disable | lando setup --orchestrator 2.21.0 -y
 ```
 
 **Everything, everywhere, all at once example:**
@@ -126,19 +126,18 @@ outputs:
   uses: lando/setup-lando@v2
   with:
     architecture: x64
+    auto-setup: lando setup --orchestrator 2.22.0 --plugins @pirog/my-plugin -y
     config: |
       core.engine=docker-colima
       core.telemetry=false
       plugins.@lando/php=/home/runner/work/php/php
     config-file: config.yaml
     debug: true
-    dependency-check: error|warn|false
     lando-version: 3.14.0
     lando-version-file: .tool-versions
     os: macOS
     telemetry: false
     token: ${{ github.token }}
-    setup: lando setup --orchestrator 2.22.0 --plugins @pirog/my-plugin -y
 ```
 
 ## Changelog

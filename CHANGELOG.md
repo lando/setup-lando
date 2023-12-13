@@ -1,3 +1,21 @@
+## v3.0.0 - [December 15, 2023](https://github.com/lando/setup-lando/releases/tag/v3.0.0)
+
+### **BREAKING CHANGES**
+
+* Removed `dependency-check` in favor of mechanisms provided by `lando setup`
+
+### New Features
+
+### Bug Fixes
+
+* Fixed `auto-setup` so it _does not_ run on Lando 4_
+
+### Internal
+
+### DEPRECATIONS
+
+* Deprecated `setup` in favor of `auto-setup`
+
 ## v2.2.2 - [December 7, 2023](https://github.com/lando/setup-lando/releases/tag/v2.2.2)
 
 * Added passthru support for `3-dev-slim` although it just maps to `3-dev` for now

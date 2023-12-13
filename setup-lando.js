@@ -41,6 +41,9 @@ const main = async () => {
     core.warning('Both lando-version and lando-version-file inputs are specified, only lando-version will be used');
   }
 
+  // prefer autoSetup to setup because setup is DEPRECATED
+  inputs.setup = inputs.autoSetup ?? inputs.setup;
+
   // determine lando version spec to install
   const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
   core.debug(`rolling with "${spec}" as version spec`);
@@ -147,7 +150,7 @@ const main = async () => {
     }
 
     // if setup is non-false then we want to try to run it if we can
-    if (getSetupCommand(inputs.setup) !== false) {
+    if (lmv === 'v3' && getSetupCommand(inputs.setup) !== false) {
       // print warning if setup command does not exist and leave
       if (await exec.exec(landoPath, ['setup', '--help'], {ignoreReturnCode: true}) !== 0) {
         core.warning('lando setup is only available in lando >= 3.21! Skipping!');
@@ -159,26 +162,6 @@ const main = async () => {
         await exec.exec(landoPath, args, opts);
       }
     }
-
-    // run v3 dep check
-    // @TODO: validate setup here?
-    // for v3 its just validate orchestratorBin run docker info?
-    // for v4 its run lando status
-    // remove dep check below when done
-    if (lmv === 'v3' && ['warn', 'error'].includes(inputs.dependencyCheck)) {
-      const docker = await exec.exec('docker', ['info'], {ignoreReturnCode: true});
-      const dockerCompose = await exec.exec('docker-compose', ['--version'], {ignoreReturnCode: true});
-      const func = inputs.dependencyCheck === 'warn' ? core.warning : core.setFailed;
-      const suffix = 'See: https://docs.lando.dev/getting-started/installation.html';
-      if (docker !== 0 ) {
-        func(`Something is wrong with Docker! Make sure Docker is installed correctly and running. ${suffix}`);
-      }
-      if (dockerCompose !== 0 ) {
-        func(`Something is wrong with Docker Compose! Make sure Docker Compose 1.x is installed correctly. ${suffix}`);
-      }
-    }
-
-    // @TODO: v4 dep checking?
 
     // if debug then print the entire lando config
     if (core.isDebug() || inputs.debug) await exec.exec(landoPath, ['config']);

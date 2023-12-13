@@ -15,11 +15,6 @@ jobs:
           - ubuntu-22.04
         node-version:
           - '18'
-        dependency-check:
-          - error
-          - warn
-          - false
-          - bogussssss
 
     steps:
       - name: Checkout code
@@ -40,4 +35,3 @@ jobs:
         uses: ./
         with:
           debug: true
-          dependency-check: ${{ matrix.dependency-check }}
