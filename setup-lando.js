@@ -14,16 +14,16 @@ const {execSync} = require('child_process');
 const {GitHub, getOctokitOptions} = require('@actions/github/lib/utils');
 const {paginateRest} = require('@octokit/plugin-paginate-rest');
 
-const getConfigFile = require('./lib/get-config-file');
-const getDownloadUrl = require('./lib/get-download-url');
-const getGCFPath = require('./lib/get-gcf-path');
-const getInputs = require('./lib/get-inputs');
-const getFileVersion = require('./lib/get-file-version');
-const getObjectKeys = require('./lib/get-object-keys');
-const getSetupCommand = require('./lib/get-setup-command');
-const mergeConfig = require('./lib/merge-config');
-const parseSetupCommand = require('./lib/parse-setup-command');
-const resolveVersionSpec = require('./lib/resolve-version-spec');
+const getConfigFile = require('./utils/get-config-file');
+const getDownloadUrl = require('./utils/get-download-url');
+const getGCFPath = require('./utils/get-gcf-path');
+const getInputs = require('./utils/get-inputs');
+const getFileVersion = require('./utils/get-file-version');
+const getObjectKeys = require('./utils/get-object-keys');
+const getSetupCommand = require('./utils/get-setup-command');
+const mergeConfig = require('./utils/merge-config');
+const parseSetupCommand = require('./utils/parse-setup-command');
+const resolveVersionSpec = require('./utils/resolve-version-spec');
 
 const main = async () => {
   // ensure needed RUNNER_ vars are set
