@@ -1,4 +1,4 @@
-name: File Tests
+name: Actions Version Tests
 
 on:
   pull_request:
@@ -15,9 +15,25 @@ jobs:
           - ubuntu-22.04
         node-version:
           - '18'
-        lando-version-file:
-          - '.lando-version'
-          - '.tool-versions'
+        lando-version:
+          - '3.x'
+          - '>2'
+          - '3'
+          - '3.14'
+          - '3.14.0'
+          - '3-stable'
+          - '3-edge'
+          - '3-latest'
+          - '3-dev'
+          - '3-dev-slim'
+          - 'stable'
+          - 'edge'
+          - 'latest'
+          - 'dev'
+          - 'pm-preview'
+          - 'https://github.com/lando/cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0'
+          - '/home/runner/work/setup-lando/setup-lando/bin/lando'
+          - './bin/lando'
 
     steps:
       - name: Checkout code
@@ -34,7 +50,7 @@ jobs:
           npm clean-install --prefer-offline --frozen-lockfile
           npm run prepare
 
-      - name: Setup Lando version ${{ matrix.lando-version-file }}
+      - name: Setup Lando version ${{ matrix.lando-version }}
         uses: ./
         with:
-          lando-version-file: ${{ matrix.lando-version-file }}
+          lando-version: ${{ matrix.lando-version }}

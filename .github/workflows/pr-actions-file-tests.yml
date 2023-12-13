@@ -1,4 +1,4 @@
-name: Config Tests
+name: Actions Version File Tests
 
 on:
   pull_request:
@@ -12,17 +12,12 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - macos-12
           - ubuntu-22.04
-          - windows-2022
-        telemetry:
-          - true
-          - false
         node-version:
           - '18'
-        debug:
-          - true
-          - false
+        lando-version-file:
+          - '.lando-version'
+          - '.tool-versions'
 
     steps:
       - name: Checkout code
@@ -38,13 +33,8 @@ jobs:
         run: |
           npm clean-install --prefer-offline --frozen-lockfile
           npm run prepare
-      - name: Setup Lando version
+
+      - name: Setup Lando version ${{ matrix.lando-version-file }}
         uses: ./
         with:
-          config-file: test-config.yaml
-          config: |
-            pirog=5001
-            captains.enterprise=kirk
-            captains.enterprise-nx01=archer
-          debug: true
-          telemetry: ${{ matrix.telemetry }}
+          lando-version-file: ${{ matrix.lando-version-file }}

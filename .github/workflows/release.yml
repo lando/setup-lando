@@ -31,8 +31,8 @@ jobs:
       - name: Lint
         run: npm run lint
       - name: Prepare release
-        uses: lando/prepare-release-action@v2
+        uses: lando/prepare-release-action@v3
         with:
           commands: npm run prepare
-          sync-tags: v2
+          sync-tags: v3
 

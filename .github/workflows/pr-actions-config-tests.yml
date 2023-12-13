@@ -1,4 +1,4 @@
-name: Dep Tests
+name: Actions Config Tests
 
 on:
   pull_request:
@@ -12,9 +12,17 @@ jobs:
       fail-fast: false
       matrix:
         os:
+          - macos-12
           - ubuntu-22.04
+          - windows-2022
+        telemetry:
+          - true
+          - false
         node-version:
           - '18'
+        debug:
+          - true
+          - false
 
     steps:
       - name: Checkout code
@@ -30,8 +38,13 @@ jobs:
         run: |
           npm clean-install --prefer-offline --frozen-lockfile
           npm run prepare
-
       - name: Setup Lando version
         uses: ./
         with:
+          config-file: test-config.yaml
+          config: |
+            pirog=5001
+            captains.enterprise=kirk
+            captains.enterprise-nx01=archer
           debug: true
+          telemetry: ${{ matrix.telemetry }}
