@@ -55,6 +55,37 @@ function Show-Help {
     Write-Host "  -help              : Display this help message"
 }
 
+# Checks for existing Lando installation and uninstalls it
+function Uninstall-Lando {
+    Write-Debug "Checking for previous Lando installation..."
+
+    # Catch the object not found error
+    try {
+        Get-Package -Provider Programs -IncludeWindowsInstaller -Name "Lando version*" | ForEach-Object {
+            $previousInstall = $($_.Name)
+            Write-Host "Removing previous installation: $previousInstall..."
+
+            $uninstallString = $_.Meta.Attributes["UninstallString"]
+            $arguments = "/Silent /SUPPRESSMSGBOXES"
+            if (-not $uninstallString) {
+                Write-Warning "Could not automatically uninstall $previousInstall. You may need to manually uninstall this version of Lando."
+                continue
+            }
+
+            Write-Debug "Uninstall command: $uninstallString $arguments"
+            Start-Process -Verb RunAs $_.Meta.Attributes["UninstallString"] -ArgumentList $arguments -Wait
+        }
+    } catch {
+        if ($_.CategoryInfo.Activity -eq "Get-Package" -and $_.CategoryInfo.Category -eq "ObjectNotFound") {
+            Write-Debug "No previous Lando installation found."
+            return
+        } else {
+            Write-Warning "An error occurred while trying to uninstall a previous version of Lando. You may need to manually uninstall it."
+            Write-Debug $_.Exception
+        }
+    }
+}
+
 # Resolves a version alias to a download URL
 #  -version <version> : Version to resolve
 function Resolve-VersionAlias {
@@ -75,6 +106,8 @@ function Resolve-VersionAlias {
     if ($aliasMap.ContainsKey($Version)) {
         Write-Debug "Version alias '$Version' mapped to '$aliasMap[$Version]'"
         $Version = $aliasMap[$Version]
+        Write-Debug "Version alias '$Version' mapped to '$($aliasMap[$Version])'"
+        $Version = $($aliasMap[$Version])
     }
 
     # Resolving release aliases
@@ -167,12 +200,6 @@ function Add-ToPath {
 }
 
 function Install-Lando {
-    # It's okay to ask for help
-    if ($help) {
-        Show-Help
-        return
-    }
-
     # We only have x64 and arm64 builds of Lando
     Write-Debug "Checking architecture..."
     if (-not $arch) {
@@ -230,10 +257,6 @@ function Install-Lando {
     # Add $dest to system PATH if not already present
     Add-ToPath -AddPath $dest
 
-    # Check path
-    $landoPath = Get-Command lando.exe | Select-Object -ExpandProperty Source
-    Write-Debug "lando.exe path: $landoPath"
-
     # Iterate through WSL instances and install Lando
     if (-not $no_wsl) {
         # Encoding must be Unicode to support parsing wsl.exe output
@@ -287,4 +310,14 @@ function Install-Lando {
     Write-Host "Lando setup complete!"
 }
 
+# It's okay to ask for help
+if ($help) {
+    Show-Help
+    return
+}
+
+# Uninstall previous Lando if it's already installed
+Uninstall-Lando
+
+# Install Lando
 Install-Lando
