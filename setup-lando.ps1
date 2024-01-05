@@ -15,20 +15,17 @@ param(
     [switch]$help
 )
 
-# Constants
 $LANDO_DEFAULT_MV = "3"
-$LANDO_SETUP_SH = "https://raw.githubusercontent.com/lando/setup-lando/main/setup-lando.sh"
+#$LANDO_SETUP_SH_URL = "https://raw.githubusercontent.com/lando/setup-lando/main/setup-lando.sh"
+$LANDO_SETUP_SH_URL = "https://raw.githubusercontent.com/lando/setup-lando/v3/setup-lando.sh"
 
 Set-StrictMode -Version 1
-
-$ErrorActionPreference = "Stop"
 
 # Normalize debug preference
 $DebugPreference = If ($debug) {"Continue"} Else {$DebugPreference}
 if ($DebugPreference -eq "Inquire" -or $DebugPreference -eq "Continue") {
     $debug = $true
 }
-
 
 # Bail out if this isn't Windows since PowerShell is cross-platform
 Write-Debug "OS is $env:OS"
@@ -55,13 +52,45 @@ function Show-Help {
     Write-Host "  -help              : Display this help message"
 }
 
+# Validates whether the system environment is supported
+function Confirm-Environment {
+    # Windows 10 version 1903 (build 18362) or higher is required for WSL2 support
+    Write-Debug "Validating Windows version..."
+    $minVersion = [Version]::new(10,0,18362,0)
+    $osVersion = [Version][Environment]::OSVersion.Version
+    Write-Debug "Minimum Windows version: $minVersion"
+    Write-Debug "Current Windows version: $osVersion"
+
+    if ($osVersion -lt $minVersion) {
+        throw "Unsupported Windows version. Minimum required version is $minVersion but you have $osVersion."
+    }
+}
+
+# Selects the appropriate architecture for the current system
+function Select-Architecture {
+    # We only have x64 and arm64 builds of Lando
+    Write-Debug "Checking architecture..."
+    if (-not $arch) {
+        Switch ($Env:PROCESSOR_ARCHITEW6432) {
+            "AMD64" { $arch = "x64" }
+            "ARM64" { $arch = "arm64" }
+            Default { $arch = "x64" }
+        }
+    }
+    if ($arch -notmatch "x64|arm64") {
+        throw "Unsupported architecture. Only x64 and arm64 are supported."
+    }
+    Write-Debug "System architecture: $arch"
+    return $arch
+}
+
 # Checks for existing Lando installation and uninstalls it
 function Uninstall-Lando {
     Write-Debug "Checking for previous Lando installation..."
 
     # Catch the object not found error
     try {
-        Get-Package -Provider Programs -IncludeWindowsInstaller -Name "Lando version*" | ForEach-Object {
+        Get-Package -Provider Programs -IncludeWindowsInstaller -Name "Lando version*" -ErrorAction Stop | ForEach-Object {
             $previousInstall = $($_.Name)
             Write-Host "Removing previous installation: $previousInstall..."
 
@@ -73,7 +102,7 @@ function Uninstall-Lando {
             }
 
             Write-Debug "Uninstall command: $uninstallString $arguments"
-            Start-Process -Verb RunAs $_.Meta.Attributes["UninstallString"] -ArgumentList $arguments -Wait
+            Start-Process -Verb RunAs $uninstallString -ArgumentList $arguments -Wait
         }
     } catch {
         if ($_.CategoryInfo.Activity -eq "Get-Package" -and $_.CategoryInfo.Category -eq "ObjectNotFound") {
@@ -104,8 +133,6 @@ function Resolve-VersionAlias {
     }
 
     if ($aliasMap.ContainsKey($Version)) {
-        Write-Debug "Version alias '$Version' mapped to '$aliasMap[$Version]'"
-        $Version = $aliasMap[$Version]
         Write-Debug "Version alias '$Version' mapped to '$($aliasMap[$Version])'"
         $Version = $($aliasMap[$Version])
     }
@@ -165,24 +192,25 @@ function Resolve-VersionAlias {
     return $Version, $downloadUrl
 }
 
-# Adds a path to the system PATH if not already present. 
+# Adds a path to the system PATH if not already present.
+#  -NewPath <path> : Path to add
 function Add-ToPath {
     param(
         [Parameter(Mandatory, Position=0)]
-        [string]$AddPath
+        [string]$NewPath
     )
-    Write-Debug "Adding $AddPath to system PATH..."
+    Write-Debug "Adding $NewPath to system PATH..."
 
     $regPath = 'registry::HKEY_CURRENT_USER\Environment'
 
     $currDirs = (Get-Item -LiteralPath $regPath).GetValue('Path', '', 'DoNotExpandEnvironmentNames') -split ';' -ne ''
 
-    if ($AddPath -in $currDirs) {
-        Write-Debug "'$AddPath' is already present in the user-level Path environment variable."
+    if ($NewPath -in $currDirs) {
+        Write-Debug "'$NewPath' is already present in the user-level Path environment variable."
         return
     }
 
-    $newValue = ($currDirs + $AddPath) -join ';'
+    $newValue = ($currDirs + $NewPath) -join ';'
 
     # Update the registry to make the change permanent.
     Set-ItemProperty -Type ExpandString -LiteralPath $regPath Path $newValue
@@ -194,42 +222,18 @@ function Add-ToPath {
     [Environment]::SetEnvironmentVariable($dummyName, [NullString]::value, 'User')
 
     # Also update the current session's `$env:Path` definition.
-    $env:Path = ($env:Path -replace ';$') + ';' + $AddPath
+    $env:Path = ($env:Path -replace ';$') + ';' + $NewPath
 
-    Write-Debug "'$AddPath' added to the user-level Path."
+    Write-Debug "'$NewPath' added to the user-level Path."
 }
 
+# Downloads and installs Lando
 function Install-Lando {
-    # We only have x64 and arm64 builds of Lando
-    Write-Debug "Checking architecture..."
-    if (-not $arch) {
-        Switch ($Env:PROCESSOR_ARCHITEW6432) {
-            "AMD64" { $arch = "x64" }
-            "ARM64" { $arch = "arm64" }
-            Default { $arch = "x64" }
-        }
-    }
-    if ($arch -notmatch "x64|arm64") {
-        throw "Unsupported architecture. Only x64 and arm64 are supported."
-    }
-    Write-Debug "System architecture: $arch"
-
-
-    Write-Debug "Validating Windows version..."
-    # Windows 10 version 1903 (build 18362) or higher is required for WSL2 support
-    $minVersion = [Version]::new(10,0,18362,0)
-    $osVersion = [Version][Environment]::OSVersion.Version
-    Write-Debug "Minimum Windows version: $minVersion"
-    Write-Debug "Current Windows version: $osVersion"
-
-    if ($osVersion -lt $minVersion) {
-        throw "Unsupported Windows version. Minimum required version is $minVersion but you have $osVersion."
-    }
-
-    # Resolve the version alias
-    $resolvedVersion, $downloadUrl = Resolve-VersionAlias -Version $version
-    if (-not $resolvedVersion) {
-        throw "Could not resolve the provided version alias '$version'."
+    # Resolve the version alias to a download URL
+    try {
+        $resolvedVersion, $downloadUrl = Resolve-VersionAlias -Version $version
+    } catch {
+        throw "Could not resolve the provided version alias '$version'. Error: $_"
     }
     $version = $resolvedVersion
 
@@ -239,11 +243,23 @@ function Install-Lando {
     $filename = $downloadUrl.Split('/')[-1]
     $tempFile = "$env:TEMP\$filename"
 
-    Write-Host "Downloading Lando CLI from $downloadUrl..."
-    (New-Object Net.WebClient).DownloadFile($downloadUrl, $tempFile)
+    Write-Host "Downloading Lando CLI..."
+    Write-Debug "From $downloadUrl to $tempFile..."
+    $wbcl = New-Object System.Net.WebClient
+    try {
+        # Use WebClient instead of Invoke-WebRequest because Invoke-WebRequest's progress indicator
+        # blocks the download to update the status after each byte is received, which is very slow.
+        # TODO: Add a non-blocking progress indicator
+        $wbcl.DownloadFile($downloadUrl, $tempFile)
 
-    if (!(Test-Path $tempFile)) {
-        throw "Failed to download Lando."
+    } catch [System.Net.WebException] {
+        $message = $_.Exception.Message
+        throw "Failed to download Lando from $downloadUrl. Error: $message"
+    } catch {
+        $message = $_.Exception.Message
+        throw "Failed to download Lando from $downloadUrl. Error: $_"
+    } finally {
+        $wbcl.Dispose()
     }
 
     if (-not (Test-Path $dest)) {
@@ -255,12 +271,20 @@ function Install-Lando {
     Move-Item -Path $tempFile -Destination $dest\lando.exe -Force
 
     # Add $dest to system PATH if not already present
-    Add-ToPath -AddPath $dest
+    Add-ToPath -NewPath $dest
 
     # Iterate through WSL instances and install Lando
     if (-not $no_wsl) {
         # Encoding must be Unicode to support parsing wsl.exe output
         [Console]::OutputEncoding = [System.Text.Encoding]::Unicode
+
+        try {
+            Write-Debug "Checking for WSL..."
+            wsl.exe --help > $null
+        } catch {
+            Write-Warning "WSL is not installed. Skipping WSL setup."
+            return
+        }
 
         $wslInstances = wsl.exe --list --quiet
         if (-not $wslInstances) {
@@ -271,10 +295,14 @@ function Install-Lando {
 
         # Download the Lando installer script that we'll run in WSL
         $wslSetupScript = "$env:TEMP\setup-lando.sh"
-        Write-Debug "Downloading Lando Linux installer script from $LANDO_SETUP_SH..."
-        Invoke-WebRequest -Uri $LANDO_SETUP_SH -OutFile $wslSetupScript
+        try {
+            Write-Debug "Downloading Lando Linux installer script from $LANDO_SETUP_SH_URL..."
+            Invoke-WebRequest -Uri $LANDO_SETUP_SH_URL -OutFile $wslSetupScript
+        } catch {
+            throw "Failed to download Lando Linux installer script from $LANDO_SETUP_SH_URL. Error: $_"
+        }
 
-        # We will pass some select parameters to the setup script in WSL
+        # We will pass some of our parameters to the setup script in WSL
         $setupParams = @()
         if ($debug) {
             $setupParams += "--debug"
@@ -315,6 +343,12 @@ if ($help) {
     Show-Help
     return
 }
+
+# Validate the system environment
+Confirm-Environment
+
+# Select the appropriate architecture
+$arch = Select-Architecture
 
 # Uninstall previous Lando if it's already installed
 Uninstall-Lando
