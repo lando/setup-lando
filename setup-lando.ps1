@@ -12,6 +12,7 @@ param(
     [switch]$no_setup,
     [switch]$no_wsl,
     [string]$version = "stable",
+    [switch]$wsl_only,
     [switch]$help
 )
 
@@ -33,14 +34,6 @@ if ($env:OS -ne "Windows_NT") {
     throw "This script is only supported on Windows."
 }
 
-Write-Debug "Running script with:"
-Write-Debug "  -arch: $arch"
-Write-Debug "  -debug: $debug"
-Write-Debug "  -dest: $dest"
-Write-Debug "  -no_setup: $no_setup"
-Write-Debug "  -no_wsl: $no_wsl"
-Write-Debug "  -version: $version"
-
 function Show-Help {
     Write-Host "Usage: setup-lando.ps1 [-arch <x64|arm64>] [-dest <path>] [-no_setup] [-no_wsl] [-version <version>] [-debug] [-help]"
     Write-Host "  -arch <x64|arm64>  : Architecture to install (defaults to system architecture)"
@@ -48,6 +41,7 @@ function Show-Help {
     Write-Host "  -no_setup          : Skip setup script"
     Write-Host "  -no_wsl            : Skip WSL setup"
     Write-Host "  -version <version> : Version to install (default: stable)"
+    Write-Host "  -wsl_only          : Only install Lando in WSL"
     Write-Host "  -debug             : Enable debug output"
     Write-Host "  -help              : Display this help message"
 }
@@ -229,6 +223,7 @@ function Add-ToPath {
 
 # Downloads and installs Lando
 function Install-Lando {
+    Write-Debug "Installing Lando in Windows..."
     # Resolve the version alias to a download URL
     try {
         $resolvedVersion, $downloadUrl = Resolve-VersionAlias -Version $version
@@ -272,71 +267,91 @@ function Install-Lando {
 
     # Add $dest to system PATH if not already present
     Add-ToPath -NewPath $dest
+}
 
-    # Iterate through WSL instances and install Lando
-    if (-not $no_wsl) {
-        # Encoding must be Unicode to support parsing wsl.exe output
-        [Console]::OutputEncoding = [System.Text.Encoding]::Unicode
+# Install Lando in WSL2
+function Install-LandoInWSL {
+    Write-Debug "Installing Lando in WSL..."
+    # Encoding must be Unicode to support parsing wsl.exe output
+    [Console]::OutputEncoding = [System.Text.Encoding]::Unicode
 
-        try {
-            Write-Debug "Checking for WSL..."
-            wsl.exe --help > $null
-        } catch {
-            Write-Warning "WSL is not installed. Skipping WSL setup."
-            return
-        }
-
-        $wslInstances = wsl.exe --list --quiet
-        if (-not $wslInstances) {
-            Write-Debug "No WSL instances found."
-            return
-        }
-        Write-Debug "Found WSL instances: $wslInstances"
-
-        # Download the Lando installer script that we'll run in WSL
-        $wslSetupScript = "$env:TEMP\setup-lando.sh"
-        try {
-            Write-Debug "Downloading Lando Linux installer script from $LANDO_SETUP_SH_URL..."
-            Invoke-WebRequest -Uri $LANDO_SETUP_SH_URL -OutFile $wslSetupScript
-        } catch {
-            throw "Failed to download Lando Linux installer script from $LANDO_SETUP_SH_URL. Error: $_"
-        }
-
-        # We will pass some of our parameters to the setup script in WSL
-        $setupParams = @()
-        if ($debug) {
-            $setupParams += "--debug"
-        }
-        if ($arch) {
-            $setupParams += "--arch=$arch"
-        }
-        if ($version) {
-            $setupParams += "--version=$version"
-        }
-
-        foreach ($wslInstance in $wslInstances) {
-            # Skip Docker Desktop WSL instance
-            if ($wslInstance -match "docker-desktop|docker-desktop-data") {
-                Write-Debug "Skipping Docker Desktop WSL instance '$wslInstance'."
-                continue
-            }
-            $currentLoc = Get-Location
-
-            Write-Host "Installing Lando in WSL distribution '$wslInstance'..."
-            Set-Location $env:TEMP
-            wsl.exe -d $wslInstance --shell-type login ./setup-lando.sh $setupParams
-
-            # Exit code 0 means success
-            if ($LASTEXITCODE -ne 0) {
-                Write-Error "Failed to automatically install Lando into WSL distribution '$wslInstance'. You may need to manually install Lando in this distribution."
-            }
-
-            Set-Location $currentLoc
-        }
+    try {
+        Write-Debug "Checking for WSL..."
+        wsl.exe --help > $null
+    } catch {
+        Write-Warning "WSL is not installed. Skipping WSL setup."
+        return
     }
 
-    Write-Host "Lando setup complete!"
+    $wslInstances = wsl.exe --list --quiet
+    if (-not $wslInstances) {
+        Write-Debug "No WSL instances found."
+        return
+    }
+    Write-Debug "Found WSL instances: $wslInstances"
+
+    # Download the Lando installer script that we'll run in WSL
+    $wslSetupScript = "$env:TEMP\setup-lando.sh"
+    try {
+        $originalProgressPreference = $ProgressPreference
+        $ProgressPreference = "SilentlyContinue"
+        Write-Debug "Downloading Lando Linux installer script from $LANDO_SETUP_SH_URL..."
+        Invoke-WebRequest -Uri $LANDO_SETUP_SH_URL -OutFile $wslSetupScript
+        $ProgressPreference = $originalProgressPreference
+    } catch {
+        throw "Failed to download Lando Linux installer script from $LANDO_SETUP_SH_URL. Error: $_"
+    }
+
+    # We will pass some of our parameters to the setup script in WSL
+    $setupParams = @()
+    if ($debug) {
+        $setupParams += "--debug"
+    }
+    if ($arch) {
+        $setupParams += "--arch=$arch"
+    }
+    if ($version) {
+        $setupParams += "--version=$version"
+    }
+
+    foreach ($wslInstance in $wslInstances) {
+        # Skip Docker Desktop WSL instance
+        if ($wslInstance -match "docker-desktop|docker-desktop-data") {
+            Write-Debug "Skipping Docker Desktop WSL instance '$wslInstance'."
+            continue
+        }
+        $currentLoc = Get-Location
+        Set-Location $env:TEMP
+        
+        Write-Host "`nInstalling Lando in WSL distribution '$wslInstance'..."
+        $command = "wsl.exe -d $wslInstance --shell-type login ./setup-lando.sh $setupParams"
+        Write-Debug "$command"
+
+        try {
+            Invoke-Expression $command
+        } catch {
+            Write-Host $_.Exception.Message
+            Write-Host "Failed to automatically install Lando into WSL distribution '$wslInstance'. You may need to manually install Lando in this distribution." -ForegroundColor Red
+            Write-Debug $_.Exception
+        }
+
+        # Check the return code from the setup script
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "Failed to automatically install Lando into WSL distribution '$wslInstance'. You may need to manually install Lando in this distribution." -ForegroundColor Red
+        }
+
+        Set-Location $currentLoc
+    }
 }
+
+Write-Debug "Running script with:"
+Write-Debug "  -arch: $arch"
+Write-Debug "  -debug: $debug"
+Write-Debug "  -dest: $dest"
+Write-Debug "  -no_setup: $no_setup"
+Write-Debug "  -no_wsl: $no_wsl"
+Write-Debug "  -version: $version"
+Write-Debug "  -wsl_only: $wsl_only"
 
 # It's okay to ask for help
 if ($help) {
@@ -350,8 +365,18 @@ Confirm-Environment
 # Select the appropriate architecture
 $arch = Select-Architecture
 
-# Uninstall previous Lando if it's already installed
+# Uninstall Lando added by legacy installers
 Uninstall-Lando
 
-# Install Lando
-Install-Lando
+# Install Lando in Windows
+if (-not $wsl_only) {
+    Write-Host "Installing Lando..."
+    Install-Lando
+}
+
+# Install Lando in WSL
+if (-not $no_wsl) {
+    Install-LandoInWSL
+}
+
+Write-Host "`nLando setup complete!`n"
