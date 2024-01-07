@@ -28,11 +28,8 @@ if ($DebugPreference -eq "Inquire" -or $DebugPreference -eq "Continue") {
     $debug = $true
 }
 
-# Bail out if this isn't Windows since PowerShell is cross-platform
-Write-Debug "OS is $env:OS"
-if ($env:OS -ne "Windows_NT") {
-    throw "This script is only supported on Windows."
-}
+# Encoding must be Unicode to support parsing wsl.exe output
+[Console]::OutputEncoding = [System.Text.Encoding]::Unicode
 
 function Show-Help {
     Write-Host "Usage: setup-lando.ps1 [-arch <x64|arm64>] [-dest <path>] [-no_setup] [-no_wsl] [-version <version>] [-debug] [-help]"
@@ -48,15 +45,35 @@ function Show-Help {
 
 # Validates whether the system environment is supported
 function Confirm-Environment {
+    # Bail out if this isn't Windows since PowerShell is cross-platform
+    Write-Debug "OS is $env:OS"
+    if ($env:OS -ne "Windows_NT") {
+        throw "This script is only supported on Windows."
+    }
+
     # Windows 10 version 1903 (build 18362) or higher is required for WSL2 support
-    Write-Debug "Validating Windows version..."
     $minVersion = [Version]::new(10,0,18362,0)
     $osVersion = [Version][Environment]::OSVersion.Version
-    Write-Debug "Minimum Windows version: $minVersion"
-    Write-Debug "Current Windows version: $osVersion"
+    Write-Debug "Windows version: $osVersion"
 
     if ($osVersion -lt $minVersion) {
         throw "Unsupported Windows version. Minimum required version is $minVersion but you have $osVersion."
+    }
+
+    # Check for WSL
+    $wslVersion = & wsl.exe --version | Out-String
+    Write-Debug "WSL version details: `n$wslVersion"
+    $wslList = & wsl.exe --list --verbose | Out-String
+    Write-Debug "WSL Instances:`n$wslList"
+
+    # Warn if Docker is not installed
+    try {
+        # Powershell doesn't like the output encoding from docker.exe
+        $dockerVersion = [System.Text.Encoding]::Unicode.GetBytes($(docker.exe --version))
+        $dockerVersion = [System.Text.Encoding]::UTF8.GetString($dockerVersion)
+        Write-Debug $dockerVersion
+    } catch {
+        Write-Warning "Docker Desktop is not installed. You will need to install Docker Desktop to use Lando."
     }
 }
 
@@ -272,16 +289,6 @@ function Install-Lando {
 # Install Lando in WSL2
 function Install-LandoInWSL {
     Write-Debug "Installing Lando in WSL..."
-    # Encoding must be Unicode to support parsing wsl.exe output
-    [Console]::OutputEncoding = [System.Text.Encoding]::Unicode
-
-    try {
-        Write-Debug "Checking for WSL..."
-        wsl.exe --help > $null
-    } catch {
-        Write-Warning "WSL is not installed. Skipping WSL setup."
-        return
-    }
 
     $wslInstances = wsl.exe --list --quiet
     if (-not $wslInstances) {
@@ -314,6 +321,7 @@ function Install-LandoInWSL {
         $setupParams += "--version=$version"
     }
 
+    Write-Host ""
     foreach ($wslInstance in $wslInstances) {
         # Skip Docker Desktop WSL instance
         if ($wslInstance -match "docker-desktop|docker-desktop-data") {
@@ -323,7 +331,7 @@ function Install-LandoInWSL {
         $currentLoc = Get-Location
         Set-Location $env:TEMP
         
-        Write-Host "`nInstalling Lando in WSL distribution '$wslInstance'..."
+        Write-Host "Installing Lando in WSL distribution '$wslInstance'..."
         $command = "wsl.exe -d $wslInstance --shell-type login ./setup-lando.sh $setupParams"
         Write-Debug "$command"
 
@@ -341,6 +349,7 @@ function Install-LandoInWSL {
         }
 
         Set-Location $currentLoc
+        Write-Host ""
     }
 }
 
