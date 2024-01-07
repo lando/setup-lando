@@ -238,6 +238,17 @@ function Add-ToPath {
     Write-Debug "'$NewPath' added to the user-level Path."
 }
 
+# Converts a byte size to a human-readable string
+#  -Bytes <bytes> : Bytes to convert
+function Get-FriendlySize {
+    param($Bytes)
+    $sizes='Bytes,KB,MB,GB,TB,PB,EB,ZB' -split ','
+    for($i=0; ($Bytes -ge 1kb) -and 
+        ($i -lt $sizes.Count); $i++) {$Bytes/=1kb}
+    $N=2; if($i -eq 0) {$N=0}
+    "{0:N$($N)}{1}" -f $Bytes, $sizes[$i]
+}
+
 # Downloads and installs Lando
 function Install-Lando {
     Write-Debug "Installing Lando in Windows..."
@@ -257,12 +268,44 @@ function Install-Lando {
 
     Write-Host "Downloading Lando CLI..."
     Write-Debug "From $downloadUrl to $tempFile..."
-    $wbcl = New-Object System.Net.WebClient
+    Write-Progress -Activity "Downloading Lando $version" -Status "Preparing..." -PercentComplete 0
+
+
+    $outputFileStream = [System.IO.FileStream]::new($tempFile, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
     try {
-        # Use WebClient instead of Invoke-WebRequest because Invoke-WebRequest's progress indicator
-        # blocks the download to update the status after each byte is received, which is very slow.
-        # TODO: Add a non-blocking progress indicator
-        $wbcl.DownloadFile($downloadUrl, $tempFile)
+        $httpClient = New-Object System.Net.Http.HttpClient
+        $httpCompletionOption = [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead
+        $response = $httpClient.GetAsync($downloadUrl, $httpCompletionOption)
+
+        Write-Progress -Activity "Downloading Lando $version" -Status "Starting download..." -PercentComplete 0
+        $response.Wait()
+
+        $fileSize = $response.Result.Content.Headers.ContentLength
+        $fileSizeString = Get-FriendlySize $fileSize
+        
+        # Stream the download to the destination file stream
+        $downloadTask = $response.Result.Content.CopyToAsync($outputFileStream)
+        $previousSize = 0
+        $byteChange = @()
+        while (-not $downloadTask.IsCompleted) {
+            $sleepTime = 500
+            Start-Sleep -Milliseconds $sleepTime
+
+            # Calculate the download speed
+            $downloaded = $outputFileStream.Position
+            $byteChange += ($downloaded - $previousSize)
+            $previousSize = $downloaded
+            if ($byteChange.Count -gt (1000 / $sleepTime)) {
+                $byteChange = $byteChange | Select-Object -Last (1000 / $sleepTime)
+            }
+            $averageSpeed = $byteChange | Measure-Object -Average | Select-Object -ExpandProperty Average
+            $speedString = Get-FriendlySize ($averageSpeed * (1000 / $sleepTime))
+
+            Write-Progress -Activity "Downloading Lando $version" -Status "$(Get-FriendlySize $downloaded)/$fileSizeString (${speedString}/s)" -PercentComplete ($outputFileStream.Position / $fileSize * 100)
+        }
+        Write-Progress -Activity "Downloading Lando $version" -Status "Download complete" -PercentComplete 100
+        Start-Sleep -Milliseconds 200
+        $downloadTask.Dispose()
 
     } catch [System.Net.WebException] {
         $message = $_.Exception.Message
@@ -271,8 +314,9 @@ function Install-Lando {
         $message = $_.Exception.Message
         throw "Failed to download Lando from $downloadUrl. Error: $_"
     } finally {
-        $wbcl.Dispose()
+        $outputFileStream.Close()
     }
+    Write-Progress -Activity "Downloading Lando $version" -Completed
 
     if (-not (Test-Path $dest)) {
         Write-Debug "Creating destination directory $dest..."
