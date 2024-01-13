@@ -41,5 +41,6 @@ module.exports = () => ({
   debug: getDebug(),
   os: core.getInput('os') || getOS(),
   telemetry: process.env.GITHUB_ACTIONS ? core.getBooleanInput('telemetry') : true,
+  slim: false,
   setup: core.getInput('setup'),
 });

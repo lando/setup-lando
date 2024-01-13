@@ -16,6 +16,11 @@
 
 * Deprecated `setup` in favor of `auto-setup`
 
+## v2.3.0 - [January 13, 2024](https://github.com/lando/setup-lando/releases/tag/v2.3.0)
+
+* Added support for approved `-slim` variants
+* Fixed bug causing `edge` GitHub convenience aliases to not resolve to the correct version
+
 ## v2.2.2 - [December 7, 2023](https://github.com/lando/setup-lando/releases/tag/v2.2.2)
 
 * Added passthru support for `3-dev-slim` although it just maps to `3-dev` for now
