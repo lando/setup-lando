@@ -397,6 +397,24 @@ function Install-LandoInWSL {
     }
 }
 
+# Runs the "lando setup" command if Lando is at least version 3.21.0
+function Invoke-LandoSetup {
+    Write-Debug "Running 'lando setup'..."
+    if ($version -lt "v3.21.0") {
+        Write-Debug "Skipping 'lando setup' because version $version is less than 3.21.0."
+        return
+    }
+    $landoSetupCommand = "$dest\lando.exe setup"
+    Write-Debug "Running '$landoSetupCommand'"
+    try {
+        Invoke-Expression $landoSetupCommand
+    } catch {
+        Write-Host $_.Exception.Message
+        Write-Host "Failed to run 'lando setup'. You may need to manually run this command to complete the setup." -ForegroundColor Red
+        Write-Debug $_.Exception
+    }
+}
+
 Write-Debug "Running script with:"
 Write-Debug "  -arch: $arch"
 Write-Debug "  -debug: $debug"
