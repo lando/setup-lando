@@ -14,6 +14,7 @@ const {execSync} = require('child_process');
 const {GitHub, getOctokitOptions} = require('@actions/github/lib/utils');
 const {paginateRest} = require('@octokit/plugin-paginate-rest');
 
+const canBeSlim = require('./lib/can-be-slim');
 const getConfigFile = require('./lib/get-config-file');
 const getDownloadUrl = require('./lib/get-download-url');
 const getGCFPath = require('./lib/get-gcf-path');
@@ -36,6 +37,9 @@ const main = async () => {
   // start by getting the inputs and stuff
   const inputs = getInputs();
 
+  // immediately try to determine our slim status
+  inputs.slim = inputs.landoVersion.endsWith('-slim');
+
   // show a warning if both version inputs are set
   if (inputs.landoVersion && inputs.landoVersionFile) {
     core.warning('Both lando-version and lando-version-file inputs are specified, only lando-version will be used');
@@ -56,15 +60,20 @@ const main = async () => {
 
     // attempt to resolve the spec
     let version = resolveVersionSpec(spec, releases);
+
     // throw error if we cannot resolve a version
     if (!version) throw new Error(`Could not resolve "${spec}" into an installable version of Lando`);
     core.debug(`found ${releases.length} valid releases`);
+
+    // now that we have a version lets try to reevaluate slim since it should only be true in the >3.21 <4 range
+    if (inputs.slim) inputs.slim = inputs.slim && canBeSlim(version);
 
     // start by assuming that version is just the path to some locally installed version of lando
     let landoPath = version;
     core.startGroup('Version information');
     core.info(`spec: ${spec}`);
     core.info(`version: ${version}`);
+    core.info(`slim: ${inputs.slim}`);
 
     // if that assumption is wrong then we need to attempt a download
     if (!fs.existsSync(landoPath)) {
@@ -72,6 +81,7 @@ const main = async () => {
       const downloadUrl = getDownloadUrl(version, inputs);
       core.debug(`going to download version ${version} from ${downloadUrl}`);
       core.info(`url: ${downloadUrl}`);
+      core.endGroup();
 
       // download lando
       try {

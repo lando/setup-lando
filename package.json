@@ -25,6 +25,7 @@
     "js-yaml": "^4.1.0",
     "lodash.get": "^4.4.2",
     "lodash.set": "^4.3.2",
+    "semver": "^7.5.4",
     "string-argv": "^0.3.2"
   },
   "devDependencies": {
