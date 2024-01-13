@@ -25,6 +25,7 @@
     "js-yaml": "^4.1.0",
     "lodash.get": "^4.4.2",
     "lodash.set": "^4.3.2",
+    "semver": "^7.5.4",
     "string-argv": "^0.3.2"
   },
   "devDependencies": {
@@ -32,7 +33,7 @@
     "@babel/eslint-parser": "^7.16.0",
     "@vercel/ncc": "^0.38.1",
     "eslint": "^7.32.0",
-    "eslint-config-google": "^0.14.0"
+    "eslint-config-google": "^0.9.1"
   },
   "scripts": {
     "lint": "eslint .",
