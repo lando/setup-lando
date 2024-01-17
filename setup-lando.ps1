@@ -234,7 +234,7 @@ function Add-ToPath {
 
     # Also update the current session's `$env:Path` definition.
     $env:Path = ($env:Path -replace ';$') + ';' + $NewPath
-
+    $env:Path = $NewPath + ';' + $env:Path
     Write-Debug "'$NewPath' added to the user-level Path."
 }
 
