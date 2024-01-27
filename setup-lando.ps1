@@ -23,10 +23,11 @@ $LANDO_SETUP_SH_URL = "https://raw.githubusercontent.com/lando/setup-lando/v3/se
 Set-StrictMode -Version 1
 
 # Normalize debug preference
-$DebugPreference = If ($debug) {"Continue"} Else {$DebugPreference}
+$DebugPreference = If ($debug) { "Continue" } Else { $DebugPreference }
 if ($DebugPreference -eq "Inquire" -or $DebugPreference -eq "Continue") {
     $debug = $true
 }
+$Host.PrivateData.DebugForegroundColor = "Gray"
 
 # Encoding must be Unicode to support parsing wsl.exe output
 [Console]::OutputEncoding = [System.Text.Encoding]::Unicode
@@ -52,7 +53,7 @@ function Confirm-Environment {
     }
 
     # Windows 10 version 1903 (build 18362) or higher is required for WSL2 support
-    $minVersion = [Version]::new(10,0,18362,0)
+    $minVersion = [Version]::new(10, 0, 18362, 0)
     $osVersion = [Version][Environment]::OSVersion.Version
     Write-Debug "Windows version: $osVersion"
 
@@ -72,7 +73,8 @@ function Confirm-Environment {
         $dockerVersion = [System.Text.Encoding]::Unicode.GetBytes($(docker.exe --version))
         $dockerVersion = [System.Text.Encoding]::UTF8.GetString($dockerVersion)
         Write-Debug $dockerVersion
-    } catch {
+    }
+    catch {
         Write-Warning "Docker Desktop is not installed. You will need to install Docker Desktop to use Lando."
     }
 }
@@ -115,11 +117,13 @@ function Uninstall-Lando {
             Write-Debug "Uninstall command: $uninstallString $arguments"
             Start-Process -Verb RunAs $uninstallString -ArgumentList $arguments -Wait
         }
-    } catch {
+    }
+    catch {
         if ($_.CategoryInfo.Activity -eq "Get-Package" -and $_.CategoryInfo.Category -eq "ObjectNotFound") {
             Write-Debug "No previous Lando installation found."
             return
-        } else {
+        }
+        else {
             Write-Warning "An error occurred while trying to uninstall a previous version of Lando. You may need to manually uninstall it."
             Write-Debug $_.Exception
         }
@@ -135,11 +139,11 @@ function Resolve-VersionAlias {
     $originalVersion = $Version
 
     $aliasMap = @{
-        "3" = "3-stable";
-        "4" = "4-stable";
+        "3"      = "3-stable";
+        "4"      = "4-stable";
         "stable" = "$LANDO_DEFAULT_MV-stable";
-        "edge" = "$LANDO_DEFAULT_MV-edge";
-        "dev" = "$LANDO_DEFAULT_MV-dev";
+        "edge"   = "$LANDO_DEFAULT_MV-edge";
+        "dev"    = "$LANDO_DEFAULT_MV-dev";
         "latest" = "$LANDO_DEFAULT_MV-dev";
     }
 
@@ -207,13 +211,11 @@ function Resolve-VersionAlias {
 #  -NewPath <path> : Path to add
 function Add-ToPath {
     param(
-        [Parameter(Mandatory, Position=0)]
+        [Parameter(Mandatory, Position = 0)]
         [string]$NewPath
     )
     Write-Debug "Adding $NewPath to system PATH..."
-
     $regPath = 'registry::HKEY_CURRENT_USER\Environment'
-
     $currDirs = (Get-Item -LiteralPath $regPath).GetValue('Path', '', 'DoNotExpandEnvironmentNames') -split ';' -ne ''
 
     if ($NewPath -in $currDirs) {
@@ -242,10 +244,10 @@ function Add-ToPath {
 #  -Bytes <bytes> : Bytes to convert
 function Get-FriendlySize {
     param($Bytes)
-    $sizes='Bytes,KB,MB,GB,TB,PB,EB,ZB' -split ','
-    for($i=0; ($Bytes -ge 1kb) -and 
-        ($i -lt $sizes.Count); $i++) {$Bytes/=1kb}
-    $N=2; if($i -eq 0) {$N=0}
+    $sizes = 'Bytes,KB,MB,GB,TB,PB,EB,ZB' -split ','
+    for ($i = 0; ($Bytes -ge 1kb) -and 
+        ($i -lt $sizes.Count); $i++) { $Bytes /= 1kb }
+    $N = 2; if ($i -eq 0) { $N = 0 }
     "{0:N$($N)}{1}" -f $Bytes, $sizes[$i]
 }
 
@@ -255,7 +257,8 @@ function Install-Lando {
     # Resolve the version alias to a download URL
     try {
         $resolvedVersion, $downloadUrl = Resolve-VersionAlias -Version $version
-    } catch {
+    }
+    catch {
         throw "Could not resolve the provided version alias '$version'. Error: $_"
     }
     $version = $resolvedVersion
@@ -263,6 +266,7 @@ function Install-Lando {
     if (-not $downloadUrl) {
         throw "Could not resolve the download URL for version '$version'."
     }
+
     $filename = $downloadUrl.Split('/')[-1]
     $tempFile = "$env:TEMP\$filename"
 
@@ -349,8 +353,9 @@ function Install-LandoInWSL {
         Write-Debug "Downloading Lando Linux installer script from $LANDO_SETUP_SH_URL..."
         Invoke-WebRequest -Uri $LANDO_SETUP_SH_URL -OutFile $wslSetupScript
         $ProgressPreference = $originalProgressPreference
-    } catch {
-        throw "Failed to download Lando Linux installer script from $LANDO_SETUP_SH_URL. Error: $_"
+    }
+    catch {
+        throw "Failed to download Lando Linux installer script from $LANDO_SETUP_SH_URL.`nError: $_"
     }
 
     # We will pass some of our parameters to the setup script in WSL
@@ -360,6 +365,9 @@ function Install-LandoInWSL {
     }
     if ($arch) {
         $setupParams += "--arch=$arch"
+    }
+    if ($no_setup) {
+        $setupParams += "--no-setup"
     }
     if ($version) {
         $setupParams += "--version=$version"
@@ -381,7 +389,8 @@ function Install-LandoInWSL {
 
         try {
             Invoke-Expression $command
-        } catch {
+        }
+        catch {
             Write-Host $_.Exception.Message
             Write-Host "Failed to automatically install Lando into WSL distribution '$wslInstance'. You may need to manually install Lando in this distribution." -ForegroundColor Red
             Write-Debug $_.Exception
@@ -408,7 +417,8 @@ function Invoke-LandoSetup {
     Write-Debug "Running '$landoSetupCommand'"
     try {
         Invoke-Expression $landoSetupCommand
-    } catch {
+    }
+    catch {
         Write-Host $_.Exception.Message
         Write-Host "Failed to run 'lando setup'. You may need to manually run this command to complete the setup." -ForegroundColor Red
         Write-Debug $_.Exception
@@ -443,6 +453,9 @@ Uninstall-Lando
 if (-not $wsl_only) {
     Write-Host "Installing Lando..."
     Install-Lando
+    if (-not $no_setup) {
+        Invoke-LandoSetup
+    }
 }
 
 # Install Lando in WSL
