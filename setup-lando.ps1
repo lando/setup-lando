@@ -373,6 +373,18 @@ function Install-Lando {
 
     # Add $dest to system PATH if not already present
     Add-ToPath -NewPath $dest
+
+    # Clear the cache so that new Lando commands are available
+    $landoClearCommand = "$symlinkPath --clear"
+    Write-Debug "Running '$landoClearCommand'"
+    try {
+        Invoke-Expression $landoClearCommand
+    }
+    catch {
+        Write-Host $_.Exception.Message
+        Write-Host "Failed to run 'lando --clear'. You may need to manually run this command to complete the setup." -ForegroundColor Red
+        Write-Debug $_.Exception
+    }
 }
 
 # Install Lando in WSL2
