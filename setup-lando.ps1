@@ -20,6 +20,8 @@ $LANDO_DEFAULT_MV = "3"
 #$LANDO_SETUP_SH_URL = "https://raw.githubusercontent.com/lando/setup-lando/main/setup-lando.sh"
 $LANDO_SETUP_SH_URL = "https://raw.githubusercontent.com/lando/setup-lando/v3/setup-lando.sh"
 
+$resolvedVersion = $null
+
 Set-StrictMode -Version 1
 
 # Normalize debug preference
@@ -256,32 +258,35 @@ function Install-Lando {
     Write-Debug "Installing Lando in Windows..."
     # Resolve the version alias to a download URL
     try {
-        $resolvedVersion, $downloadUrl = Resolve-VersionAlias -Version $version
+        $script:resolvedVersion, $downloadUrl = Resolve-VersionAlias -Version $version
     }
     catch {
         throw "Could not resolve the provided version alias '$version'. Error: $_"
     }
-    $version = $resolvedVersion
 
     if (-not $downloadUrl) {
         throw "Could not resolve the download URL for version '$version'."
     }
 
     $filename = $downloadUrl.Split('/')[-1]
-    $tempFile = "$env:TEMP\$filename"
+    $landoDir = "$env:LOCALAPPDATA\Lando"
+    if (-not (Test-Path $landoDir)) {
+        Write-Debug "Creating destination directory $landoDir..."
+        New-Item -ItemType Directory -Path $landoDir -Force
+    }
 
     Write-Host "Downloading Lando CLI..."
-    Write-Debug "From $downloadUrl to $tempFile..."
-    Write-Progress -Activity "Downloading Lando $version" -Status "Preparing..." -PercentComplete 0
+    $downloadDest = "$landoDir\$filename"
+    Write-Debug "From $downloadUrl to $downloadDest..."
+    Write-Progress -Activity "Downloading Lando $resolvedVersion" -Status "Preparing..." -PercentComplete 0
 
-
-    $outputFileStream = [System.IO.FileStream]::new($tempFile, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
+    $outputFileStream = [System.IO.FileStream]::new($downloadDest, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
     try {
         $httpClient = New-Object System.Net.Http.HttpClient
         $httpCompletionOption = [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead
         $response = $httpClient.GetAsync($downloadUrl, $httpCompletionOption)
 
-        Write-Progress -Activity "Downloading Lando $version" -Status "Starting download..." -PercentComplete 0
+        Write-Progress -Activity "Downloading Lando $resolvedVersion" -Status "Starting download..." -PercentComplete 0
         $response.Wait()
 
         $fileSize = $response.Result.Content.Headers.ContentLength
@@ -305,30 +310,66 @@ function Install-Lando {
             $averageSpeed = $byteChange | Measure-Object -Average | Select-Object -ExpandProperty Average
             $speedString = Get-FriendlySize ($averageSpeed * (1000 / $sleepTime))
 
-            Write-Progress -Activity "Downloading Lando $version" -Status "$(Get-FriendlySize $downloaded)/$fileSizeString (${speedString}/s)" -PercentComplete ($outputFileStream.Position / $fileSize * 100)
+            Write-Progress -Activity "Downloading Lando $resolvedVersion" -Status "$(Get-FriendlySize $downloaded)/$fileSizeString (${speedString}/s)" -PercentComplete ($outputFileStream.Position / $fileSize * 100)
         }
-        Write-Progress -Activity "Downloading Lando $version" -Status "Download complete" -PercentComplete 100
+        Write-Progress -Activity "Downloading Lando $resolvedVersion" -Status "Download complete" -PercentComplete 100
         Start-Sleep -Milliseconds 200
         $downloadTask.Dispose()
 
-    } catch [System.Net.WebException] {
+    }
+    catch [System.Net.WebException] {
         $message = $_.Exception.Message
         throw "Failed to download Lando from $downloadUrl. Error: $message"
-    } catch {
+    }
+    catch {
         $message = $_.Exception.Message
         throw "Failed to download Lando from $downloadUrl. Error: $_"
-    } finally {
+    }
+    finally {
         $outputFileStream.Close()
     }
-    Write-Progress -Activity "Downloading Lando $version" -Completed
+    Write-Progress -Activity "Downloading Lando $resolvedVersion" -Completed
 
     if (-not (Test-Path $dest)) {
         Write-Debug "Creating destination directory $dest..."
         New-Item -ItemType Directory -Path $dest
     }
 
-    Write-Debug "Copying $tempFile to $dest..."
-    Move-Item -Path $tempFile -Destination $dest\lando.exe -Force
+    $symlinkPath = "$dest\lando.exe"
+    if (Test-Path $symlinkPath) {
+        Write-Debug "Removing existing file or link at $symlinkPath..."
+        Remove-Item -Path $symlinkPath -Force
+    }
+
+    try {
+        # Set up mklink command
+        $QuotedPath = '"{0}"' -f $symlinkPath
+        $QuotedTarget = '"{0}"' -f $downloadDest
+        $mklink = @('mklink', $QuotedPath, $QuotedTarget)
+        (-not $debug -and ($mklink += @('>nul', '2>&1'))) | Out-Null
+
+        # Try to create the link
+        Write-Debug "> $($mklink -join ' ')"
+        $process = Start-Process -FilePath 'cmd.exe' -ArgumentList "/D /C $($mklink -join ' ')" -NoNewWindow -Wait -PassThru
+        
+        # Symlink creation will fail if the user doesn't have developer mode enabled in Windows, but hard links work.
+        if ($process.ExitCode) {
+            Write-Debug "Symlink creation failed with exit code $($process.ExitCode). Trying hard link..."
+            $mklink = @('mklink', '/H', $QuotedPath, $QuotedTarget)
+            (-not $debug -and ($mklink += @('>nul', '2>&1'))) | Out-Null
+
+            Write-Debug "> $($mklink -join ' ')"
+            $process = Start-Process -FilePath 'cmd.exe' -ArgumentList "/D /C $($mklink -join ' ')" -NoNewWindow -Wait -PassThru
+
+            if ($process.ExitCode) {
+                Write-Debug "Hard link creation failed with exit code $($process.ExitCode). Trying copy..."
+                Copy-Item -Path $downloadDest -Destination $symlinkPath -Force
+            }
+        }
+    }
+    catch {
+        throw "Failed to create symlink from $symlinkPath to $downloadDest.`nError: $_"
+    }
 
     # Add $dest to system PATH if not already present
     Add-ToPath -NewPath $dest
@@ -370,7 +411,7 @@ function Install-LandoInWSL {
         $setupParams += "--no-setup"
     }
     if ($version) {
-        $setupParams += "--version=$version"
+        $setupParams += "--version=$(if ($resolvedVersion) { $resolvedVersion } Else { $version })"
     }
 
     Write-Host ""
@@ -409,8 +450,8 @@ function Install-LandoInWSL {
 # Runs the "lando setup" command if Lando is at least version 3.21.0
 function Invoke-LandoSetup {
     Write-Debug "Running 'lando setup'..."
-    if ($version -lt "v3.21.0") {
-        Write-Debug "Skipping 'lando setup' because version $version is less than 3.21.0."
+    if ($resolvedVersion -lt "v3.21.0") {
+        Write-Debug "Skipping 'lando setup' because version $resolvedVersion is less than 3.21.0."
         return
     }
     $landoSetupCommand = "$dest\lando.exe setup -y"
@@ -463,4 +504,4 @@ if (-not $no_wsl) {
     Install-LandoInWSL
 }
 
-Write-Host "`nLando setup complete!`n"
+Write-Host "`nLando setup complete!`n" -ForegroundColor Green
