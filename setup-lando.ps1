@@ -30,6 +30,7 @@ if ($DebugPreference -eq "Inquire" -or $DebugPreference -eq "Continue") {
     $debug = $true
 }
 $Host.PrivateData.DebugForegroundColor = "Gray"
+$Host.PrivateData.DebugBackgroundColor = $Host.UI.RawUI.BackgroundColor
 
 # Encoding must be Unicode to support parsing wsl.exe output
 [Console]::OutputEncoding = [System.Text.Encoding]::Unicode
@@ -77,7 +78,6 @@ function Confirm-Environment {
             Write-Debug "WSL Instances:`n$wslList"
         }        
     }
-
     if (-not $wslVersion) {
         Write-Debug "WSL is not installed."
         if (-not $no_wsl) {
@@ -86,17 +86,6 @@ function Confirm-Environment {
         if ($wsl_only) {
             throw "WSL is not installed. Cannot install Lando in WSL."
         }
-    }
-
-    # Warn if Docker is not installed
-    try {
-        # Powershell doesn't like the output encoding from docker.exe
-        $dockerVersion = [System.Text.Encoding]::Unicode.GetBytes($(docker.exe --version))
-        $dockerVersion = [System.Text.Encoding]::UTF8.GetString($dockerVersion)
-        Write-Debug $dockerVersion
-    }
-    catch {
-        Write-Warning "Docker Desktop is not installed. You will need to install Docker Desktop to use Lando."
     }
 }
 
@@ -349,6 +338,7 @@ function Install-Lando {
         $outputFileStream.Close()
     }
     Write-Progress -Activity "Downloading Lando $resolvedVersion" -Completed
+    Write-Host "Installing Lando..."
 
     if (-not (Test-Path $dest)) {
         Write-Debug "Creating destination directory $dest..."
@@ -528,7 +518,6 @@ Uninstall-Lando
 
 # Install Lando in Windows
 if (-not $wsl_only) {
-    Write-Host "Installing Lando..."
     Install-Lando
     if (-not $no_setup) {
         Invoke-LandoSetup
