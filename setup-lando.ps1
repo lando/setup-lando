@@ -293,6 +293,7 @@ function Install-Lando {
 
     $outputFileStream = [System.IO.FileStream]::new($downloadDest, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
     try {
+        Add-Type -AssemblyName System.Net.Http
         $httpClient = New-Object System.Net.Http.HttpClient
         $httpCompletionOption = [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead
         $response = $httpClient.GetAsync($downloadUrl, $httpCompletionOption)
