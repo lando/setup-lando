@@ -64,10 +64,21 @@ function Confirm-Environment {
     }
 
     # Check for WSL
-    $wslVersion = & wsl.exe --version | Out-String
-    Write-Debug "WSL version details: `n$wslVersion"
-    $wslList = & wsl.exe --list --verbose | Out-String
-    Write-Debug "WSL Instances:`n$wslList"
+    if (Test-Path "$env:WINDIR\system32\wsl.exe") {
+        $wslVersion = & wsl.exe --version | Out-String
+        Write-Debug "WSL version details: `n$wslVersion"
+        $wslList = & wsl.exe --list --verbose | Out-String
+        Write-Debug "WSL Instances:`n$wslList"
+    }
+    else {
+        Write-Debug "WSL is not installed."
+        if (-not $no_wsl) {
+            $Script:no_wsl = $true
+        }
+        if ($wsl_only) {
+            throw "WSL is not installed. Cannot install Lando in WSL."
+        }
+    }
 
     # Warn if Docker is not installed
     try {
