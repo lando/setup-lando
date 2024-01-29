@@ -64,13 +64,21 @@ function Confirm-Environment {
     }
 
     # Check for WSL
+    $wslVersion = $null
     if (Test-Path "$env:WINDIR\system32\wsl.exe") {
         $wslVersion = & wsl.exe --version | Out-String
-        Write-Debug "WSL version details: `n$wslVersion"
-        $wslList = & wsl.exe --list --verbose | Out-String
-        Write-Debug "WSL Instances:`n$wslList"
+        # Check for "WSL version" string on the first line
+        if ($wslVersion -notmatch "WSL version") {
+            $wslVersion = $null
+        }
+        else {
+            Write-Debug "WSL version details: `n$wslVersion"
+            $wslList = & wsl.exe --list --verbose | Out-String
+            Write-Debug "WSL Instances:`n$wslList"
+        }        
     }
-    else {
+
+    if (-not $wslVersion) {
         Write-Debug "WSL is not installed."
         if (-not $no_wsl) {
             $Script:no_wsl = $true
