@@ -89,21 +89,30 @@ function Confirm-Environment {
     }
 }
 
-# Selects the appropriate architecture for the current system
+# Selects the appropriate architecture for the current system and warns about issues.
 function Select-Architecture {
-    # We only have x64 and arm64 builds of Lando
-    Write-Debug "Checking architecture..."
+    $procArch = $(if ($Env:PROCESSOR_ARCHITEW6432) { $Env:PROCESSOR_ARCHITEW6432 } Else { $Env:PROCESSOR_ARCHITECTURE })
+    Write-Debug "Processor architecture: $procArch"
+
     if (-not $arch) {
-        Switch ($Env:PROCESSOR_ARCHITEW6432) {
-            "AMD64" { $arch = "x64" }
-            "ARM64" { $arch = "arm64" }
-            Default { $arch = "x64" }
+        $arch = "x64"  # Default architecture is x64
+        if ($procArch -eq "ARM64") {
+            $arch = "arm64"
         }
     }
+    Write-Debug "Selected architecture: $arch"
+
     if ($arch -notmatch "x64|arm64") {
-        throw "Unsupported architecture. Only x64 and arm64 are supported."
+        throw "Unsupported architecture provided. Only x64 and arm64 are supported."
     }
-    Write-Debug "System architecture: $arch"
+
+    if ($arch -eq "x64" -and $procArch -eq "ARM64") {
+        Write-Warning "You are attempting to install the x64 version of Lando on an arm64 system. This may not work."
+    }
+    if ($arch -eq "arm64" -and $procArch -eq "AMD64") {
+        Write-Warning "You are attempting to install the arm64 version of Lando on an x64 system. This may not work."
+    }
+
     return $arch
 }
 
