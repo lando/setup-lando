@@ -388,6 +388,7 @@ function Install-Lando {
 
     # Clear the cache so that new Lando commands are available
     $landoClearCommand = "$symlinkPath --clear"
+    ($debug -and ($landoClearCommand += " --debug")) | Out-Null
     Write-Debug "Running '$landoClearCommand'"
     try {
         Invoke-Expression $landoClearCommand
@@ -478,7 +479,10 @@ function Invoke-LandoSetup {
         Write-Debug "Skipping 'lando setup' because version $resolvedVersion is less than 3.21.0."
         return
     }
+
     $landoSetupCommand = "$dest\lando.exe setup -y"
+    ($debug -and ($landoSetupCommand += " --debug")) | Out-Null
+
     Write-Debug "Running '$landoSetupCommand'"
     try {
         Invoke-Expression $landoSetupCommand
