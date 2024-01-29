@@ -280,7 +280,7 @@ function Install-Lando {
     $landoDir = "$env:LOCALAPPDATA\Lando"
     if (-not (Test-Path $landoDir)) {
         Write-Debug "Creating destination directory $landoDir..."
-        New-Item -ItemType Directory -Path $landoDir -Force
+        New-Item -ItemType Directory -Path $landoDir -Force | Out-Null
     }
 
     Write-Host "Downloading Lando CLI..."
@@ -342,7 +342,7 @@ function Install-Lando {
 
     if (-not (Test-Path $dest)) {
         Write-Debug "Creating destination directory $dest..."
-        New-Item -ItemType Directory -Path $dest
+        New-Item -ItemType Directory -Path $dest | Out-Null
     }
 
     $symlinkPath = "$dest\lando.exe"
