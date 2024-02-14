@@ -8,7 +8,7 @@ const {name, version} = require('../../package.json');
 const landoPlugin = name.replace('@lando/', '');
 
 export default defineConfig({
-  title: 'Lando Installation',
+  title: 'Lando',
   description: 'The offical Lando installation guide.',
   landoDocs: 3,
   landoPlugin,
