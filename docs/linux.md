@@ -13,7 +13,7 @@ description: Install Lando on Linux
 4. Make sure you look at the caveats below and follow them appropriately
 
 ::: tip Install from source for other Linux distros
-If your Linux distro does not support our `.deb`, `.pacman` or `.rpm` packages you can [install from source](/install/source)
+If your Linux distro does not support our `.deb`, `.pacman` or `.rpm` packages you can [install from source](/source)
 :::
 
 ## via CLI
