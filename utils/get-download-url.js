@@ -38,5 +38,6 @@ module.exports = (version, {os, architecture, slim = false} = {}) => {
   const filename = os === 'Windows' ? `${parts.join('-')}.exe` : parts.join('-');
 
   // return the correct filename
-  return s3Releases.includes(version) || version.includes('preview') ? `${s3Base}/${filename}` : `${gitHubBase}/${version}/${filename}`;
+  return s3Releases.includes(version) || version.includes('preview')
+    ? `${s3Base}/${filename}` : `${gitHubBase}/${version}/${filename}`;
 };

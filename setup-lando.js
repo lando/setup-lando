@@ -58,7 +58,8 @@ const main = async () => {
 
   // try/catch
   try {
-    const releases = await octokit.paginate('GET /repos/{owner}/{repo}/releases', {owner: 'lando', repo: 'cli', per_page: 100});
+    const releases =
+      await octokit.paginate('GET /repos/{owner}/{repo}/releases', {owner: 'lando', repo: 'cli', per_page: 100});
     core.debug(`found ${releases.length} valid releases`);
 
     // attempt to resolve the spec
@@ -130,9 +131,12 @@ const main = async () => {
     if (inputs.config) config = mergeConfig(config, inputs.config);
 
     // if telemetry is off on v3 then add in more config
-    if (!inputs.telemetry && lmv === 'v3') config = mergeConfig(config, [['stats[0].report', false], 'stats[0].url=https://metrics.lando.dev']);
-    // or if telemetry is off on v4 then add in more config
-    else if (!inputs.telemetry && lmv === 'v4') config = mergeConfig(config, [['core.telemetry', false]]);
+    if (!inputs.telemetry && lmv === 'v3') {
+      config = mergeConfig(config, [['stats[0].report', false], 'stats[0].url=https://metrics.lando.dev']);
+    } else if (!inputs.telemetry && lmv === 'v4') {
+      // or if telemetry is off on v4 then add in more config
+      config = mergeConfig(config, [['core.telemetry', false]]);
+    }
 
     // set config info
     core.startGroup('Configuration information');

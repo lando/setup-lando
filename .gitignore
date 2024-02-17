@@ -27,15 +27,23 @@ lando.env
 
 # Build dirs
 build
+dist
 
 # coverage reporting
 .nyc_output
 coverage/
 
-# Vuepress
+# lando
+.lando/id
+
+# docs
 .temp
 .cache
 _site
+dist
+cache
+temp
+config.*.timestamp-*-*.*
 
-# Yarn
+# YARN
 yarn.lock

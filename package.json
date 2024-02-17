@@ -1,7 +1,7 @@
 {
   "name": "@lando/setup-lando",
   "description": "GitHub Action to setup Lando on GitHub Actions.",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "author": "Mike Pirog @pirog",
   "main": "setup-lando.js",
   "license": "GPL-3.0",
@@ -31,13 +31,18 @@
   "devDependencies": {
     "@babel/core": "^7.21.5",
     "@babel/eslint-parser": "^7.16.0",
+    "@lando/vitepress-theme-default-plus": "^1.0.0-beta.33",
     "@vercel/ncc": "^0.38.1",
     "eslint": "^7.32.0",
     "eslint-config-google": "^0.9.1",
-    "shellcheck": "^2.2.0"
+    "shellcheck": "^2.2.0",
+    "vitepress": "^1.0.0-rc.42"
   },
   "scripts": {
-    "lint": "eslint . && shellcheck setup-lando.sh",
+    "docs:dev": "vitepress dev docs --debug",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs",
+    "lint": "eslint . --ext .js --ext .mjs && shellcheck setup-lando.sh",
     "prepare": "ncc build setup-lando.js -o dist --source-map --license licenses.txt"
   }
 }
