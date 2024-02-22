@@ -19,6 +19,7 @@ param(
 $LANDO_DEFAULT_MV = "3"
 #$LANDO_SETUP_SH_URL = "https://raw.githubusercontent.com/lando/setup-lando/main/setup-lando.sh"
 $LANDO_SETUP_SH_URL = "https://raw.githubusercontent.com/lando/setup-lando/v3/setup-lando.sh"
+$LANDO_APPDATA = "$env:LOCALAPPDATA\Lando"
 
 $resolvedVersion = $null
 
@@ -117,7 +118,7 @@ function Select-Architecture {
 }
 
 # Checks for existing Lando installation and uninstalls it
-function Uninstall-Lando {
+function Uninstall-LegacyLando {
     Write-Debug "Checking for previous Lando installation..."
 
     # Catch the object not found error
@@ -286,14 +287,13 @@ function Install-Lando {
     }
 
     $filename = $downloadUrl.Split('/')[-1]
-    $landoDir = "$env:LOCALAPPDATA\Lando"
-    if (-not (Test-Path $landoDir)) {
-        Write-Debug "Creating destination directory $landoDir..."
-        New-Item -ItemType Directory -Path $landoDir -Force | Out-Null
+    if (-not (Test-Path $LANDO_APPDATA)) {
+        Write-Debug "Creating destination directory $LANDO_APPDATA..."
+        New-Item -ItemType Directory -Path $LANDO_APPDATA -Force | Out-Null
     }
 
     Write-Host "Downloading Lando CLI..."
-    $downloadDest = "$landoDir\$filename"
+    $downloadDest = "$LANDO_APPDATA\$filename"
     Write-Debug "From $downloadUrl to $downloadDest..."
     Write-Progress -Activity "Downloading Lando $resolvedVersion" -Status "Preparing..." -PercentComplete 0
 
@@ -522,8 +522,7 @@ Confirm-Environment
 # Select the appropriate architecture
 $arch = Select-Architecture
 
-# Uninstall Lando added by legacy installers
-Uninstall-Lando
+        Uninstall-LegacyLando
 
 # Install Lando in Windows
 if (-not $wsl_only) {
