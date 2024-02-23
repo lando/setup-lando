@@ -11,6 +11,7 @@ param(
     [string]$dest = "$env:USERPROFILE\.lando\bin",
     [switch]$no_setup,
     [switch]$no_wsl,
+    [switch]$resume,
     [string]$version = "stable",
     [switch]$wsl_only,
     [switch]$help
@@ -276,6 +277,32 @@ function Get-FriendlySize {
     "{0:N$($N)}{1}" -f $Bytes, $sizes[$i]
 }
 
+# Builds the command to execute after a reboot
+#  -ScriptPath <path> : Path to the local script
+function Get-ResumeCommand {
+    param(
+        [Parameter(Mandatory, Position = 0)]
+        [string]$ScriptPath
+    )
+    Write-Debug "Building resume command string..."
+
+    $arguments = $MyInvocation.BoundParameters.GetEnumerator() | ForEach-Object {
+        if ($_.Value -is [switch]) {
+            if ($_.Value) {
+                "-$($_.Key)"
+            }
+        }
+        else {
+            "-$($_.Key) `"$($_.Value)`""
+        }
+    }
+    $argString = ($arguments += "-resume") -join " "
+    $command = ("powershell.exe -ExecutionPolicy Bypass -File `"$ScriptPath`" $argString").Trim()
+    
+    Write-Debug "Resume command: $command"
+    return $command
+}
+
 # Downloads and installs Lando
 function Install-Lando {
     Write-Debug "Installing Lando in Windows..."
@@ -526,32 +553,79 @@ if ($help) {
     return
 }
 
+if ($resume) {
+    Write-Host "Lando installation was interrupted by a Windows restart. Resuming..." -ForegroundColor Cyan
+}
+
 # Validate the system environment
 Confirm-Environment
 
 # Select the appropriate architecture
 $arch = Select-Architecture
 
+# Add a RunOnce registry key so Windows will automatically resume the script when interrupted by a reboot
+$runOnceKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
+$runOnceName = "LandoSetup"
+if (-not $no_setup -and -not $resume) {
+    # When the script is invoked from a piped web request, save the script block
+    # to a file so we can run it again after "lando setup" restarts Windows.
+    $localScriptPath = $MyInvocation.MyCommand.Path
+    if ($null -eq $localScriptPath) {
+        $localScriptPath = "$LANDO_APPDATA\setup-lando.ps1"
+        Write-Debug "Saving script to $localScriptPath..."
+        $scriptBlock = $MyInvocation.MyCommand.ScriptBlock
+        $scriptBlock | Out-File -FilePath $localScriptPath -Encoding utf8 -Force
+    }
+
+    $resumeCommand = Get-ResumeCommand -ScriptPath $localScriptPath
+
+    Write-Debug "Adding RunOnce registry key to re-run the script after a reboot..."
+    if (-not (Test-Path $runOnceKey)) {
+        New-Item -Path $runOnceKey -Force | Out-Null
+    }
+    New-ItemProperty -Path $runOnceKey -Name $runOnceName -Value $resumeCommand -PropertyType String -Force | Out-Null
+
+    # Install Lando in Windows
+    if (-not $wsl_only) {
         Uninstall-LegacyLando
 
-# Install Lando in Windows
-if (-not $wsl_only) {
-    Install-Lando
-    if (-not $no_setup) {
-        Invoke-LandoSetup
+        Install-Lando
+
+        if (-not $no_setup) {
+            # Dependency installation may trigger a reboot
+            Invoke-LandoSetup
+
+            # If we get here, a reboot didn't happen, so we won't need to resume later.
+            Write-Debug "Removing RunOnce registry key..."
+            Remove-ItemProperty -Path $runOnceKey -Name $runOnceName -ErrorAction SilentlyContinue
+        }
     }
 }
 
-# Install Lando in WSL
+# Lando setup may have been interrupted by the reboot. Run it again.
+if ($resume -and -not $no_setup -and -not $wsl_only) {
+    Invoke-LandoSetup
+}
+
+# Install in WSL after lando setup runs because Docker Desktop WSL
+# instances may not be available until after reboot.
 if (-not $no_wsl) {
+    # Docker Desktop adds the docker command to WSL instances after it starts.
+    Write-Debug "Checking if Docker Desktop has started..."
+    $dockerInfo = docker info --format '{{.ServerVersion}}' 2>$null
+    if (-not $dockerInfo) {
+        Write-Host "Starting Docker Desktop..."
+        Start-Process -FilePath "C:\Program Files\Docker\Docker\Docker Desktop.exe"
+        Start-Sleep -Seconds 2
+        $dockerInfo = docker info --format '{{.ServerVersion}}' 2>$null
+    }
+
     Install-LandoInWSL
 }
 
-if (-not $issueEncountered) {
-    Write-Host "`nLando setup complete!`n" -ForegroundColor Green
-    exit 0
-}
-else {
-    Write-Warning "`nLando setup completed but encountered issues. Please check the output above for details.`n"
+if ($issueEncountered) {
+    Write-Warning "Lando was installed but issues were encountered during installation. Please check the output above for details."
     exit 100
 }
+
+Write-Host "`nLando setup complete!`n" -ForegroundColor Green
