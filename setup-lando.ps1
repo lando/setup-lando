@@ -21,6 +21,7 @@ $LANDO_DEFAULT_MV = "3"
 $LANDO_SETUP_SH_URL = "https://raw.githubusercontent.com/lando/setup-lando/v3/setup-lando.sh"
 $LANDO_APPDATA = "$env:LOCALAPPDATA\Lando"
 
+$issueEncountered = $false
 $resolvedVersion = $null
 
 Set-StrictMode -Version 1
@@ -108,9 +109,11 @@ function Select-Architecture {
     }
 
     if ($arch -eq "x64" -and $procArch -eq "ARM64") {
+        $script:issueEncountered = $true
         Write-Warning "You are attempting to install the x64 version of Lando on an arm64 system. This may not work."
     }
     if ($arch -eq "arm64" -and $procArch -eq "AMD64") {
+        $script:issueEncountered = $true
         Write-Warning "You are attempting to install the arm64 version of Lando on an x64 system. This may not work."
     }
 
@@ -130,6 +133,7 @@ function Uninstall-LegacyLando {
             $uninstallString = $_.Meta.Attributes["UninstallString"]
             $arguments = "/Silent /SUPPRESSMSGBOXES"
             if (-not $uninstallString) {
+                $script:issueEncountered = $true
                 Write-Warning "Could not automatically uninstall $previousInstall. You may need to manually uninstall this version of Lando."
                 continue
             }
@@ -144,6 +148,7 @@ function Uninstall-LegacyLando {
             return
         }
         else {
+            $script:issueEncountered = $true
             Write-Warning "An error occurred while trying to uninstall a previous version of Lando. You may need to manually uninstall it."
             Write-Debug $_.Exception
         }
@@ -401,6 +406,7 @@ function Install-Lando {
         Invoke-Expression $landoClearCommand
     }
     catch {
+        $script:issueEncountered = $true
         Write-Host $_.Exception.Message
         Write-Host "Failed to run 'lando --clear'. You may need to manually run this command to complete the setup." -ForegroundColor Red
         Write-Debug $_.Exception
@@ -464,6 +470,7 @@ function Install-LandoInWSL {
             Invoke-Expression $command
         }
         catch {
+            $script:issueEncountered = $true
             Write-Host $_.Exception.Message
             Write-Host "Failed to automatically install Lando into WSL distribution '$wslInstance'. You may need to manually install Lando in this distribution." -ForegroundColor Red
             Write-Debug $_.Exception
@@ -471,6 +478,7 @@ function Install-LandoInWSL {
 
         # Check the return code from the setup script
         if ($LASTEXITCODE -ne 0) {
+            $script:issueEncountered = $true
             Write-Host "Failed to automatically install Lando into WSL distribution '$wslInstance'. You may need to manually install Lando in this distribution." -ForegroundColor Red
         }
 
@@ -493,11 +501,13 @@ function Invoke-LandoSetup {
     Write-Debug "Running '$landoSetupCommand'"
     try {
         Invoke-Expression $landoSetupCommand
+        if ($LASTEXITCODE -ne 0) {
+            throw "'lando setup' failed with exit code $LASTEXITCODE."
+        }
     }
     catch {
-        Write-Host $_.Exception.Message
-        Write-Host "Failed to run 'lando setup'. You may need to manually run this command to complete the setup." -ForegroundColor Red
-        Write-Debug $_.Exception
+        $script:issueEncountered = $true
+        Write-Host "Failed to run 'lando setup'. You may need to manually run this command to complete the setup. `nError: $_" -ForegroundColor Red
     }
 }
 
@@ -537,4 +547,11 @@ if (-not $no_wsl) {
     Install-LandoInWSL
 }
 
-Write-Host "`nLando setup complete!`n" -ForegroundColor Green
+if (-not $issueEncountered) {
+    Write-Host "`nLando setup complete!`n" -ForegroundColor Green
+    exit 0
+}
+else {
+    Write-Warning "`nLando setup completed but encountered issues. Please check the output above for details.`n"
+    exit 100
+}
