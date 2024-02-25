@@ -626,7 +626,6 @@ if (-not $no_wsl) {
 
 if ($issueEncountered) {
     Write-Warning "Lando was installed but issues were encountered during installation. Please check the output above for details."
-    exit 100
 }
 
 Write-Host "`nLando setup complete!`n" -ForegroundColor Green
