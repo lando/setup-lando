@@ -549,6 +549,7 @@ Write-Debug "  -debug: $debug"
 Write-Debug "  -dest: $dest"
 Write-Debug "  -no_setup: $no_setup"
 Write-Debug "  -no_wsl: $no_wsl"
+Write-Debug "  -resume: $resume"
 Write-Debug "  -version: $version"
 Write-Debug "  -wsl_only: $wsl_only"
 
@@ -615,16 +616,6 @@ if ($resume -and -not $no_setup -and -not $wsl_only) {
 # Install in WSL after lando setup runs because Docker Desktop WSL
 # instances may not be available until after reboot.
 if (-not $no_wsl) {
-    # Docker Desktop adds the docker command to WSL instances after it starts.
-    Write-Debug "Checking if Docker Desktop has started..."
-    $dockerInfo = docker info --format '{{.ServerVersion}}' 2>$null
-    if (-not $dockerInfo) {
-        Write-Host "Starting Docker Desktop..."
-        Start-Process -FilePath "C:\Program Files\Docker\Docker\Docker Desktop.exe"
-        Start-Sleep -Seconds 2
-        $dockerInfo = docker info --format '{{.ServerVersion}}' 2>$null
-    }
-
     Install-LandoInWSL
 }
 
