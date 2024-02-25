@@ -286,7 +286,8 @@ function Get-ResumeCommand {
     )
     Write-Debug "Building resume command string..."
 
-    $arguments = $MyInvocation.BoundParameters.GetEnumerator() | ForEach-Object {
+    # Strongly-typed array to avoid issues with the -join operator in some cases
+    [string[]]$arguments = $MyInvocation.BoundParameters.GetEnumerator() | ForEach-Object {
         if ($_.Value -is [switch]) {
             if ($_.Value) {
                 "-$($_.Key)"
