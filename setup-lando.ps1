@@ -278,16 +278,20 @@ function Get-FriendlySize {
 }
 
 # Builds the command to execute after a reboot
-#  -ScriptPath <path> : Path to the local script
+#  -ScriptPath <path> : Path to the script
+#  -BoundParameters <$MyInvocation.BoundParameters> : Pass in the $MyInvocation.BoundParameters for the script
 function Get-ResumeCommand {
     param(
         [Parameter(Mandatory, Position = 0)]
-        [string]$ScriptPath
+        [string]$ScriptPath,
+        [Parameter(Mandatory, Position = 1)]
+        $BoundParameters
+        
     )
     Write-Debug "Building resume command string..."
 
     # Strongly-typed array to avoid issues with the -join operator in some cases
-    [string[]]$arguments = $MyInvocation.BoundParameters.GetEnumerator() | ForEach-Object {
+    [string[]]$arguments = $BoundParameters.GetEnumerator() | ForEach-Object {
         if ($_.Value -is [switch]) {
             if ($_.Value) {
                 "-$($_.Key)"
@@ -578,7 +582,7 @@ if (-not $no_setup -and -not $resume) {
         $scriptBlock | Out-File -FilePath $localScriptPath -Encoding utf8 -Force
     }
 
-    $resumeCommand = Get-ResumeCommand -ScriptPath $localScriptPath
+    $resumeCommand = Get-ResumeCommand $localScriptPath $MyInvocation.BoundParameters
 
     Write-Debug "Adding RunOnce registry key to re-run the script after a reboot..."
     if (-not (Test-Path $runOnceKey)) {
