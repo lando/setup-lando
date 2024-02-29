@@ -123,7 +123,8 @@ module.exports = (version, {os, architecture, slim = false} = {}) => {
   const filename = os === 'Windows' ? `${parts.join('-')}.exe` : parts.join('-');
 
   // return the correct filename
-  return s3Releases.includes(version) || version.includes('preview') ? `${s3Base}/${filename}` : `${gitHubBase}/${version}/${filename}`;
+  return s3Releases.includes(version) || version.includes('preview')
+    ? `${s3Base}/${filename}` : `${gitHubBase}/${version}/${filename}`;
 };
 
 
@@ -480,7 +481,8 @@ module.exports = (spec, releases = [], dmv = 3) => {
     releases = releases
       .filter(release => release.prerelease === prerelease)
       .filter(release => semver.valid(semver.clean(release.tag_name)) !== null)
-      .filter(release => semver.satisfies(release.tag_name, `>=${mv} <${mv + 1}`, {loose: true, includePrerelease: true}));
+      .filter(release => semver.satisfies(release.tag_name, `>=${mv} <${mv + 1}`,
+        {loose: true, includePrerelease: true}));
 
     // theoretically our spec should be at the top so reset to that
     spec = releases[0].tag_name;
@@ -32788,6 +32790,9 @@ function httpRedirectFetch (fetchParams, response) {
     // https://fetch.spec.whatwg.org/#cors-non-wildcard-request-header-name
     request.headersList.delete('authorization')
 
+    // https://fetch.spec.whatwg.org/#authentication-entries
+    request.headersList.delete('proxy-authorization', true)
+
     // "Cookie" and "Host" are forbidden request-headers, which undici doesn't implement.
     request.headersList.delete('cookie')
     request.headersList.delete('host')
@@ -47658,7 +47663,8 @@ const main = async () => {
 
   // try/catch
   try {
-    const releases = await octokit.paginate('GET /repos/{owner}/{repo}/releases', {owner: 'lando', repo: 'cli', per_page: 100});
+    const releases =
+      await octokit.paginate('GET /repos/{owner}/{repo}/releases', {owner: 'lando', repo: 'cli', per_page: 100});
     core.debug(`found ${releases.length} valid releases`);
 
     // attempt to resolve the spec
@@ -47730,9 +47736,12 @@ const main = async () => {
     if (inputs.config) config = mergeConfig(config, inputs.config);
 
     // if telemetry is off on v3 then add in more config
-    if (!inputs.telemetry && lmv === 'v3') config = mergeConfig(config, [['stats[0].report', false], 'stats[0].url=https://metrics.lando.dev']);
-    // or if telemetry is off on v4 then add in more config
-    else if (!inputs.telemetry && lmv === 'v4') config = mergeConfig(config, [['core.telemetry', false]]);
+    if (!inputs.telemetry && lmv === 'v3') {
+      config = mergeConfig(config, [['stats[0].report', false], 'stats[0].url=https://metrics.lando.dev']);
+    } else if (!inputs.telemetry && lmv === 'v4') {
+      // or if telemetry is off on v4 then add in more config
+      config = mergeConfig(config, [['core.telemetry', false]]);
+    }
 
     // set config info
     core.startGroup('Configuration information');
