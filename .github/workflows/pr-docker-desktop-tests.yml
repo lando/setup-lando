@@ -42,12 +42,15 @@ jobs:
         run: |
           if [ "$RUNNER_OS" == "macOS" ]; then
             brew uninstall --force --ignore-dependencies docker-desktop
-          elif [ "$RUNNER_OS" == "Windows" ]; then
-            c:/Program Files/Docker/Docker/Docker Desktop Installer.exe uninstall
           elif [ "$RUNNER_OS" == "Linux" ]; then
             sudo apt-get remove docker-ce docker-ce-cli containerd.io
             sudo apt-get autoremove -y
           fi
+      - name: Uninstall Docker Desktop Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          & 'C:\Program Files\Docker\Docker\Docker Desktop Installer.exe' uninstall
       - name: Test if Docker Desktop is Uninstalled
         shell: bash
         run: |
