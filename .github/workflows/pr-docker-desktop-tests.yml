@@ -64,6 +64,8 @@ jobs:
         uses: ./
         with:
           dependency-check: false
+      - name: Run lando setup
+        run: lando setup -y
       - name: Run Docker Hello World
         run: |
           docker run hello-world
