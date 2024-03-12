@@ -11,6 +11,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        lando-version:
+          # - '3.14.0'
+          - '3-dev'
+          # - 'stable'
         os:
           - macos-13
           - macos-14
@@ -34,15 +38,18 @@ jobs:
           npm clean-install --prefer-offline --frozen-lockfile
           npm run prepare
       - name: Uninstall Docker Desktop
+        shell: bash
         run: |
           if [ "$RUNNER_OS" == "macOS" ]; then
             brew uninstall --force --ignore-dependencies docker-desktop
           elif [ "$RUNNER_OS" == "Windows" ]; then
             choco uninstall docker-desktop --yes
           elif [ "$RUNNER_OS" == "Linux" ]; then
-            sudo apt-get remove docker-desktop
+            sudo apt-get remove docker-ce docker-ce-cli containerd.io
+            sudo apt-get autoremove -y
           fi
       - name: Test if Docker Desktop is Uninstalled
+        shell: bash
         run: |
           if [ "$RUNNER_OS" == "macOS" ]; then
             if brew list --versions docker-desktop; then
@@ -63,9 +70,13 @@ jobs:
       - name: Setup Lando version
         uses: ./
         with:
-          dependency-check: false
-      - name: Run lando setup
-        run: lando setup -y
+          lando-version: ${{ matrix.lando-version }}
+          setup: lando setup --skip-common-plugins -y
+          debug: true
+          telemetry: false
+          config: |
+            setup.skipCommonPlugins=true
+            setup.plugins.@lando/core=latest
       - name: Run Docker Hello World
         run: |
           docker run hello-world
