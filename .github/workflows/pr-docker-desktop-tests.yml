@@ -45,12 +45,15 @@ jobs:
           elif [ "$RUNNER_OS" == "Linux" ]; then
             sudo apt-get remove docker-ce docker-ce-cli containerd.io
             sudo apt-get autoremove -y
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+            ls -la "$PROGRAMFILES\Docker\"
           fi
       - name: Uninstall Docker Desktop Windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          & 'C:\Program Files\Docker\Docker\Docker Desktop Installer.exe' uninstall
+          $dockerInstaller = Get-Command "$Env:ProgramFiles\Docker\Docker\Docker Desktop Installer.exe"
+          & $dockerInstaller.Source uninstall
       - name: Test if Docker Desktop is Uninstalled
         shell: bash
         run: |
@@ -60,7 +63,7 @@ jobs:
               exit 1
             fi
           elif [ "$RUNNER_OS" == "Windows" ]; then
-            if choco list --local-only docker-desktop; then
+            if docker --version; then
               echo "Docker Desktop is still installed"
               exit 1
             fi
@@ -74,7 +77,7 @@ jobs:
         uses: ./
         with:
           lando-version: ${{ matrix.lando-version }}
-          setup: lando setup --skip-common-plugins -y
+          setup: sudo lando setup --skip-common-plugins -y
           debug: true
           telemetry: false
           config: |
