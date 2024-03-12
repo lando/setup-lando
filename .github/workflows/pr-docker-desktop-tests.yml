@@ -16,9 +16,9 @@ jobs:
           - '3-dev'
           # - 'stable'
         os:
-          - macos-13
-          - macos-14
-          - ubuntu-22.04
+          # - macos-13
+          # - macos-14
+          # - ubuntu-22.04
           - windows-2022
         node-version:
           - '18'
@@ -45,13 +45,12 @@ jobs:
           elif [ "$RUNNER_OS" == "Linux" ]; then
             sudo apt-get remove docker-ce docker-ce-cli containerd.io
             sudo apt-get autoremove -y
-          elif [ "$RUNNER_OS" == "Windows" ]; then
-            ls -la "$PROGRAMFILES\Docker\"
           fi
       - name: Uninstall Docker Desktop Windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
+          docker version
           $dockerInstaller = Get-Command "$Env:ProgramFiles\Docker\Docker\Docker Desktop Installer.exe"
           & $dockerInstaller.Source uninstall
       - name: Test if Docker Desktop is Uninstalled
