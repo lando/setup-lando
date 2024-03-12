@@ -1,0 +1,69 @@
+name: Docker Desktop Tests 
+
+on:
+  pull_request:
+
+jobs:
+  setup-lando-dd-tests:
+    runs-on: ${{ matrix.os }}
+    env:
+      term: xterm
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-13
+          - macos-14
+          - ubuntu-22.04
+          - windows-2022
+        node-version:
+          - '18'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install node ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - name: Install dependencies and prepare
+        run: |
+          npm clean-install --prefer-offline --frozen-lockfile
+          npm run prepare
+      - name: Uninstall Docker Desktop
+        run: |
+          if [ "$RUNNER_OS" == "macOS" ]; then
+            brew uninstall --force --ignore-dependencies docker-desktop
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+            choco uninstall docker-desktop --yes
+          elif [ "$RUNNER_OS" == "Linux" ]; then
+            sudo apt-get remove docker-desktop
+          fi
+      - name: Test if Docker Desktop is Uninstalled
+        run: |
+          if [ "$RUNNER_OS" == "macOS" ]; then
+            if brew list --versions docker-desktop; then
+              echo "Docker Desktop is still installed"
+              exit 1
+            fi
+          elif [ "$RUNNER_OS" == "Windows" ]; then
+            if choco list --local-only docker-desktop; then
+              echo "Docker Desktop is still installed"
+              exit 1
+            fi
+          elif [ "$RUNNER_OS" == "Linux" ]; then
+            if dpkg -l | grep docker-desktop; then
+              echo "Docker Desktop is still installed"
+              exit 1
+            fi
+          fi
+      - name: Setup Lando version
+        uses: ./
+        with:
+          dependency-check: false
+      - name: Run Docker Hello World
+        run: |
+          docker run hello-world
