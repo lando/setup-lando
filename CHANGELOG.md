@@ -1,3 +1,8 @@
+
+## v2.3.1 - [March 13, 2024](https://github.com/lando/setup-lando/releases/tag/v2.3.1)
+
+* Fixed bug causing `3` and `4` GitHub convenience aliases to not resolve to the correct version
+
 ## v2.3.0 - [January 13, 2024](https://github.com/lando/setup-lando/releases/tag/v2.3.0)
 
 * Added support for approved `-slim` variants
