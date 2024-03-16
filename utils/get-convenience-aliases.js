@@ -10,6 +10,8 @@ exports.s3Releases = [
 ];
 
 exports.gitHubReleases = [
+  '3',
+  '4',
   'stable',
   'edge',
   '4-stable',
