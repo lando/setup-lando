@@ -324,7 +324,7 @@ function Install-Lando {
     }
 
     $filename = $downloadUrl.Split('/')[-1]
-    if (-not (Test-Path $LANDO_APPDATA)) {
+    if (-not (Test-Path "$LANDO_APPDATA" -ErrorAction SilentlyContinue)) {
         Write-Debug "Creating destination directory $LANDO_APPDATA..."
         New-Item -ItemType Directory -Path $LANDO_APPDATA -Force | Out-Null
     }
