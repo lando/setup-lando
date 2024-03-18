@@ -165,7 +165,7 @@ const main = async () => {
     if (lmv === 'v3' && getSetupCommand(inputs.setup) !== false) {
       // print warning if setup command does not exist and leave
       if (await exec.exec(landoPath, ['setup', '--help'], {ignoreReturnCode: true}) !== 0) {
-        core.warning('lando setup is only available in lando >= 3.21! Skipping!');
+        core.warning('lando setup is only available in lando >=3.21 <4! Skipping!');
 
       // if we get here then we should be G2G
       } else {

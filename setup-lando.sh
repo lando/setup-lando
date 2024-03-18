@@ -40,7 +40,6 @@ set -u
 
 # configuration things, at the top for quality of life
 LANDO_DEFAULT_MV="3"
-MACOS_NEWEST_UNSUPPORTED="15.0"
 MACOS_OLDEST_SUPPORTED="12.0"
 REQUIRED_CURL_VERSION="7.41.0"
 SEMVER_REGEX='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*))?(\+([0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*))?$'
@@ -128,7 +127,7 @@ get_installer_os
 # @TODO: dest
 ARCH="${LANDO_INSTALLER_ARCH:-"$INSTALLER_ARCH"}"
 DEBUG="${LANDO_INSTALLER_DEBUG:-${RUNNER_DEBUG:-}}"
-DEST="${LANDO_INSTALLER_DEST:-"${HOME}/.lando/bin"}"
+DEST="${LANDO_INSTALLER_DEST:-/usr/local/bin}"
 OS="${LANDO_INSTALLER_OS:-"$INSTALLER_OS"}"
 SUDO="${LANDO_INSTALLER_SUDO:-1}"
 SETUP="${LANDO_INSTALLER_SETUP:-1}"
@@ -143,7 +142,6 @@ ${tty_green}Options:${tty_reset}
   --arch           installs for this arch ${tty_dim}[default: ${ARCH}]${tty_reset}
   --dest           installs in this directory ${tty_dim}[default: ${DEST}]${tty_reset}
   --no-setup       installs without running lando setup ${tty_dim}3.21+ <4 only${tty_reset}
-  --no-sudo        installs without sudo ${tty_dim}may require additional manual setup${tty_reset}
   --os             installs for this os ${tty_dim}[default: ${OS}]${tty_reset}
   --version        installs this version ${tty_dim}[default: ${VERSION}]${tty_reset}
   --debug          shows debug messages
@@ -183,14 +181,9 @@ while [[ $# -gt 0 ]]; do
       usage
       ;;
     --no-setup)
-      SUDO="0"
+      SETUP="0"
       shift
       ;;
-    --no-sudo)
-      SUDO="0"
-      shift
-      ;;
-
     --os)
       OS="$2"
       shift 2
@@ -223,6 +216,7 @@ fi
 # redefine this one
 abort() {
   printf "${tty_red}ERROR${tty_reset}: %s\n" "$(chomp "$1")" >&2
+  exit 1
 }
 
 abort_multi() {
@@ -251,7 +245,7 @@ debug_multi() {
 }
 
 log() {
-  printf "$(shell_join "$@")"
+  printf "%s" "$(shell_join "$@")"
 }
 
 shell_join() {
@@ -282,11 +276,42 @@ debug raw DEBUG="$DEBUG"
 debug raw DEST="$DEST"
 debug raw OS="$OS"
 debug raw SETUP="$SETUP"
-debug raw SUDO="$SUDO"
 debug raw USER="$USER"
 debug raw VERSION="$VERSION"
 
 #######################################################################  tool-verification
+
+unset HAVE_SUDO_ACCESS
+
+have_sudo_access() {
+  if [[ ! -x "/usr/bin/sudo" ]]; then
+    return 1
+  fi
+
+  local -a SUDO=("/usr/bin/sudo")
+  if [[ -n "${SUDO_ASKPASS-}" ]]; then
+    SUDO+=("-A")
+  elif [[ -n "${NONINTERACTIVE-}" ]]; then
+    SUDO+=("-n")
+  fi
+
+  if [[ -z "${HAVE_SUDO_ACCESS-}" ]]; then
+    if [[ -n "${NONINTERACTIVE-}" ]]; then
+      "${SUDO[@]}" -l mkdir &>/dev/null
+    else
+      "${SUDO[@]}" -l -U "${USER}" &>/dev/null
+    fi
+    HAVE_SUDO_ACCESS="$?"
+  fi
+
+  if [[ "${HAVE_SUDO_ACCESS}" == 1 ]]; then
+    debug "${USER} does not appear to have sudo access!"
+  else
+    debug "${USER} has sudo access"
+  fi
+
+  return "${HAVE_SUDO_ACCESS}"
+}
 
 # shellcheck disable=SC2230
 find_tool() {
@@ -303,6 +328,10 @@ find_tool() {
       break
     fi
   done < <(which -a "$1")
+}
+
+major() {
+  echo "$1" | cut -d '.' -f1
 }
 
 major_minor() {
@@ -324,6 +353,7 @@ test_curl() {
   version_compare "$(major_minor "${curl_name_and_version##* }")" "$(major_minor "${REQUIRED_CURL_VERSION}")"
 }
 
+# returns true if maj.min a is greater than maj.min b
 version_compare() (
 	yy_a="$(echo "$1" | cut -d'.' -f1)"
 	yy_b="$(echo "$2" | cut -d'.' -f1)"
@@ -380,8 +410,6 @@ if [[ "${ORIGINAL_VERSION}" == "dev" ]] || [[ "${ORIGINAL_VERSION}" == "latest" 
   VERSION="${LANDO_DEFAULT_MV}-dev"
 fi
 
-# at this point we should be able to resolve release aliases
-
 # STABLE
 if [[ "${VERSION}" == "4-stable" ]]; then
   VERSION="$($CURL -fsSL https://raw.githubusercontent.com/lando/cli/main/release-aliases/4-STABLE | tr -s '[:blank:]')"
@@ -390,10 +418,6 @@ if [[ "${VERSION}" == "4-stable" ]]; then
 elif [[ "${VERSION}" == "3-stable" ]]; then
   VERSION="$($CURL -fsSL https://raw.githubusercontent.com/lando/cli/main/release-aliases/3-STABLE | tr -s '[:blank:]')"
   URL="https://github.com/lando/cli/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
-
-elif [[ "${VERSION}" == "3-stable-slim" ]]; then
-  VERSION="$($CURL -fsSL https://raw.githubusercontent.com/lando/cli/main/release-aliases/3-STABLE | tr -s '[:blank:]')"
-  URL="https://github.com/lando/cli/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}-slim"
 
 # EDGE
 elif [[ "${VERSION}" == "4-edge" ]]; then
@@ -404,10 +428,6 @@ elif [[ "${VERSION}" == "3-edge" ]]; then
   VERSION="$($CURL -fsSL https://raw.githubusercontent.com/lando/cli/main/release-aliases/3-EDGE | tr -s '[:blank:]')"
   URL="https://github.com/lando/cli/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
 
-elif [[ "${VERSION}" == "3-edge-slim" ]]; then
-  VERSION="$($CURL -fsSL https://raw.githubusercontent.com/lando/cli/main/release-aliases/3-EDGE | tr -s '[:blank:]')"
-  URL="https://github.com/lando/cli/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}-slim"
-
 # DEV
 elif [[ "${VERSION}" == "4-dev" ]]; then
   URL="https://files.lando.dev/cli/lando-${OS}-${ARCH}-dev"
@@ -415,10 +435,6 @@ elif [[ "${VERSION}" == "4-dev" ]]; then
 
 elif [[ "${VERSION}" == "3-dev" ]] ; then
   URL="https://files.lando.dev/cli/lando-${OS}-${ARCH}-dev"
-  VERSION_DEV=1
-
-elif [[ "${VERSION}" == "3-dev-slim" ]]; then
-  URL="https://files.lando.dev/cli/lando-${OS}-${ARCH}-dev-slim"
   VERSION_DEV=1
 
 # CUSTOM
@@ -429,13 +445,29 @@ else
   URL="https://github.com/lando/cli/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
 fi
 
-# debug version resolution
-debug "resolved version '${ORIGINAL_VERSION}' to ${VERSION} (${URL})"
-
-# get semver if it makes sense
+# Set some helper things
 if [[ -z "${VERSION_DEV-}" ]]; then
   SVERSION="${VERSION#v}"
-  debug using "$SVERSION" for version comparison purposes
+  LMV="$(major "$SVERSION")"
+  debug using "$SVERSION" for downstream version comparison purposes
+else
+  LMV="$(echo "$VERSION" | cut -c1)"
+fi
+
+# autoslim all v3 urls by default
+# @TODO: --fat flag to stop this?
+if [[ $LMV == '3' ]]; then
+  URL="${URL}-slim"
+  debug "autoslimin url for lando 3"
+fi
+
+# debug version resolution
+debug "resolved v${LMV} version '${ORIGINAL_VERSION}' to ${VERSION} (${URL})"
+
+# force setup to 0 if lando 4
+if [[ $SETUP == '1' ]] && [[ $LMV == '4' ]]; then
+  SETUP=0
+  debug "disabled autosetup --setup=${SETUP}, not needed in v${LMV}"
 fi
 
 ####################################################################### pre-script errors
@@ -446,30 +478,40 @@ if [[ "${EUID:-${UID}}" == "0" ]]; then
   abort "Cannot run this script as root"
 fi
 
-# abort if unsupported os
-if [[ "${OS}" != "macos" ]] && [[ "${OS}" != "linux" ]] ; then
+# abort if cannot write to dest
+if [[ ! -w "$DEST" ]] && ! have_sudo_access; then
   abort_multi "$(cat <<EOABORT
-This installer is only supported on macOS and Linux and not on ${tty_bold}${OS}${tty_reset}!
+${tty_bold}${USER}${tty_reset} cannot write to ${tty_red}${DEST}${tty_reset} and is not a ${tty_bold}sudo${tty_reset} user!
+Rerun setup with a sudoer or use --dest to install to a directory ${tty_bold}${USER}${tty_reset} can write to.
+For more information on advanced usage rerurn with --help or check out: ${tty_underline}${tty_magenta}https://docs.lando.dev/install/advanced.html${tty_reset}
+EOABORT
+)"
+fi
+
+# abort if unsupported os
+if [[ "${OS}" != "macos" ]] && [[ "${OS}" != "linux" ]]; then
+  abort_multi "$(cat <<EOABORT
+This script is only for ${tty_green}macOS${tty_reset} and ${tty_green}Linux${tty_reset}! ${tty_red}${OS}${tty_reset} is not supported!
 For installation on other OSes check out: ${tty_underline}${tty_magenta}https://docs.lando.dev/install${tty_reset}
 EOABORT
 )"
 fi
 
 # abort if unsupported arch
-if [[ "${ARCH}" != "x64" ]] && [[ "${ARCH}" != "arm64" ]] ; then
+if [[ "${ARCH}" != "x64" ]] && [[ "${ARCH}" != "arm64" ]]; then
   abort_multi "$(cat <<EOABORT
-Lando cannot be install on anything but ${tty_bold}x64${tty_reset} or ${tty_bold}arm64${tty_reset} based systems!
+Lando can only be installed on ${tty_green}x64${tty_reset} or ${tty_green}arm64${tty_reset} based systems!
 For requirements check out: ${tty_underline}${tty_magenta}https://docs.lando.dev/requirements${tty_reset}
 EOABORT
 )"
 fi
 
 # abort if macos version is too low
-if [[ "${OS}" == "macos" ]];then
+if [[ "${OS}" == "macos" ]]; then
   macos_version="$(major_minor "$(/usr/bin/sw_vers -productVersion)")"
   if ! version_compare "${macos_version}" "${MACOS_OLDEST_SUPPORTED}"; then
     abort_multi "$(cat <<EOABORT
-Your macOS version (${macos_version}) is ${tty_bold}too old${tty_reset}! Min required version is ${MACOS_OLDEST_SUPPORTED}
+Your macOS version ${tty_red}${macos_version}${tty_reset} is ${tty_bold}too old${tty_reset}! Min required version is ${tty_green}${MACOS_OLDEST_SUPPORTED}${tty_reset}
 For requirements check out: ${tty_underline}${tty_magenta}https://docs.lando.dev/requirements${tty_reset}
 EOABORT
 )"
@@ -479,7 +521,7 @@ fi
 # abort if non-dev version is non-semver
 if [[ -z "${VERSION_DEV-}" ]] && ! [[ "$SVERSION" =~ $SEMVER_REGEX ]]; then
   abort_multi "$(cat <<EOABORT
-"Lando version must be a valid semantic version or supported release alias. You gave '${SVERSION}' as the version."
+--version must be a ${tty_green}valid semantic version${tty_reset} or ${tty_green}supported release alias${tty_reset}. You gave ${tty_red}'${SVERSION}'${tty_reset} as the version.
 Check out ${tty_underline}${tty_magenta}https://github.com/lando/setup-lando${tty_reset} for more info.
 EOABORT
 )"
@@ -488,7 +530,7 @@ fi
 # abort if non-dev version is before 3.21
 if [[ -z "${VERSION_DEV-}" ]] && ! version_compare "$SVERSION" "3.21"; then
   abort_multi "$(cat <<EOABORT
-This installer is for Lando 3.21 and above!
+This script is for Lando ${tty_green}3.21${tty_reset} and above!
 To install ${VERSION} check out ${tty_underline}${tty_magenta}https://github.com/lando/lando/releases/${VERSION}${tty_reset}
 EOABORT
 )"
@@ -497,7 +539,7 @@ fi
 # abort if non-dev version is above 4
 if [[ -z "${VERSION_DEV-}" ]] && version_compare "$SVERSION" "5.0.0"; then
   abort_multi "$(cat <<EOABORT
-This installer is for Lando 3 and 4 only!
+This script is for Lando ${tty_green}3${tty_reset} and ${tty_green}4${tty_reset} only!
 EOABORT
 )"
 fi
@@ -509,7 +551,7 @@ if ! "${CURL}" --location --head --silent --fail "${URL}" &>/dev/null; then
   # shellcheck disable=SC2086
   debug_multi "curl" "$($CURL --location --head --silent $URL)"
   abort "$(cat <<EOABORT
-Could not resolve '${VERSION}' to a downloadable URL! (${URL})
+Could not resolve ${tty_red}'${VERSION}'${tty_reset} to a downloadable URL! (${URL})
 Make sure you are using a version that exists! Rerun with --debug for more info!
 EOABORT
 )"
@@ -519,30 +561,6 @@ else
 fi
 
 ####################################################################### pre-script warnings
-
-have_sudo_access() {
-  if [[ ! -x "/usr/bin/sudo" ]]; then
-    return 1
-  fi
-
-  local -a SUDO=("/usr/bin/sudo")
-  if [[ -n "${SUDO_ASKPASS-}" ]]; then
-    SUDO+=("-A")
-  elif [[ -n "${NONINTERACTIVE-}" ]]; then
-    SUDO+=("-n")
-  fi
-
-  if [[ -z "${HAVE_SUDO_ACCESS-}" ]]; then
-    if [[ -n "${NONINTERACTIVE-}" ]]; then
-      "${SUDO[@]}" -l mkdir &>/dev/null
-    else
-      "${SUDO[@]}" -l -U ${USER} &>/dev/null
-    fi
-    HAVE_SUDO_ACCESS="$?"
-  fi
-
-  return "${HAVE_SUDO_ACCESS}"
-}
 
 # Check if script is run non-interactively (e.g. CI)
 # If it is run non-interactively we should not prompt for passwords.
@@ -564,28 +582,10 @@ else
   log 'Running in non-interactive mode because `$NONINTERACTIVE` is set.'
 fi
 
-# warn if macOS is ahead
-if [[ "${OS}" == "macos" ]];then
-  macos_version="$(major_minor "$(/usr/bin/sw_vers -productVersion)")"
-  if ! version_compare "${MACOS_NEWEST_UNSUPPORTED}" "${macos_version}"; then
-    warn_multi "$(cat <<EOS
-
-You are using macOS ${macos_version} which is above our OFFICIALLY supported range!
-
-${tty_bold}This installation may not succeed. Then again, it also might be fine.${tty_reset}
-
-Basically we just want to tell you that you are in uncharted territory and YMMV.
-EOS
-)"
-  warn
-
-  fi
-fi
-
 # warn if arch mismatch
 if [[ "${ARCH}" != "${INSTALLER_ARCH}" ]]; then
   warn_multi "$(cat <<EOS
-Architecture mismatch! You are running on ${INSTALLER_ARCH} but are trying to install for ${ARCH}.
+Architecture mismatch! You are running on ${tty_yellow}${INSTALLER_ARCH}${tty_reset} but are trying to install for ${tty_yellow}${ARCH}${tty_reset}.
 This might be intentional but if it is not then this is us warning you.
 EOS
 )"
@@ -594,56 +594,75 @@ fi
 # warn if os mismatch
 if [[ "${OS}" != "${INSTALLER_OS}" ]]; then
   warn_multi "$(cat <<EOS
-OS mismatch! You are running on ${INSTALLER_OS} but are trying to install for ${OS}.
+OS mismatch! You are running on ${tty_yellow}${INSTALLER_OS}${tty_reset} but are trying to install for ${tty_yellow}${OS}${tty_reset}.
 This might be intentional but if it is not then this is us warning you.
 EOS
 )"
 fi
 
-# warn if sudo mismatch exists
-USER=bob
-if [[ "${SUDO}" -ne 0 ]] && ! have_sudo_access; then
-  warn "Trying to run with sudo but user '${USER}' "
+# @TODO: warn if setup is on but user does not have sudo access?
+if [[ "${SETUP}" == "1" ]] && ! have_sudo_access; then
+  warn_multi "$(cat <<EOS
+Lando setup ${tty_bold}may${tty_reset} require ${tty_bold}sudo${tty_reset} but it appears like ${tty_bold}${USER}${tty_reset} does not have sudo access!
+In this case you may want to rerun as a ${tty_bold}sudoer${tty_reset} or have a ${tty_bold}sudoer${tty_reset} install
+needed dependencies before/after running this script.
+EOS
+)"
 fi
 
+####################################################################### script
 
+execute() {
+  if ! "$@"; then
+    abort "$(printf "Failed during: %s" "$(shell_join "$@")")"
+  fi
+}
+
+execute_sudo() {
+  local -a args=("$@")
+  if [[ "${EUID:-${UID}}" != "0" ]] && have_sudo_access; then
+    if [[ -n "${SUDO_ASKPASS-}" ]]; then
+      args=("-A" "${args[@]}")
+    fi
+    debug "/usr/bin/sudo" "${args[@]}"
+    execute "/usr/bin/sudo" "${args[@]}"
+  else
+    debug "${args[@]}"
+    execute "${args[@]}"
+  fi
+}
+
+# Invalidate sudo timestamp before exiting (if it wasn't active before).
+if [[ -x /usr/bin/sudo ]] && ! /usr/bin/sudo -n -v 2>/dev/null; then
+  trap '/usr/bin/sudo -k' EXIT
+fi
+
+# Things can fail later if `pwd` doesn't exist.
+# Also sudo prints a warning message for no good reason
+cd "/usr" || exit 1
+
+# if NONINTERACTIVE then show a summary of what we are going to do:
+
+
+# check for exist/permission on DEST etc
+  # elevate to sudo if needed
+
+# install to location, make executable etc
+
+# if setup is indicated and lmv=3 then run setup
+  # make sure we turn SETUP off if range is not satisfied?
+
+# run shellenv --add? and eval?
+
+# if lando is not in path then see if eval shellenv works and print useful message
+
+
+# finish?
 
 exit 0
 
 # if we get here we are solidly in "warning" territory
 
-
-
-# check_run_command_as_root() {
-#   [[ "${EUID:-${UID}}" == "0" ]] || return
-
-#   # Allow Azure Pipelines/GitHub Actions/Docker/Concourse/Kubernetes to do everything as root (as it's normal there)
-#   [[ -f /.dockerenv ]] && return
-#   [[ -f /run/.containerenv ]] && return
-#   [[ -f /proc/1/cgroup ]] && grep -E "azpl_job|actions_job|docker|garden|kubepods" -q /proc/1/cgroup && return
-
-#   abort "Don't run this as root!"
-# }
-
-# execute() {
-#   if ! "$@"; then
-#     abort "$(printf "Failed during: %s" "$(shell_join "$@")")"
-#   fi
-# }
-
-# execute_sudo() {
-#   local -a args=("$@")
-#   if [[ "${EUID:-${UID}}" != "0" ]] && have_sudo_access; then
-#     if [[ -n "${SUDO_ASKPASS-}" ]]; then
-#       args=("-A" "${args[@]}")
-#     fi
-#     ohai "/usr/bin/sudo" "${args[@]}"
-#     execute "/usr/bin/sudo" "${args[@]}"
-#   else
-#     ohai "${args[@]}"
-#     execute "${args[@]}"
-#   fi
-# }
 
 # exists_but_not_writable() {
 #   [[ -e "$1" ]] && ! [[ -r "$1" && -w "$1" && -x "$1" ]]
@@ -708,79 +727,7 @@ exit 0
 #   type -P "$@"
 # }
 
-# # Required installation paths. To install elsewhere (which is unsupported)
-# # you can untar https://github.com/Homebrew/brew/tarball/master
-# # anywhere you like.
-# if [[ -n "${HOMEBREW_ON_MACOS-}" ]]
-# then
-#   UNAME_MACHINE="$(/usr/bin/uname -m)"
 
-#   if [[ "${UNAME_MACHINE}" == "arm64" ]]
-#   then
-#     # On ARM macOS, this script installs to /opt/homebrew only
-#     HOMEBREW_PREFIX="/opt/homebrew"
-#     HOMEBREW_REPOSITORY="${HOMEBREW_PREFIX}"
-#   else
-#     # On Intel macOS, this script installs to /usr/local only
-#     HOMEBREW_PREFIX="/usr/local"
-#     HOMEBREW_REPOSITORY="${HOMEBREW_PREFIX}/Homebrew"
-#   fi
-#   HOMEBREW_CACHE="${HOME}/Library/Caches/Homebrew"
-
-#   STAT_PRINTF=("stat" "-f")
-#   PERMISSION_FORMAT="%A"
-#   CHOWN=("/usr/sbin/chown")
-#   CHGRP=("/usr/bin/chgrp")
-#   GROUP="admin"
-#   TOUCH=("/usr/bin/touch")
-#   INSTALL=("/usr/bin/install" -d -o "root" -g "wheel" -m "0755")
-# else
-#   UNAME_MACHINE="$(uname -m)"
-
-#   # On Linux, this script installs to /home/linuxbrew/.linuxbrew only
-#   HOMEBREW_PREFIX="/home/linuxbrew/.linuxbrew"
-#   HOMEBREW_REPOSITORY="${HOMEBREW_PREFIX}/Homebrew"
-#   HOMEBREW_CACHE="${HOME}/.cache/Homebrew"
-
-#   STAT_PRINTF=("stat" "--printf")
-#   PERMISSION_FORMAT="%a"
-#   CHOWN=("/bin/chown")
-#   CHGRP=("/bin/chgrp")
-#   GROUP="$(id -gn)"
-#   TOUCH=("/bin/touch")
-#   INSTALL=("/usr/bin/install" -d -o "${USER}" -g "${GROUP}" -m "0755")
-# fi
-# CHMOD=("/bin/chmod")
-# MKDIR=("/bin/mkdir" "-p")
-# HOMEBREW_BREW_DEFAULT_GIT_REMOTE="https://github.com/Homebrew/brew"
-# HOMEBREW_CORE_DEFAULT_GIT_REMOTE="https://github.com/Homebrew/homebrew-core"
-
-# # Use remote URLs of Homebrew repositories from environment if set.
-# HOMEBREW_BREW_GIT_REMOTE="${HOMEBREW_BREW_GIT_REMOTE:-"${HOMEBREW_BREW_DEFAULT_GIT_REMOTE}"}"
-# HOMEBREW_CORE_GIT_REMOTE="${HOMEBREW_CORE_GIT_REMOTE:-"${HOMEBREW_CORE_DEFAULT_GIT_REMOTE}"}"
-# # The URLs with and without the '.git' suffix are the same Git remote. Do not prompt.
-# if [[ "${HOMEBREW_BREW_GIT_REMOTE}" == "${HOMEBREW_BREW_DEFAULT_GIT_REMOTE}.git" ]]
-# then
-#   HOMEBREW_BREW_GIT_REMOTE="${HOMEBREW_BREW_DEFAULT_GIT_REMOTE}"
-# fi
-# if [[ "${HOMEBREW_CORE_GIT_REMOTE}" == "${HOMEBREW_CORE_DEFAULT_GIT_REMOTE}.git" ]]
-# then
-#   HOMEBREW_CORE_GIT_REMOTE="${HOMEBREW_CORE_DEFAULT_GIT_REMOTE}"
-# fi
-# export HOMEBREW_{BREW,CORE}_GIT_REMOTE
-
-
-
-
-
-# # Invalidate sudo timestamp before exiting (if it wasn't active before).
-# if [[ -x /usr/bin/sudo ]] && ! /usr/bin/sudo -n -v 2>/dev/null; then
-#   trap '/usr/bin/sudo -k' EXIT
-# fi
-
-# # Things can fail later if `pwd` doesn't exist.
-# # Also sudo prints a warning message for no good reason
-# cd "/usr" || exit 1
 
 # ####################################################################### script
 
