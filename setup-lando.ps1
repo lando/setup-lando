@@ -302,7 +302,7 @@ function Get-ResumeCommand {
         }
     }
     $argString = ($arguments += "-resume") -join " "
-    $command = ("powershell.exe -ExecutionPolicy Bypass -File `"$ScriptPath`" $argString").Trim()
+    $command = ("PowerShell -NoLogo -NoExit -ExecutionPolicy Bypass -Command `"$ScriptPath`" $argString").Trim()
     
     Write-Debug "Resume command: $command"
     return $command
