@@ -303,7 +303,7 @@ function Get-ResumeCommand {
     }
     $argString = ($arguments += "-resume") -join " "
     if ($script:resolvedVersion) {
-        $argString += " -version=$script:resolvedVersion"
+        $argString += " -version `"$script:resolvedVersion`""
     }
     $command = ("PowerShell -NoLogo -NoExit -ExecutionPolicy Bypass -Command `"$ScriptPath`" $argString").Trim()
     
