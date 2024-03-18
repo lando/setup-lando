@@ -583,7 +583,7 @@ if (-not $no_setup -and -not $resume) {
         $localScriptPath = "$LANDO_APPDATA\setup-lando.ps1"
         Write-Debug "Saving script to $localScriptPath..."
         $scriptBlock = $MyInvocation.MyCommand.ScriptBlock
-        $scriptBlock | Out-File -FilePath $localScriptPath -Encoding utf8 -Force
+        $scriptBlock | Set-Content -Path $localScriptPath -Encoding utf8 -Force
     }
 
     # Install Lando in Windows
