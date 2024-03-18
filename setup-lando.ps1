@@ -327,10 +327,6 @@ function Install-Lando {
     }
 
     $filename = $downloadUrl.Split('/')[-1]
-    if (-not (Test-Path "$LANDO_APPDATA" -ErrorAction SilentlyContinue)) {
-        Write-Debug "Creating destination directory $LANDO_APPDATA..."
-        New-Item -ItemType Directory -Path $LANDO_APPDATA -Force | Out-Null
-    }
 
     Write-Host "Downloading Lando CLI..."
     $downloadDest = "$LANDO_APPDATA\$filename"
@@ -571,6 +567,12 @@ Confirm-Environment
 
 # Select the appropriate architecture
 $arch = Select-Architecture
+
+# Set up our working directory
+if (-not (Test-Path "$LANDO_APPDATA" -ErrorAction SilentlyContinue)) {
+    Write-Debug "Creating destination directory $LANDO_APPDATA..."
+    New-Item -ItemType Directory -Path $LANDO_APPDATA -Force | Out-Null
+}
 
 # Add a RunOnce registry key so Windows will automatically resume the script when interrupted by a reboot
 $runOnceKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
