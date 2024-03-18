@@ -586,14 +586,6 @@ if (-not $no_setup -and -not $resume) {
         $scriptBlock | Out-File -FilePath $localScriptPath -Encoding utf8 -Force
     }
 
-    $resumeCommand = Get-ResumeCommand $localScriptPath $MyInvocation.BoundParameters
-
-    Write-Debug "Adding RunOnce registry key to re-run the script after a reboot..."
-    if (-not (Test-Path $runOnceKey)) {
-        New-Item -Path $runOnceKey -Force | Out-Null
-    }
-    New-ItemProperty -Path $runOnceKey -Name $runOnceName -Value $resumeCommand -PropertyType String -Force | Out-Null
-
     # Install Lando in Windows
     if (-not $wsl_only) {
         Uninstall-LegacyLando
@@ -601,7 +593,16 @@ if (-not $no_setup -and -not $resume) {
         Install-Lando
 
         if (-not $no_setup) {
-            # Dependency installation may trigger a reboot
+            # Dependency installation may trigger a reboot so make sure we can resume after
+            $resumeCommand = Get-ResumeCommand $localScriptPath $MyInvocation.BoundParameters
+
+            Write-Debug "Adding RunOnce registry key to re-run the script after a reboot..."
+            if (-not (Test-Path $runOnceKey)) {
+                New-Item -Path $runOnceKey -Force | Out-Null
+            }
+            New-ItemProperty -Path $runOnceKey -Name $runOnceName -Value $resumeCommand -PropertyType String -Force | Out-Null
+
+            # Let Lando take over for dependecy installation. A system reboot may happen here.
             Invoke-LandoSetup
 
             # If we get here, a reboot didn't happen, so we won't need to resume later.
