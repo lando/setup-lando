@@ -321,6 +321,7 @@ find_tool() {
   done < <(which -a "$1")
 }
 
+# shellcheck disable=SC2317
 exists_but_not_writable() {
   [[ -e "$1" ]] && ! [[ -r "$1" && -w "$1" && -x "$1" ]]
 }
@@ -656,7 +657,7 @@ getc() {
 }
 
 execute() {
-  debug ${tty_blue}running${tty_reset} "$@"
+  debug "${tty_blue}running${tty_reset}" "$@"
   if ! "$@"; then
     abort "$(printf "Failed during: %s" "$(shell_join "$@")")"
   fi
