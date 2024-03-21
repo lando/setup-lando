@@ -13,6 +13,9 @@ jobs:
       matrix:
         os:
           - ubuntu-22.04
+        fat:
+          - --fat
+          - ''
         success-version:
           - '3'
           - 'v3.21.0-alpha.9'
@@ -35,5 +38,15 @@ jobs:
       - name: Setup Lando version ${{ matrix.success-version }}
         shell: bash
         run: |
-          ./setup-lando.sh --version=${{ matrix.success-version }} --no-setup
-          lando version
+          ./setup-lando.sh --version=${{ matrix.success-version }} --no-setup ${{ matrix.fat }}
+          lando version --all
+
+          # test slim|fat on lando 3
+          if lando version | grep "v3."; then
+            if [[ "${{ matrix.fat }}" == "--fat" ]]; then
+              lando config --path cli.slim | grep true
+            else
+              lando config --path cli.slim | grep false
+            fi
+          fi
+
