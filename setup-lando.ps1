@@ -27,6 +27,10 @@ $resolvedVersion = $null
 
 Set-StrictMode -Version 1
 
+# Stop execution of this script if any cmdlet fails.
+# We'll still need to check exit codes on any exe we run.
+$ErrorActionPreference = "Stop"
+
 # Normalize debug preference
 $DebugPreference = If ($debug) { "Continue" } Else { $DebugPreference }
 if ($DebugPreference -eq "Inquire" -or $DebugPreference -eq "Continue") {
