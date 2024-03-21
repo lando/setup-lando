@@ -1,0 +1,34 @@
+name: Run Docs Tests
+
+on:
+  pull_request:
+
+jobs:
+  docs-tests:
+    runs-on: ${{ matrix.os }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      DEBUG: "@lando/*"
+    strategy:
+      matrix:
+        os:
+          - ubuntu-22.04
+        node-version:
+          - "18"
+    steps:
+      # Install deps and cache
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Install node ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - name: Install dependencies
+        run: npm clean-install --prefer-offline --frozen-lockfile
+
+      # Run tests
+      - name: Run linter
+        run: npm run lint
+      - name: Test build
+        run: npm run docs:build
