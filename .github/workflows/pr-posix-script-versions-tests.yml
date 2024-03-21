@@ -44,9 +44,9 @@ jobs:
           # test slim|fat on lando 3
           if lando version | grep "v3."; then
             if [[ "${{ matrix.fat }}" == "--fat" ]]; then
-              lando config --path cli.slim | grep true
-            else
               lando config --path cli.slim | grep false
+            else
+              lando config --path cli.slim | grep true
             fi
           fi
 
