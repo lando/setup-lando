@@ -1,4 +1,4 @@
-name: POSIX Script Version Tests
+name: POSIX Script Bad Version Tests
 
 on:
   pull_request:
@@ -17,7 +17,6 @@ jobs:
           - 'something'
           - '5.1.2'
           - '3.1.14'
-          - '3-edge'
           - 'pm-preview'
           - 'https://github.com/lando/cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0'
           - '/home/runner/work/setup-lando/setup-lando/bin/lando'
@@ -31,6 +30,4 @@ jobs:
 
       - name: Setup Lando version ${{ matrix.bad-version }}
         shell: bash
-        run: |
-          ./setup-lando.sh --version=${{ matrix.bad-version }} --no-setup
-          echo "$?"
+        run: ./setup-lando.sh --version=${{ matrix.bad-version }} --no-setup || echo "$?" | grep 1

@@ -461,11 +461,11 @@ elif [[ "${VERSION}" == "3-edge" ]]; then
   URL="https://github.com/lando/cli/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
 
 # DEV
-elif [[ "${VERSION}" == "4-dev" ]]; then
+elif [[ "${VERSION}" == "4-dev" ]] || [[ "${VERSION}" == "4-latest" ]]; then
   URL="https://files.lando.dev/cli/lando-${OS}-${ARCH}-dev"
   VERSION_DEV=1
 
-elif [[ "${VERSION}" == "3-dev" ]] ; then
+elif [[ "${VERSION}" == "3-dev" ]] [[ "${VERSION}" == "3-latest" ]]; then
   URL="https://files.lando.dev/cli/lando-${OS}-${ARCH}-dev"
   VERSION_DEV=1
 
