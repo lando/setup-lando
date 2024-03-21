@@ -42,6 +42,8 @@ $Host.PrivateData.DebugBackgroundColor = $Host.UI.RawUI.BackgroundColor
 # Encoding must be Unicode to support parsing wsl.exe output
 [Console]::OutputEncoding = [System.Text.Encoding]::Unicode
 
+Write-Host "Lando Windows Installer" -ForegroundColor Cyan
+
 function Show-Help {
     Write-Host "Usage: setup-lando.ps1 [-arch <x64|arm64>] [-dest <path>] [-no_setup] [-no_wsl] [-version <version>] [-debug] [-help]"
     Write-Host "  -arch <x64|arm64>  : Architecture to install (defaults to system architecture)"
@@ -563,7 +565,7 @@ if ($help) {
 }
 
 if ($resume) {
-    Write-Host "Lando installation was interrupted by a Windows restart. Resuming..." -ForegroundColor Cyan
+    Write-Host "Lando installation was previously interrupted by a Windows restart. Resuming..."
 }
 
 # Validate the system environment
