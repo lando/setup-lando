@@ -14,28 +14,17 @@ jobs:
         os:
           - ubuntu-22.04
         success-version:
-          - '3.x'
-          - '>2'
           - '3'
-          - '3.14'
-          - '3.14.0'
-          - 'v3.21.0-alpha.9-slim'
-          - '3-slim'
+          - 'v3.21.0-alpha.9'
           - '3-stable'
-          - '3-stable-slim'
           - '3-edge'
-          - '3-edge-slim'
+          - '3-edge'
           - '3-latest'
           - '3-dev'
-          - '3-dev-slim'
           - 'stable'
           - 'edge'
           - 'latest'
           - 'dev'
-          - 'pm-preview'
-          - 'https://github.com/lando/cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0'
-          - '/home/runner/work/setup-lando/setup-lando/bin/lando'
-          - './bin/lando'
 
     steps:
       - name: Checkout code
@@ -45,7 +34,6 @@ jobs:
 
       - name: Setup Lando version ${{ matrix.success-version }}
         shell: bash
-        run: ./setup-lando.sh --version=${{ matrix.success-version }} --no-setup
-      - name: Verify Lando is in PATH
-        shell: bash
-        run: lando version
+        run: |
+          ./setup-lando.sh --version=${{ matrix.success-version }} --no-setup
+          lando version
