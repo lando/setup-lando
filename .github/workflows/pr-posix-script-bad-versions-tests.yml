@@ -1,0 +1,33 @@
+name: POSIX Script Bad Version Tests
+
+on:
+  pull_request:
+
+jobs:
+  setup-lando-os-test:
+    runs-on: ${{ matrix.os }}
+    env:
+      term: xterm
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-22.04
+        bad-version:
+          - 'something'
+          - '5.1.2'
+          - '3.1.14'
+          - 'pm-preview'
+          - 'https://github.com/lando/cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0'
+          - '/home/runner/work/setup-lando/setup-lando/bin/lando'
+          - './bin/lando'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Lando version ${{ matrix.bad-version }}
+        shell: bash
+        run: ./setup-lando.sh --version=${{ matrix.bad-version }} --no-setup || echo "$?" | grep 1

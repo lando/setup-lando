@@ -1,3 +1,21 @@
+## v3.0.0 - [December 15, 2023](https://github.com/lando/setup-lando/releases/tag/v3.0.0)
+
+### **BREAKING CHANGES**
+
+* Removed `dependency-check` in favor of mechanisms provided by `lando setup`
+
+### New Features
+
+### Bug Fixes
+
+* Fixed `auto-setup` so it _does not_ run on Lando 4_
+
+### Internal
+
+### DEPRECATIONS
+
+* Deprecated `setup` in favor of `auto-setup`
+
 ## v2.3.1 - [March 13, 2024](https://github.com/lando/setup-lando/releases/tag/v2.3.1)
 
 * Fixed bug causing `3` and `4` GitHub convenience aliases to not resolve to the correct version

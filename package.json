@@ -35,6 +35,7 @@
     "@vercel/ncc": "^0.38.1",
     "eslint": "^7.32.0",
     "eslint-config-google": "^0.9.1",
+    "shellcheck": "^2.2.0",
     "ua-parser-js": "^1.0.37",
     "vitepress": "^1.0.0-rc.42"
   },
@@ -42,7 +43,7 @@
     "docs:dev": "vitepress dev docs --debug",
     "docs:build": "vitepress build docs",
     "docs:preview": "vitepress preview docs",
-    "lint": "eslint . --ext .js --ext .mjs ",
+    "lint": "eslint . --ext .js --ext .mjs && shellcheck setup-lando.sh",
     "prepare": "ncc build setup-lando.js -o dist --source-map --license licenses.txt"
   }
 }

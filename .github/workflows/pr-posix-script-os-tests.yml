@@ -1,4 +1,4 @@
-name: OS Tests
+name: POSIX Script OS Tests
 
 on:
   pull_request:
@@ -15,26 +15,21 @@ jobs:
           - macos-13
           - macos-14
           - ubuntu-22.04
-          - windows-2022
-        node-version:
-          - '18'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Install node ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
+
       - name: Install dependencies and prepare
         run: |
           npm clean-install --prefer-offline --frozen-lockfile
           npm run prepare
 
-      - name: Setup Lando version
-        uses: ./
-        with:
-          dependency-check: false
+      - name: Setup Lando version ${{ matrix.os }}
+        shell: bash
+        run: |
+          ./setup-lando.sh --debug
+          lando version --all
+

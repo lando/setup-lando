@@ -1,4 +1,4 @@
-name: Dep Tests
+name: Actions Version File Tests
 
 on:
   pull_request:
@@ -15,11 +15,9 @@ jobs:
           - ubuntu-22.04
         node-version:
           - '18'
-        dependency-check:
-          - error
-          - warn
-          - false
-          - bogussssss
+        lando-version-file:
+          - '.lando-version'
+          - '.tool-versions'
 
     steps:
       - name: Checkout code
@@ -36,8 +34,7 @@ jobs:
           npm clean-install --prefer-offline --frozen-lockfile
           npm run prepare
 
-      - name: Setup Lando version
+      - name: Setup Lando version ${{ matrix.lando-version-file }}
         uses: ./
         with:
-          debug: true
-          dependency-check: ${{ matrix.dependency-check }}
+          lando-version-file: ${{ matrix.lando-version-file }}

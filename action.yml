@@ -16,6 +16,10 @@ inputs:
     description: "The architecture to use. Defaults to system architecture."
     required: false
     default: ${{ runner.arch }}
+  auto-setup:
+    description: "The lando setup configuration"
+    required: false
+    default: auto
   config:
     description: "A list of . delimited config."
     required: false
@@ -26,10 +30,6 @@ inputs:
     description: "Toggle debug output. (deprecated). Use https://github.blog/changelog/2022-05-24-github-actions-re-run-jobs-with-debug-logging/ instead."
     required: false
     default: false
-  dependency-check:
-    description: "The seriousness of dependency check failure."
-    required: false
-    default: error
   os:
     description: "The OS to use. Defaults to system OS."
     required: false

@@ -1,4 +1,4 @@
-name: File Tests
+name: Actions OS Tests
 
 on:
   pull_request:
@@ -12,12 +12,12 @@ jobs:
       fail-fast: false
       matrix:
         os:
+          - macos-13
+          - macos-14
           - ubuntu-22.04
+          - windows-2022
         node-version:
           - '18'
-        lando-version-file:
-          - '.lando-version'
-          - '.tool-versions'
 
     steps:
       - name: Checkout code
@@ -34,7 +34,6 @@ jobs:
           npm clean-install --prefer-offline --frozen-lockfile
           npm run prepare
 
-      - name: Setup Lando version ${{ matrix.lando-version-file }}
+      - name: Setup Lando version
         uses: ./
-        with:
-          lando-version-file: ${{ matrix.lando-version-file }}
+

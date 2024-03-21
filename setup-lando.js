@@ -14,17 +14,17 @@ const {execSync} = require('child_process');
 const {GitHub, getOctokitOptions} = require('@actions/github/lib/utils');
 const {paginateRest} = require('@octokit/plugin-paginate-rest');
 
-const canBeSlim = require('./lib/can-be-slim');
-const getConfigFile = require('./lib/get-config-file');
-const getDownloadUrl = require('./lib/get-download-url');
-const getGCFPath = require('./lib/get-gcf-path');
-const getInputs = require('./lib/get-inputs');
-const getFileVersion = require('./lib/get-file-version');
-const getObjectKeys = require('./lib/get-object-keys');
-const getSetupCommand = require('./lib/get-setup-command');
-const mergeConfig = require('./lib/merge-config');
-const parseSetupCommand = require('./lib/parse-setup-command');
-const resolveVersionSpec = require('./lib/resolve-version-spec');
+const canBeSlim = require('./utils/can-be-slim');
+const getConfigFile = require('./utils/get-config-file');
+const getDownloadUrl = require('./utils/get-download-url');
+const getGCFPath = require('./utils/get-gcf-path');
+const getInputs = require('./utils/get-inputs');
+const getFileVersion = require('./utils/get-file-version');
+const getObjectKeys = require('./utils/get-object-keys');
+const getSetupCommand = require('./utils/get-setup-command');
+const mergeConfig = require('./utils/merge-config');
+const parseSetupCommand = require('./utils/parse-setup-command');
+const resolveVersionSpec = require('./utils/resolve-version-spec');
 
 const main = async () => {
   // ensure needed RUNNER_ vars are set
@@ -44,6 +44,9 @@ const main = async () => {
   if (inputs.landoVersion && inputs.landoVersionFile) {
     core.warning('Both lando-version and lando-version-file inputs are specified, only lando-version will be used');
   }
+
+  // prefer autoSetup to setup because setup is DEPRECATED
+  inputs.setup = inputs.autoSetup ?? inputs.setup;
 
   // determine lando version spec to install
   const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
@@ -159,10 +162,10 @@ const main = async () => {
     }
 
     // if setup is non-false then we want to try to run it if we can
-    if (getSetupCommand(inputs.setup) !== false) {
+    if (lmv === 'v3' && getSetupCommand(inputs.setup) !== false) {
       // print warning if setup command does not exist and leave
       if (await exec.exec(landoPath, ['setup', '--help'], {ignoreReturnCode: true}) !== 0) {
-        core.warning('lando setup is only available in lando >= 3.21! Skipping!');
+        core.warning('lando setup is only available in lando >=3.21 <4! Skipping!');
 
       // if we get here then we should be G2G
       } else {
@@ -171,26 +174,6 @@ const main = async () => {
         await exec.exec(landoPath, args, opts);
       }
     }
-
-    // run v3 dep check
-    // @TODO: validate setup here?
-    // for v3 its just validate orchestratorBin run docker info?
-    // for v4 its run lando status
-    // remove dep check below when done
-    if (lmv === 'v3' && ['warn', 'error'].includes(inputs.dependencyCheck)) {
-      const docker = await exec.exec('docker', ['info'], {ignoreReturnCode: true});
-      const dockerCompose = await exec.exec('docker-compose', ['--version'], {ignoreReturnCode: true});
-      const func = inputs.dependencyCheck === 'warn' ? core.warning : core.setFailed;
-      const suffix = 'See: https://docs.lando.dev/getting-started/installation.html';
-      if (docker !== 0 ) {
-        func(`Something is wrong with Docker! Make sure Docker is installed correctly and running. ${suffix}`);
-      }
-      if (dockerCompose !== 0 ) {
-        func(`Something is wrong with Docker Compose! Make sure Docker Compose 1.x is installed correctly. ${suffix}`);
-      }
-    }
-
-    // @TODO: v4 dep checking?
 
     // if debug then print the entire lando config
     if (core.isDebug() || inputs.debug) await exec.exec(landoPath, ['config']);

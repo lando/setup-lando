@@ -1,0 +1,52 @@
+name: POSIX Script Version Tests
+
+on:
+  pull_request:
+
+jobs:
+  setup-lando-os-test:
+    runs-on: ${{ matrix.os }}
+    env:
+      term: xterm
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-22.04
+        fat:
+          - --fat
+          - ''
+        success-version:
+          - '3'
+          - 'v3.21.0-beta.10'
+          - '3-stable'
+          - '3-edge'
+          - '3-edge'
+          - '3-latest'
+          - '3-dev'
+          - 'stable'
+          - 'edge'
+          - 'latest'
+          - 'dev'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Lando version ${{ matrix.success-version }}
+        shell: bash
+        run: |
+          ./setup-lando.sh --version=${{ matrix.success-version }} --no-setup ${{ matrix.fat }}
+          lando version --all
+
+          # test slim|fat on lando 3
+          if lando version | grep "v3."; then
+            if [[ "${{ matrix.fat }}" == "--fat" ]]; then
+              lando config --path cli.slim | grep false
+            else
+              lando config --path cli.slim | grep true
+            fi
+          fi
+

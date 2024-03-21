@@ -1,506 +1,6 @@
 require('./sourcemap-register.js');/******/ (() => { // webpackBootstrap
 /******/ 	var __webpack_modules__ = ({
 
-/***/ 5074:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const satisfies = __nccwpck_require__(6055);
-const {s3Releases} = __nccwpck_require__(6709);
-
-module.exports = version => {
-  // slim can be any v3 s3 alias
-  if (s3Releases.includes(version)) return version.split('-')[0] === '3';
-  // or anything in the range
-  return satisfies(version, '>3.20 <4', {includePrerelease: true, loose: true});
-};
-
-
-/***/ }),
-
-/***/ 5305:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const core = __nccwpck_require__(2186);
-const fs = __nccwpck_require__(7147);
-const path = __nccwpck_require__(1017);
-const yaml = __nccwpck_require__(1917);
-
-module.exports = file => {
-  // if no file then return empty config
-  if (!file) return;
-  // if file is not absolute then prepend some bases as needed
-  if (!path.isAbsolute(file)) file = path.join(process.env.GITHUB_WORKSPACE || process.cwd(), file);
-  // if the file does not exist then notify and return
-  if (!fs.existsSync(file)) {
-    core.notice(`Could not locate a config file at ${file}`);
-    return;
-  }
-  // otherwise return the config values
-  try {
-    return yaml.load(fs.readFileSync(file));
-  } catch {
-    core.error(`Error reading config file ${file}`);
-  }
-};
-
-
-/***/ }),
-
-/***/ 6709:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-exports.s3Releases = [
-  'dev',
-  'latest',
-  '4-dev',
-  '4-latest',
-  '3-dev',
-  '3-latest',
-];
-
-exports.gitHubReleases = [
-  '3',
-  '4',
-  'stable',
-  'edge',
-  '4-stable',
-  '4-edge',
-  '3-stable',
-  '3-edge',
-];
-
-
-/***/ }),
-
-/***/ 4458:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const isValidUrl = __nccwpck_require__(6769);
-const {s3Releases} = __nccwpck_require__(6709);
-
-const s3Base = 'https://files.lando.dev/cli';
-const gitHubBase = 'https://github.com/lando/cli/releases/download';
-
-module.exports = (version, {os, architecture, slim = false} = {}) => {
-  // if version is actually a downlaod url then just return that right away
-  if (isValidUrl(version)) return version;
-
-  // otherwise start by building the lando file string
-  const parts = ['lando'];
-  parts.push(os === 'Windows' ? 'win' : os.toLowerCase());
-  parts.push(architecture.toLowerCase());
-
-  // if version is a dev release from s3
-  // @TODO: we allow s3 convenience aliases with major version stuff eg 4-dev but we dont actually
-  // have those releases labeled in S3, thats fine with just Lando 3 but with Lando 4 we probably need
-  // to have ALL of the below
-  //
-  // https://files.lando.dev/cli/lando-macos-arm64-dev
-  // https://files.lando.dev/cli/lando-macos-arm64-3-dev
-  // https://files.lando.dev/cli/lando-macos-arm64-4-dev
-  //
-  // right now we basically just strip the version
-  if (s3Releases.includes(version)) {
-    // add the s3 alias
-    parts.push(version.split('-').length === 2 ? version.split('-')[1] : version.split('-')[0]);
-  // otherwise append the version
-  } else parts.push(version);
-
-  // add slim if needed
-  if (slim) parts.push('slim');
-
-  // and add special handling for windows
-  const filename = os === 'Windows' ? `${parts.join('-')}.exe` : parts.join('-');
-
-  // return the correct filename
-  return s3Releases.includes(version) || version.includes('preview')
-    ? `${s3Base}/${filename}` : `${gitHubBase}/${version}/${filename}`;
-};
-
-
-/***/ }),
-
-/***/ 1603:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const core = __nccwpck_require__(2186);
-const fs = __nccwpck_require__(7147);
-const os = __nccwpck_require__(2037);
-const path = __nccwpck_require__(1017);
-
-module.exports = file => {
-  // if no file then return right away
-  if (!file) return;
-
-  // if file is not absolute then prepend some bases as needed
-  if (!path.isAbsolute(file)) file = path.join(process.env.GITHUB_WORKSPACE || process.cwd(), file);
-
-  // if the file does not exist then notify and return
-  if (!fs.existsSync(file)) {
-    core.notice(`Could not locate a version file at ${file}`);
-    return;
-  }
-
-  // Otherwise try to parse it depending on what it is, we start first with a "tool-versions" file
-  if (path.basename(file) === '.tool-versions') {
-    const contents = fs.readFileSync(file, 'utf8');
-    const versions = Object.fromEntries(contents.trim().split(os.EOL).map(tool => tool.split(' ')));
-    return versions.lando;
-  }
-
-  // If not .tool-versions then we just assume a single JSON version entry
-  try {
-    const version = fs.readFileSync(file, 'utf8');
-    return version.trim();
-  } catch {
-    core.error(`Error reading version file ${file}`);
-  }
-};
-
-
-/***/ }),
-
-/***/ 4510:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const path = __nccwpck_require__(1017);
-
-const getOClifBase = () => {
-  const base = process.env['XDG_CACHE_HOME'] ||
-    (process.platform === 'win32' && process.env.LOCALAPPDATA) ||
-    path.join(getOClifHome(), '.config');
-  return path.join(base, 'lando');
-};
-
-const getOClifHome = () => {
-  switch (process.platform) {
-    case 'darwin':
-    case 'linux':
-      return process.env.HOME || os.homedir() || os.tmpdir();
-    case 'win32':
-      return process.env.HOME ||
-      (process.env.HOMEDRIVE && process.env.HOMEPATH && path.join(process.env.HOMEDRIVE, process.env.HOMEPATH)) ||
-      process.env.USERPROFILE ||
-      os.homedir() ||
-      os.tmpdir();
-  }
-};
-
-module.exports = (lmv = 'v3') => {
-  // if this is lando 3 then
-  if (lmv === 'v3') return path.join(getOClifHome(), '.lando', 'config.yml');
-  // otherwise we assume lando 4
-  return path.join(getOClifBase(), 'config.yaml');
-};
-
-
-/***/ }),
-
-/***/ 7428:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const core = __nccwpck_require__(2186);
-const get = __nccwpck_require__(9197);
-const os = __nccwpck_require__(2037);
-
-const getArch = () => {
-  if (!get(process, 'env.RUNNER_ARCH', false)) {
-    process.env.RUNNER_ARCH = os.arch().toUpperCase();
-  }
-  return get(process, 'env.RUNNER_ARCH', 'unknown');
-};
-
-const getDepCheck = () => {
-  if (!['warn', 'error'].includes(core.getInput('dependency-check'))) return false;
-  else return core.getInput('dependency-check');
-};
-
-const getDebug = () => {
-  // GITHUB ACTIONS logix
-  if (process.env.GITHUB_ACTIONS) return core.getBooleanInput('debug') || process.env['RUNNER_DEBUG'] === '1' || false;
-  // otherwise we assume this is running locally eg for dev/test so just set to true as that is a sensible thing
-  return true;
-};
-
-const getOS = () => {
-  if (!get(process, 'env.RUNNER_OS', false)) {
-    if (process.platform === 'win32') process.env.RUNNER_OS = 'Windows';
-    else if (process.platform === 'darwin') process.env.RUNNER_OS = 'macOS';
-    else process.env.RUNNER_OS = 'Linux';
-  }
-  return get(process, 'env.RUNNER_OS', 'unknown');
-};
-
-module.exports = () => ({
-  // primary inputs
-  landoVersion: String(core.getInput('lando-version')),
-  landoVersionFile: core.getInput('lando-version-file'),
-  config: core.getMultilineInput('config'),
-  configFile: core.getInput('config-file'),
-  token: core.getInput('token') || get(process, 'env.GITHUB_TOKEN'),
-
-  // other inputs
-  architecture: core.getInput('architecture') || getArch(),
-  dependencyCheck: getDepCheck(),
-  debug: getDebug(),
-  os: core.getInput('os') || getOS(),
-  telemetry: process.env.GITHUB_ACTIONS ? core.getBooleanInput('telemetry') : true,
-  slim: false,
-  setup: core.getInput('setup'),
-});
-
-
-/***/ }),
-
-/***/ 5993:
-/***/ ((module) => {
-
-"use strict";
-
-
-/*
- * Returns an array of all keys, nested or otherwise, as "." separated paths but does not expand arrays
- * @TODO: implement depth? this is needed for upstream things like get-object-size?
- */
-module.exports = (data, {prefix = '', expandArrays = true, separator = '.'} = {}) => {
-  return Object.keys(data).reduce((keys, key) => {
-    // if we have a primitive then return the path
-    if (!data[key] || typeof data[key] !== 'object' || Object.keys(data[key]).length === 0) {
-      return [...keys, `${prefix}${key}`];
-    }
-
-    // if we arent expanding arrays then dont return paths with array indexes
-    if (!expandArrays && Array.isArray(data[key])) {
-      return [...keys, `${prefix}${key}`];
-    }
-
-    // otherwise cycle through again
-    return [...keys, ...module.exports(data[key], {expandArrays, prefix: `${prefix}${key}${separator}`})];
-  }, []);
-};
-
-
-/***/ }),
-
-/***/ 9383:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const isDisabled = __nccwpck_require__(8342);
-
-module.exports = setup => {
-  // if its jsut disabled then return false
-  if (isDisabled(setup)) return false;
-
-  // if its a truthy value somehow then assume that is auto
-  if (setup === true || setup === 1) setup = 'auto';
-
-  // check to see if auto mode is on
-  if (typeof setup === 'string' &&
-    (setup.toUpperCase() === '1' ||
-    setup.toUpperCase() === 'AUTO' ||
-    setup.toUpperCase() === 'ENABLED' ||
-    setup.toUpperCase() === 'ON' ||
-    setup.toUpperCase() === 'RUN' ||
-    setup.toUpperCase() === 'TRUE'
-    )) {
-    setup = 'lando setup -y';
-  }
-
-  // if we get here we *should* have a string command we can parse
-  return setup;
-};
-
-
-/***/ }),
-
-/***/ 8342:
-/***/ ((module) => {
-
-"use strict";
-
-
-module.exports = data => {
-  // return true if boolean false
-  if (data === false || data === 0) return true;
-  // return true if nully
-  else if (data === undefined || data === null) return true;
-  // return true if stringy false
-  else if (typeof data === 'string') {
-    return data.toUpperCase() === '0' ||
-      data.toUpperCase() === 'FALSE' ||
-      data.toUpperCase() === 'OFF' ||
-      data.toUpperCase() === 'DISABLE' ||
-      data.toUpperCase() === 'DISABLED';
-  }
-
-  // otherwise its not disabled;
-  return false;
-};
-
-
-/***/ }),
-
-/***/ 6769:
-/***/ ((module) => {
-
-"use strict";
-
-
-module.exports = url => {
-  try {
-    new URL(url);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-
-/***/ }),
-
-/***/ 6718:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const set = __nccwpck_require__(1552);
-
-module.exports = (config = {}, pairs = []) => {
-  // go through pairs and set into config
-  pairs.forEach(line => {
-    if (Array.isArray(line)) set(config, line[0], line[1]);
-    else if (typeof line === 'string') {
-      const key = line.split('=')[0];
-      const value = line.split('=')[1];
-      set(config, key, value);
-    }
-  });
-
-  return config;
-};
-
-
-/***/ }),
-
-/***/ 4340:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const {parseArgsStringToArgv} = __nccwpck_require__(9663);
-
-module.exports = command => {
-  // throw if not a string
-  if (typeof command !== 'string') throw new Error('Setup command must be a string!');
-  // parse string
-  command = parseArgsStringToArgv(command);
-  // validate a few things
-  if (command[0] !== 'lando' || command[1] !== 'setup') {
-    throw new Error(`Setup command must begin with "lando setup"! You tried to run "${command.join(' ')}"`);
-  }
-  // remove first lando because we only care about the args
-  command.shift();
-  return command;
-};
-
-
-/***/ }),
-
-/***/ 5374:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const core = __nccwpck_require__(2186);
-const fs = __nccwpck_require__(7147);
-const path = __nccwpck_require__(1017);
-const semver = __nccwpck_require__(1383);
-const tc = __nccwpck_require__(7784);
-
-const isValidUrl = __nccwpck_require__(6769);
-const {s3Releases, gitHubReleases} = __nccwpck_require__(6709);
-
-module.exports = (spec, releases = [], dmv = 3) => {
-  // if spec is a file that exists relative to GITHUB_WORKSPACE then set spec to absolute path based on that
-  if (!path.isAbsolute(spec) && fs.existsSync(path.join(process.env['GITHUB_WORKSPACE'], spec))) {
-    spec = path.join(process.env['GITHUB_WORKSPACE'], spec);
-  // or ditto if its relative to cwd
-  } else if (!path.isAbsolute(spec) && fs.existsSync(path.join(process.cwd(), spec))) {
-    spec = path.join(process.cwd(), spec);
-  }
-
-  // if we have a file that exists on the filesystem then return that
-  if (fs.existsSync(spec)) return spec;
-  // also return any spec that include "preview"
-  if (spec.includes('preview')) return spec;
-  // also return any url specs
-  if (isValidUrl(spec)) return spec;
-
-  // at this point it should be safe to remove -slim
-  if (spec.endsWith('-slim')) spec = spec.replace(/(-slim)(?!.*\1)/, '');
-
-  // resolve and normalize s3 aliases
-  if (s3Releases.includes(spec)) {
-    // add the dmv if needed
-    if (spec.split('-')[0] !== '3' && spec.split('-')[0] !== '4') spec = `${dmv}-${spec}`;
-    // return
-    return spec;
-  }
-
-  // then attempt to resolve special "convenience" aliases to actual versions
-  if (gitHubReleases.includes(spec)) {
-    const mv = spec.split('-').length === 1 ? dmv : spec.split('-')[0];
-    const prerelease = spec.split('-').length === 1 ? spec.split('-')[0] === 'edge' : spec.split('-')[1] === 'edge';
-
-    // filter based on release type and major version and validity etc
-    releases = releases
-      .filter(release => release.prerelease === prerelease)
-      .filter(release => semver.valid(semver.clean(release.tag_name)) !== null)
-      .filter(release => semver.satisfies(release.tag_name, `>=${mv} <${mv + 1}`,
-        {loose: true, includePrerelease: true}));
-
-    // theoretically our spec should be at the top so reset to that
-    spec = releases[0].tag_name;
-
-    // debug
-    core.debug(`filtered to ${releases.length} releases`);
-    core.debug(`reset version spec ${spec}`);
-  }
-
-  // eval and return
-  return tc.evaluateVersions(releases.map(release => release.tag_name), spec);
-};
-
-
-/***/ }),
-
 /***/ 7351:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -2472,8 +1972,8 @@ exports.createTokenAuth = createTokenAuth;
 
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
-var universalUserAgent = __nccwpck_require__(5030);
-var beforeAfterHook = __nccwpck_require__(3682);
+var universalUserAgent = __nccwpck_require__(129);
+var beforeAfterHook = __nccwpck_require__(7041);
 var request = __nccwpck_require__(9353);
 var graphql = __nccwpck_require__(6422);
 var authToken = __nccwpck_require__(673);
@@ -2657,7 +2157,7 @@ exports.Octokit = Octokit;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 var isPlainObject = __nccwpck_require__(3287);
-var universalUserAgent = __nccwpck_require__(5030);
+var universalUserAgent = __nccwpck_require__(129);
 
 function lowercaseKeys(object) {
   if (!object) {
@@ -3055,7 +2555,7 @@ exports.endpoint = endpoint;
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 
 var request = __nccwpck_require__(9353);
-var universalUserAgent = __nccwpck_require__(5030);
+var universalUserAgent = __nccwpck_require__(129);
 
 const VERSION = "4.8.0";
 
@@ -3478,7 +2978,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
 var endpoint = __nccwpck_require__(8713);
-var universalUserAgent = __nccwpck_require__(5030);
+var universalUserAgent = __nccwpck_require__(129);
 var isPlainObject = __nccwpck_require__(3287);
 var nodeFetch = _interopDefault(__nccwpck_require__(467));
 var requestError = __nccwpck_require__(7471);
@@ -3647,6 +3147,213 @@ const request = withDefaults(endpoint.endpoint, {
 });
 
 exports.request = request;
+//# sourceMappingURL=index.js.map
+
+
+/***/ }),
+
+/***/ 7041:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var register = __nccwpck_require__(4280);
+var addHook = __nccwpck_require__(3779);
+var removeHook = __nccwpck_require__(5133);
+
+// bind with array of arguments: https://stackoverflow.com/a/21792913
+var bind = Function.bind;
+var bindable = bind.bind(bind);
+
+function bindApi(hook, state, name) {
+  var removeHookRef = bindable(removeHook, null).apply(
+    null,
+    name ? [state, name] : [state]
+  );
+  hook.api = { remove: removeHookRef };
+  hook.remove = removeHookRef;
+  ["before", "error", "after", "wrap"].forEach(function (kind) {
+    var args = name ? [state, kind, name] : [state, kind];
+    hook[kind] = hook.api[kind] = bindable(addHook, null).apply(null, args);
+  });
+}
+
+function HookSingular() {
+  var singularHookName = "h";
+  var singularHookState = {
+    registry: {},
+  };
+  var singularHook = register.bind(null, singularHookState, singularHookName);
+  bindApi(singularHook, singularHookState, singularHookName);
+  return singularHook;
+}
+
+function HookCollection() {
+  var state = {
+    registry: {},
+  };
+
+  var hook = register.bind(null, state);
+  bindApi(hook, state);
+
+  return hook;
+}
+
+var collectionHookDeprecationMessageDisplayed = false;
+function Hook() {
+  if (!collectionHookDeprecationMessageDisplayed) {
+    console.warn(
+      '[before-after-hook]: "Hook()" repurposing warning, use "Hook.Collection()". Read more: https://git.io/upgrade-before-after-hook-to-1.4'
+    );
+    collectionHookDeprecationMessageDisplayed = true;
+  }
+  return HookCollection();
+}
+
+Hook.Singular = HookSingular.bind();
+Hook.Collection = HookCollection.bind();
+
+module.exports = Hook;
+// expose constructors as a named property for TypeScript
+module.exports.Hook = Hook;
+module.exports.Singular = Hook.Singular;
+module.exports.Collection = Hook.Collection;
+
+
+/***/ }),
+
+/***/ 3779:
+/***/ ((module) => {
+
+module.exports = addHook;
+
+function addHook(state, kind, name, hook) {
+  var orig = hook;
+  if (!state.registry[name]) {
+    state.registry[name] = [];
+  }
+
+  if (kind === "before") {
+    hook = function (method, options) {
+      return Promise.resolve()
+        .then(orig.bind(null, options))
+        .then(method.bind(null, options));
+    };
+  }
+
+  if (kind === "after") {
+    hook = function (method, options) {
+      var result;
+      return Promise.resolve()
+        .then(method.bind(null, options))
+        .then(function (result_) {
+          result = result_;
+          return orig(result, options);
+        })
+        .then(function () {
+          return result;
+        });
+    };
+  }
+
+  if (kind === "error") {
+    hook = function (method, options) {
+      return Promise.resolve()
+        .then(method.bind(null, options))
+        .catch(function (error) {
+          return orig(error, options);
+        });
+    };
+  }
+
+  state.registry[name].push({
+    hook: hook,
+    orig: orig,
+  });
+}
+
+
+/***/ }),
+
+/***/ 4280:
+/***/ ((module) => {
+
+module.exports = register;
+
+function register(state, name, method, options) {
+  if (typeof method !== "function") {
+    throw new Error("method for before hook must be a function");
+  }
+
+  if (!options) {
+    options = {};
+  }
+
+  if (Array.isArray(name)) {
+    return name.reverse().reduce(function (callback, name) {
+      return register.bind(null, state, name, callback, options);
+    }, method)();
+  }
+
+  return Promise.resolve().then(function () {
+    if (!state.registry[name]) {
+      return method(options);
+    }
+
+    return state.registry[name].reduce(function (method, registered) {
+      return registered.hook.bind(null, method, options);
+    }, method)();
+  });
+}
+
+
+/***/ }),
+
+/***/ 5133:
+/***/ ((module) => {
+
+module.exports = removeHook;
+
+function removeHook(state, name, method) {
+  if (!state.registry[name]) {
+    return;
+  }
+
+  var index = state.registry[name]
+    .map(function (registered) {
+      return registered.orig;
+    })
+    .indexOf(method);
+
+  if (index === -1) {
+    return;
+  }
+
+  state.registry[name].splice(index, 1);
+}
+
+
+/***/ }),
+
+/***/ 129:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+
+function getUserAgent() {
+  if (typeof navigator === "object" && "userAgent" in navigator) {
+    return navigator.userAgent;
+  }
+
+  if (typeof process === "object" && process.version !== undefined) {
+    return `Node.js/${process.version.substr(1)} (${process.platform}; ${process.arch})`;
+  }
+
+  return "<environment undetectable>";
+}
+
+exports.getUserAgent = getUserAgent;
 //# sourceMappingURL=index.js.map
 
 
@@ -4248,7 +3955,7 @@ class HttpClient {
         if (this._keepAlive && useProxy) {
             agent = this._proxyAgent;
         }
-        if (this._keepAlive && !useProxy) {
+        if (!useProxy) {
             agent = this._agent;
         }
         // if agent is already assigned use that agent.
@@ -4280,15 +3987,11 @@ class HttpClient {
             agent = tunnelAgent(agentOptions);
             this._proxyAgent = agent;
         }
-        // if reusing agent across request and tunneling agent isn't assigned create a new agent
-        if (this._keepAlive && !agent) {
+        // if tunneling agent isn't assigned create a new agent
+        if (!agent) {
             const options = { keepAlive: this._keepAlive, maxSockets };
             agent = usingSsl ? new https.Agent(options) : new http.Agent(options);
             this._agent = agent;
-        }
-        // if not using private agent and tunnel agent isn't setup then use global agent
-        if (!agent) {
-            agent = usingSsl ? https.globalAgent : http.globalAgent;
         }
         if (usingSsl && this._ignoreSslError) {
             // we don't want to set NODE_TLS_REJECT_UNAUTHORIZED=0 since that will affect request for entire process
@@ -9119,187 +8822,6 @@ legacyRestEndpointMethods.VERSION = VERSION;
 exports.legacyRestEndpointMethods = legacyRestEndpointMethods;
 exports.restEndpointMethods = restEndpointMethods;
 //# sourceMappingURL=index.js.map
-
-
-/***/ }),
-
-/***/ 3682:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-var register = __nccwpck_require__(4670);
-var addHook = __nccwpck_require__(5549);
-var removeHook = __nccwpck_require__(6819);
-
-// bind with array of arguments: https://stackoverflow.com/a/21792913
-var bind = Function.bind;
-var bindable = bind.bind(bind);
-
-function bindApi(hook, state, name) {
-  var removeHookRef = bindable(removeHook, null).apply(
-    null,
-    name ? [state, name] : [state]
-  );
-  hook.api = { remove: removeHookRef };
-  hook.remove = removeHookRef;
-  ["before", "error", "after", "wrap"].forEach(function (kind) {
-    var args = name ? [state, kind, name] : [state, kind];
-    hook[kind] = hook.api[kind] = bindable(addHook, null).apply(null, args);
-  });
-}
-
-function HookSingular() {
-  var singularHookName = "h";
-  var singularHookState = {
-    registry: {},
-  };
-  var singularHook = register.bind(null, singularHookState, singularHookName);
-  bindApi(singularHook, singularHookState, singularHookName);
-  return singularHook;
-}
-
-function HookCollection() {
-  var state = {
-    registry: {},
-  };
-
-  var hook = register.bind(null, state);
-  bindApi(hook, state);
-
-  return hook;
-}
-
-var collectionHookDeprecationMessageDisplayed = false;
-function Hook() {
-  if (!collectionHookDeprecationMessageDisplayed) {
-    console.warn(
-      '[before-after-hook]: "Hook()" repurposing warning, use "Hook.Collection()". Read more: https://git.io/upgrade-before-after-hook-to-1.4'
-    );
-    collectionHookDeprecationMessageDisplayed = true;
-  }
-  return HookCollection();
-}
-
-Hook.Singular = HookSingular.bind();
-Hook.Collection = HookCollection.bind();
-
-module.exports = Hook;
-// expose constructors as a named property for TypeScript
-module.exports.Hook = Hook;
-module.exports.Singular = Hook.Singular;
-module.exports.Collection = Hook.Collection;
-
-
-/***/ }),
-
-/***/ 5549:
-/***/ ((module) => {
-
-module.exports = addHook;
-
-function addHook(state, kind, name, hook) {
-  var orig = hook;
-  if (!state.registry[name]) {
-    state.registry[name] = [];
-  }
-
-  if (kind === "before") {
-    hook = function (method, options) {
-      return Promise.resolve()
-        .then(orig.bind(null, options))
-        .then(method.bind(null, options));
-    };
-  }
-
-  if (kind === "after") {
-    hook = function (method, options) {
-      var result;
-      return Promise.resolve()
-        .then(method.bind(null, options))
-        .then(function (result_) {
-          result = result_;
-          return orig(result, options);
-        })
-        .then(function () {
-          return result;
-        });
-    };
-  }
-
-  if (kind === "error") {
-    hook = function (method, options) {
-      return Promise.resolve()
-        .then(method.bind(null, options))
-        .catch(function (error) {
-          return orig(error, options);
-        });
-    };
-  }
-
-  state.registry[name].push({
-    hook: hook,
-    orig: orig,
-  });
-}
-
-
-/***/ }),
-
-/***/ 4670:
-/***/ ((module) => {
-
-module.exports = register;
-
-function register(state, name, method, options) {
-  if (typeof method !== "function") {
-    throw new Error("method for before hook must be a function");
-  }
-
-  if (!options) {
-    options = {};
-  }
-
-  if (Array.isArray(name)) {
-    return name.reverse().reduce(function (callback, name) {
-      return register.bind(null, state, name, callback, options);
-    }, method)();
-  }
-
-  return Promise.resolve().then(function () {
-    if (!state.registry[name]) {
-      return method(options);
-    }
-
-    return state.registry[name].reduce(function (method, registered) {
-      return registered.hook.bind(null, method, options);
-    }, method)();
-  });
-}
-
-
-/***/ }),
-
-/***/ 6819:
-/***/ ((module) => {
-
-module.exports = removeHook;
-
-function removeHook(state, name, method) {
-  if (!state.registry[name]) {
-    return;
-  }
-
-  var index = state.registry[name]
-    .map(function (registered) {
-      return registered.orig;
-    })
-    .indexOf(method);
-
-  if (index === -1) {
-    return;
-  }
-
-  state.registry[name].splice(index, 1);
-}
 
 
 /***/ }),
@@ -18364,35 +17886,43 @@ const coerce = (version, options) => {
 
   let match = null
   if (!options.rtl) {
-    match = version.match(re[t.COERCE])
+    match = version.match(options.includePrerelease ? re[t.COERCEFULL] : re[t.COERCE])
   } else {
     // Find the right-most coercible string that does not share
     // a terminus with a more left-ward coercible string.
     // Eg, '1.2.3.4' wants to coerce '2.3.4', not '3.4' or '4'
+    // With includePrerelease option set, '1.2.3.4-rc' wants to coerce '2.3.4-rc', not '2.3.4'
     //
     // Walk through the string checking with a /g regexp
     // Manually set the index so as to pick up overlapping matches.
     // Stop when we get a match that ends at the string end, since no
     // coercible string can be more right-ward without the same terminus.
+    const coerceRtlRegex = options.includePrerelease ? re[t.COERCERTLFULL] : re[t.COERCERTL]
     let next
-    while ((next = re[t.COERCERTL].exec(version)) &&
+    while ((next = coerceRtlRegex.exec(version)) &&
         (!match || match.index + match[0].length !== version.length)
     ) {
       if (!match ||
             next.index + next[0].length !== match.index + match[0].length) {
         match = next
       }
-      re[t.COERCERTL].lastIndex = next.index + next[1].length + next[2].length
+      coerceRtlRegex.lastIndex = next.index + next[1].length + next[2].length
     }
     // leave it in a clean state
-    re[t.COERCERTL].lastIndex = -1
+    coerceRtlRegex.lastIndex = -1
   }
 
   if (match === null) {
     return null
   }
 
-  return parse(`${match[2]}.${match[3] || '0'}.${match[4] || '0'}`, options)
+  const major = match[2]
+  const minor = match[3] || '0'
+  const patch = match[4] || '0'
+  const prerelease = options.includePrerelease && match[5] ? `-${match[5]}` : ''
+  const build = options.includePrerelease && match[6] ? `+${match[6]}` : ''
+
+  return parse(`${major}.${minor}.${patch}${prerelease}${build}`, options)
 }
 module.exports = coerce
 
@@ -19084,12 +18614,17 @@ createToken('XRANGELOOSE', `^${src[t.GTLT]}\\s*${src[t.XRANGEPLAINLOOSE]}$`)
 
 // Coercion.
 // Extract anything that could conceivably be a part of a valid semver
-createToken('COERCE', `${'(^|[^\\d])' +
+createToken('COERCEPLAIN', `${'(^|[^\\d])' +
               '(\\d{1,'}${MAX_SAFE_COMPONENT_LENGTH}})` +
               `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?` +
-              `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?` +
+              `(?:\\.(\\d{1,${MAX_SAFE_COMPONENT_LENGTH}}))?`)
+createToken('COERCE', `${src[t.COERCEPLAIN]}(?:$|[^\\d])`)
+createToken('COERCEFULL', src[t.COERCEPLAIN] +
+              `(?:${src[t.PRERELEASE]})?` +
+              `(?:${src[t.BUILD]})?` +
               `(?:$|[^\\d])`)
 createToken('COERCERTL', src[t.COERCE], true)
+createToken('COERCERTLFULL', src[t.COERCEFULL], true)
 
 // Tilde ranges.
 // Meaning is "reasonably at or greater than"
@@ -42957,32 +42492,6 @@ module.exports = {
 
 /***/ }),
 
-/***/ 5030:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", ({ value: true }));
-
-function getUserAgent() {
-  if (typeof navigator === "object" && "userAgent" in navigator) {
-    return navigator.userAgent;
-  }
-
-  if (typeof process === "object" && process.version !== undefined) {
-    return `Node.js/${process.version.substr(1)} (${process.platform}; ${process.arch})`;
-  }
-
-  return "<environment undetectable>";
-}
-
-exports.getUserAgent = getUserAgent;
-//# sourceMappingURL=index.js.map
-
-
-/***/ }),
-
 /***/ 5840:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -45630,6 +45139,501 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 266:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const satisfies = __nccwpck_require__(6055);
+const {s3Releases} = __nccwpck_require__(9734);
+
+module.exports = version => {
+  // slim can be any v3 s3 alias
+  if (s3Releases.includes(version)) return version.split('-')[0] === '3';
+  // or anything in the range
+  return satisfies(version, '>3.20 <4', {includePrerelease: true, loose: true});
+};
+
+
+/***/ }),
+
+/***/ 7659:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const core = __nccwpck_require__(2186);
+const fs = __nccwpck_require__(7147);
+const path = __nccwpck_require__(1017);
+const yaml = __nccwpck_require__(1917);
+
+module.exports = file => {
+  // if no file then return empty config
+  if (!file) return;
+  // if file is not absolute then prepend some bases as needed
+  if (!path.isAbsolute(file)) file = path.join(process.env.GITHUB_WORKSPACE || process.cwd(), file);
+  // if the file does not exist then notify and return
+  if (!fs.existsSync(file)) {
+    core.notice(`Could not locate a config file at ${file}`);
+    return;
+  }
+  // otherwise return the config values
+  try {
+    return yaml.load(fs.readFileSync(file));
+  } catch {
+    core.error(`Error reading config file ${file}`);
+  }
+};
+
+
+/***/ }),
+
+/***/ 9734:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+
+exports.s3Releases = [
+  'dev',
+  'latest',
+  '4-dev',
+  '4-latest',
+  '3-dev',
+  '3-latest',
+];
+
+exports.gitHubReleases = [
+  '3',
+  '4',
+  'stable',
+  'edge',
+  '4-stable',
+  '4-edge',
+  '3-stable',
+  '3-edge',
+];
+
+
+/***/ }),
+
+/***/ 1422:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const isValidUrl = __nccwpck_require__(5142);
+const {s3Releases} = __nccwpck_require__(9734);
+
+const s3Base = 'https://files.lando.dev/cli';
+const gitHubBase = 'https://github.com/lando/cli/releases/download';
+
+module.exports = (version, {os, architecture, slim = false} = {}) => {
+  // if version is actually a downlaod url then just return that right away
+  if (isValidUrl(version)) return version;
+
+  // otherwise start by building the lando file string
+  const parts = ['lando'];
+  parts.push(os === 'Windows' ? 'win' : os.toLowerCase());
+  parts.push(architecture.toLowerCase());
+
+  // if version is a dev release from s3
+  // @TODO: we allow s3 convenience aliases with major version stuff eg 4-dev but we dont actually
+  // have those releases labeled in S3, thats fine with just Lando 3 but with Lando 4 we probably need
+  // to have ALL of the below
+  //
+  // https://files.lando.dev/cli/lando-macos-arm64-dev
+  // https://files.lando.dev/cli/lando-macos-arm64-3-dev
+  // https://files.lando.dev/cli/lando-macos-arm64-4-dev
+  //
+  // right now we basically just strip the version
+  if (s3Releases.includes(version)) {
+    // add the s3 alias
+    parts.push(version.split('-').length === 2 ? version.split('-')[1] : version.split('-')[0]);
+  // otherwise append the version
+  } else parts.push(version);
+
+  // add slim if needed
+  if (slim) parts.push('slim');
+
+  // and add special handling for windows
+  const filename = os === 'Windows' ? `${parts.join('-')}.exe` : parts.join('-');
+
+  // return the correct filename
+  return s3Releases.includes(version) || version.includes('preview')
+    ? `${s3Base}/${filename}` : `${gitHubBase}/${version}/${filename}`;
+};
+
+
+/***/ }),
+
+/***/ 9719:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const core = __nccwpck_require__(2186);
+const fs = __nccwpck_require__(7147);
+const os = __nccwpck_require__(2037);
+const path = __nccwpck_require__(1017);
+
+module.exports = file => {
+  // if no file then return right away
+  if (!file) return;
+
+  // if file is not absolute then prepend some bases as needed
+  if (!path.isAbsolute(file)) file = path.join(process.env.GITHUB_WORKSPACE || process.cwd(), file);
+
+  // if the file does not exist then notify and return
+  if (!fs.existsSync(file)) {
+    core.notice(`Could not locate a version file at ${file}`);
+    return;
+  }
+
+  // Otherwise try to parse it depending on what it is, we start first with a "tool-versions" file
+  if (path.basename(file) === '.tool-versions') {
+    const contents = fs.readFileSync(file, 'utf8');
+    const versions = Object.fromEntries(contents.trim().split(os.EOL).map(tool => tool.split(' ')));
+    return versions.lando;
+  }
+
+  // If not .tool-versions then we just assume a single JSON version entry
+  try {
+    const version = fs.readFileSync(file, 'utf8');
+    return version.trim();
+  } catch {
+    core.error(`Error reading version file ${file}`);
+  }
+};
+
+
+/***/ }),
+
+/***/ 1594:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const path = __nccwpck_require__(1017);
+
+const getOClifBase = () => {
+  const base = process.env['XDG_CACHE_HOME'] ||
+    (process.platform === 'win32' && process.env.LOCALAPPDATA) ||
+    path.join(getOClifHome(), '.config');
+  return path.join(base, 'lando');
+};
+
+const getOClifHome = () => {
+  switch (process.platform) {
+    case 'darwin':
+    case 'linux':
+      return process.env.HOME || os.homedir() || os.tmpdir();
+    case 'win32':
+      return process.env.HOME ||
+      (process.env.HOMEDRIVE && process.env.HOMEPATH && path.join(process.env.HOMEDRIVE, process.env.HOMEPATH)) ||
+      process.env.USERPROFILE ||
+      os.homedir() ||
+      os.tmpdir();
+  }
+};
+
+module.exports = (lmv = 'v3') => {
+  // if this is lando 3 then
+  if (lmv === 'v3') return path.join(getOClifHome(), '.lando', 'config.yml');
+  // otherwise we assume lando 4
+  return path.join(getOClifBase(), 'config.yaml');
+};
+
+
+/***/ }),
+
+/***/ 2567:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const core = __nccwpck_require__(2186);
+const get = __nccwpck_require__(9197);
+const os = __nccwpck_require__(2037);
+
+const getArch = () => {
+  if (!get(process, 'env.RUNNER_ARCH', false)) {
+    process.env.RUNNER_ARCH = os.arch().toUpperCase();
+  }
+  return get(process, 'env.RUNNER_ARCH', 'unknown');
+};
+
+const getDebug = () => {
+  // GITHUB ACTIONS logix
+  if (process.env.GITHUB_ACTIONS) return core.getBooleanInput('debug') || process.env['RUNNER_DEBUG'] === '1' || false;
+  // otherwise we assume this is running locally eg for dev/test so just set to true as that is a sensible thing
+  return true;
+};
+
+const getOS = () => {
+  if (!get(process, 'env.RUNNER_OS', false)) {
+    if (process.platform === 'win32') process.env.RUNNER_OS = 'Windows';
+    else if (process.platform === 'darwin') process.env.RUNNER_OS = 'macOS';
+    else process.env.RUNNER_OS = 'Linux';
+  }
+  return get(process, 'env.RUNNER_OS', 'unknown');
+};
+
+module.exports = () => ({
+  // primary inputs
+  landoVersion: String(core.getInput('lando-version')),
+  landoVersionFile: core.getInput('lando-version-file'),
+  config: core.getMultilineInput('config'),
+  configFile: core.getInput('config-file'),
+  token: core.getInput('token') || get(process, 'env.GITHUB_TOKEN'),
+
+  // other inputs
+  architecture: core.getInput('architecture') || getArch(),
+  autoSetup: core.getInput('auto-setup'),
+  debug: getDebug(),
+  os: core.getInput('os') || getOS(),
+  telemetry: process.env.GITHUB_ACTIONS ? core.getBooleanInput('telemetry') : true,
+  slim: false,
+  setup: core.getInput('setup'),
+});
+
+
+/***/ }),
+
+/***/ 604:
+/***/ ((module) => {
+
+"use strict";
+
+
+/*
+ * Returns an array of all keys, nested or otherwise, as "." separated paths but does not expand arrays
+ * @TODO: implement depth? this is needed for upstream things like get-object-size?
+ */
+module.exports = (data, {prefix = '', expandArrays = true, separator = '.'} = {}) => {
+  return Object.keys(data).reduce((keys, key) => {
+    // if we have a primitive then return the path
+    if (!data[key] || typeof data[key] !== 'object' || Object.keys(data[key]).length === 0) {
+      return [...keys, `${prefix}${key}`];
+    }
+
+    // if we arent expanding arrays then dont return paths with array indexes
+    if (!expandArrays && Array.isArray(data[key])) {
+      return [...keys, `${prefix}${key}`];
+    }
+
+    // otherwise cycle through again
+    return [...keys, ...module.exports(data[key], {expandArrays, prefix: `${prefix}${key}${separator}`})];
+  }, []);
+};
+
+
+/***/ }),
+
+/***/ 6979:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const isDisabled = __nccwpck_require__(9328);
+
+module.exports = setup => {
+  // if its jsut disabled then return false
+  if (isDisabled(setup)) return false;
+
+  // if its a truthy value somehow then assume that is auto
+  if (setup === true || setup === 1) setup = 'auto';
+
+  // check to see if auto mode is on
+  if (typeof setup === 'string' &&
+    (setup.toUpperCase() === '1' ||
+    setup.toUpperCase() === 'AUTO' ||
+    setup.toUpperCase() === 'ENABLED' ||
+    setup.toUpperCase() === 'ON' ||
+    setup.toUpperCase() === 'RUN' ||
+    setup.toUpperCase() === 'TRUE'
+    )) {
+    setup = 'lando setup -y';
+  }
+
+  // if we get here we *should* have a string command we can parse
+  return setup;
+};
+
+
+/***/ }),
+
+/***/ 9328:
+/***/ ((module) => {
+
+"use strict";
+
+
+module.exports = data => {
+  // return true if boolean false
+  if (data === false || data === 0) return true;
+  // return true if nully
+  else if (data === undefined || data === null) return true;
+  // return true if stringy false
+  else if (typeof data === 'string') {
+    return data.toUpperCase() === '0' ||
+      data.toUpperCase() === 'FALSE' ||
+      data.toUpperCase() === 'OFF' ||
+      data.toUpperCase() === 'DISABLE' ||
+      data.toUpperCase() === 'DISABLED';
+  }
+
+  // otherwise its not disabled;
+  return false;
+};
+
+
+/***/ }),
+
+/***/ 5142:
+/***/ ((module) => {
+
+"use strict";
+
+
+module.exports = url => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+
+/***/ }),
+
+/***/ 7618:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const set = __nccwpck_require__(1552);
+
+module.exports = (config = {}, pairs = []) => {
+  // go through pairs and set into config
+  pairs.forEach(line => {
+    if (Array.isArray(line)) set(config, line[0], line[1]);
+    else if (typeof line === 'string') {
+      const key = line.split('=')[0];
+      const value = line.split('=')[1];
+      set(config, key, value);
+    }
+  });
+
+  return config;
+};
+
+
+/***/ }),
+
+/***/ 1215:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const {parseArgsStringToArgv} = __nccwpck_require__(9663);
+
+module.exports = command => {
+  // throw if not a string
+  if (typeof command !== 'string') throw new Error('Setup command must be a string!');
+  // parse string
+  command = parseArgsStringToArgv(command);
+  // validate a few things
+  if (command[0] !== 'lando' || command[1] !== 'setup') {
+    throw new Error(`Setup command must begin with "lando setup"! You tried to run "${command.join(' ')}"`);
+  }
+  // remove first lando because we only care about the args
+  command.shift();
+  return command;
+};
+
+
+/***/ }),
+
+/***/ 6014:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const core = __nccwpck_require__(2186);
+const fs = __nccwpck_require__(7147);
+const path = __nccwpck_require__(1017);
+const semver = __nccwpck_require__(1383);
+const tc = __nccwpck_require__(7784);
+
+const isValidUrl = __nccwpck_require__(5142);
+const {s3Releases, gitHubReleases} = __nccwpck_require__(9734);
+
+module.exports = (spec, releases = [], dmv = 3) => {
+  // if spec is a file that exists relative to GITHUB_WORKSPACE then set spec to absolute path based on that
+  if (!path.isAbsolute(spec) && fs.existsSync(path.join(process.env['GITHUB_WORKSPACE'], spec))) {
+    spec = path.join(process.env['GITHUB_WORKSPACE'], spec);
+  // or ditto if its relative to cwd
+  } else if (!path.isAbsolute(spec) && fs.existsSync(path.join(process.cwd(), spec))) {
+    spec = path.join(process.cwd(), spec);
+  }
+
+  // if we have a file that exists on the filesystem then return that
+  if (fs.existsSync(spec)) return spec;
+  // also return any spec that include "preview"
+  if (spec.includes('preview')) return spec;
+  // also return any url specs
+  if (isValidUrl(spec)) return spec;
+
+  // at this point it should be safe to remove -slim
+  if (spec.endsWith('-slim')) spec = spec.replace(/(-slim)(?!.*\1)/, '');
+
+  // resolve and normalize s3 aliases
+  if (s3Releases.includes(spec)) {
+    // add the dmv if needed
+    if (spec.split('-')[0] !== '3' && spec.split('-')[0] !== '4') spec = `${dmv}-${spec}`;
+    // return
+    return spec;
+  }
+
+  // then attempt to resolve special "convenience" aliases to actual versions
+  if (gitHubReleases.includes(spec)) {
+    const mv = spec.split('-').length === 1 ? dmv : spec.split('-')[0];
+    const prerelease = spec.split('-').length === 1 ? spec.split('-')[0] === 'edge' : spec.split('-')[1] === 'edge';
+
+    // filter based on release type and major version and validity etc
+    releases = releases
+      .filter(release => release.prerelease === prerelease)
+      .filter(release => semver.valid(semver.clean(release.tag_name)) !== null)
+      .filter(release => semver.satisfies(release.tag_name, `>=${mv} <${mv + 1}`,
+        {loose: true, includePrerelease: true}));
+
+    // theoretically our spec should be at the top so reset to that
+    spec = releases[0].tag_name;
+
+    // debug
+    core.debug(`filtered to ${releases.length} releases`);
+    core.debug(`reset version spec ${spec}`);
+  }
+
+  // eval and return
+  return tc.evaluateVersions(releases.map(release => release.tag_name), spec);
+};
+
+
+/***/ }),
+
 /***/ 2877:
 /***/ ((module) => {
 
@@ -45970,7 +45974,7 @@ Dicer.prototype._write = function (data, encoding, cb) {
   if (this._headerFirst && this._isPreamble) {
     if (!this._part) {
       this._part = new PartStream(this._partOpts)
-      if (this._events.preamble) { this.emit('preamble', this._part) } else { this._ignore() }
+      if (this.listenerCount('preamble') !== 0) { this.emit('preamble', this._part) } else { this._ignore() }
     }
     const r = this._hparser.push(data)
     if (!this._inHeader && r !== undefined && r < data.length) { data = data.slice(r) } else { return cb() }
@@ -46027,7 +46031,7 @@ Dicer.prototype._oninfo = function (isMatch, data, start, end) {
       }
     }
     if (this._dashes === 2) {
-      if ((start + i) < end && this._events.trailer) { this.emit('trailer', data.slice(start + i, end)) }
+      if ((start + i) < end && this.listenerCount('trailer') !== 0) { this.emit('trailer', data.slice(start + i, end)) }
       this.reset()
       this._finished = true
       // no more parts will be added
@@ -46045,7 +46049,13 @@ Dicer.prototype._oninfo = function (isMatch, data, start, end) {
     this._part._read = function (n) {
       self._unpause()
     }
-    if (this._isPreamble && this._events.preamble) { this.emit('preamble', this._part) } else if (this._isPreamble !== true && this._events.part) { this.emit('part', this._part) } else { this._ignore() }
+    if (this._isPreamble && this.listenerCount('preamble') !== 0) {
+      this.emit('preamble', this._part)
+    } else if (this._isPreamble !== true && this.listenerCount('part') !== 0) {
+      this.emit('part', this._part)
+    } else {
+      this._ignore()
+    }
     if (!this._isPreamble) { this._inHeader = true }
   }
   if (data && start < end && !this._ignoreData) {
@@ -46728,7 +46738,7 @@ function Multipart (boy, cfg) {
 
         ++nfiles
 
-        if (!boy._events.file) {
+        if (boy.listenerCount('file') === 0) {
           self.parser._ignore()
           return
         }
@@ -47257,7 +47267,7 @@ const decoders = {
     if (textDecoders.has(this.toString())) {
       try {
         return textDecoders.get(this).decode(data)
-      } catch (e) { }
+      } catch {}
     }
     return typeof data === 'string'
       ? data
@@ -47624,17 +47634,17 @@ const {execSync} = __nccwpck_require__(2081);
 const {GitHub, getOctokitOptions} = __nccwpck_require__(3030);
 const {paginateRest} = __nccwpck_require__(4193);
 
-const canBeSlim = __nccwpck_require__(5074);
-const getConfigFile = __nccwpck_require__(5305);
-const getDownloadUrl = __nccwpck_require__(4458);
-const getGCFPath = __nccwpck_require__(4510);
-const getInputs = __nccwpck_require__(7428);
-const getFileVersion = __nccwpck_require__(1603);
-const getObjectKeys = __nccwpck_require__(5993);
-const getSetupCommand = __nccwpck_require__(9383);
-const mergeConfig = __nccwpck_require__(6718);
-const parseSetupCommand = __nccwpck_require__(4340);
-const resolveVersionSpec = __nccwpck_require__(5374);
+const canBeSlim = __nccwpck_require__(266);
+const getConfigFile = __nccwpck_require__(7659);
+const getDownloadUrl = __nccwpck_require__(1422);
+const getGCFPath = __nccwpck_require__(1594);
+const getInputs = __nccwpck_require__(2567);
+const getFileVersion = __nccwpck_require__(9719);
+const getObjectKeys = __nccwpck_require__(604);
+const getSetupCommand = __nccwpck_require__(6979);
+const mergeConfig = __nccwpck_require__(7618);
+const parseSetupCommand = __nccwpck_require__(1215);
+const resolveVersionSpec = __nccwpck_require__(6014);
 
 const main = async () => {
   // ensure needed RUNNER_ vars are set
@@ -47654,6 +47664,9 @@ const main = async () => {
   if (inputs.landoVersion && inputs.landoVersionFile) {
     core.warning('Both lando-version and lando-version-file inputs are specified, only lando-version will be used');
   }
+
+  // prefer autoSetup to setup because setup is DEPRECATED
+  inputs.setup = inputs.autoSetup ?? inputs.setup;
 
   // determine lando version spec to install
   const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
@@ -47769,10 +47782,10 @@ const main = async () => {
     }
 
     // if setup is non-false then we want to try to run it if we can
-    if (getSetupCommand(inputs.setup) !== false) {
+    if (lmv === 'v3' && getSetupCommand(inputs.setup) !== false) {
       // print warning if setup command does not exist and leave
       if (await exec.exec(landoPath, ['setup', '--help'], {ignoreReturnCode: true}) !== 0) {
-        core.warning('lando setup is only available in lando >= 3.21! Skipping!');
+        core.warning('lando setup is only available in lando >=3.21 <4! Skipping!');
 
       // if we get here then we should be G2G
       } else {
@@ -47781,26 +47794,6 @@ const main = async () => {
         await exec.exec(landoPath, args, opts);
       }
     }
-
-    // run v3 dep check
-    // @TODO: validate setup here?
-    // for v3 its just validate orchestratorBin run docker info?
-    // for v4 its run lando status
-    // remove dep check below when done
-    if (lmv === 'v3' && ['warn', 'error'].includes(inputs.dependencyCheck)) {
-      const docker = await exec.exec('docker', ['info'], {ignoreReturnCode: true});
-      const dockerCompose = await exec.exec('docker-compose', ['--version'], {ignoreReturnCode: true});
-      const func = inputs.dependencyCheck === 'warn' ? core.warning : core.setFailed;
-      const suffix = 'See: https://docs.lando.dev/getting-started/installation.html';
-      if (docker !== 0 ) {
-        func(`Something is wrong with Docker! Make sure Docker is installed correctly and running. ${suffix}`);
-      }
-      if (dockerCompose !== 0 ) {
-        func(`Something is wrong with Docker Compose! Make sure Docker Compose 1.x is installed correctly. ${suffix}`);
-      }
-    }
-
-    // @TODO: v4 dep checking?
 
     // if debug then print the entire lando config
     if (core.isDebug() || inputs.debug) await exec.exec(landoPath, ['config']);

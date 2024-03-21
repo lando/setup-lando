@@ -1,4 +1,4 @@
-name: Version Tests
+name: Actions Version Tests
 
 on:
   pull_request:

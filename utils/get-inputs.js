@@ -11,11 +11,6 @@ const getArch = () => {
   return get(process, 'env.RUNNER_ARCH', 'unknown');
 };
 
-const getDepCheck = () => {
-  if (!['warn', 'error'].includes(core.getInput('dependency-check'))) return false;
-  else return core.getInput('dependency-check');
-};
-
 const getDebug = () => {
   // GITHUB ACTIONS logix
   if (process.env.GITHUB_ACTIONS) return core.getBooleanInput('debug') || process.env['RUNNER_DEBUG'] === '1' || false;
@@ -42,7 +37,7 @@ module.exports = () => ({
 
   // other inputs
   architecture: core.getInput('architecture') || getArch(),
-  dependencyCheck: getDepCheck(),
+  autoSetup: core.getInput('auto-setup'),
   debug: getDebug(),
   os: core.getInput('os') || getOS(),
   telemetry: process.env.GITHUB_ACTIONS ? core.getBooleanInput('telemetry') : true,
