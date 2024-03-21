@@ -13,8 +13,6 @@ jobs:
       matrix:
         os:
           - ubuntu-22.04
-        node-version:
-          - '18'
         success-version:
           - '3.x'
           - '>2'
@@ -47,7 +45,7 @@ jobs:
 
       - name: Setup Lando version ${{ matrix.success-version }}
         shell: bash
-        run: ./setup-lando --version=${{ matrix.success-version }} --no-setup
+        run: ./setup-lando.sh --version=${{ matrix.success-version }} --no-setup
       - name: Verify Lando is in PATH
         shell: bash
         run: lando version
