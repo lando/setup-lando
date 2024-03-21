@@ -285,6 +285,9 @@ warn_multi() {
   done <<< "$@"
 }
 
+# print version of script
+debug "running setup-lando.sh version: $(git describe --tags --always --abbrev=1)"
+
 # debug raw options
 # these are options that have not yet been validated or mutated e.g. the ones the user has supplied or defualts\
 debug "raw args setup-lando.sh $ORIGOPTS"
