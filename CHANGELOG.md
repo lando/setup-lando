@@ -9,6 +9,7 @@
 ### Bug Fixes
 
 * Fixed `auto-setup` so it _does not_ run on Lando 4_
+* Fixed `edge` releases to also include `stable` releases from release list
 
 ### Internal
 
