@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /
+Sitemap: https://get.lando.dev/sitemap.xml
+Host: https://get.lando.dev
+Allow: /setup-lando.ps1
+Allow: /setup-lando.sh
+Allow: /sitemap.xml
