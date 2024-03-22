@@ -285,8 +285,13 @@ warn_multi() {
   done <<< "$@"
 }
 
+# if we dont have a SCRIPT_VERSION then try to get it from git
+if [[ -z "${SCRIPT_VERSION-}" ]]; then
+  SCRIPT_VERSION="$(git describe --tags --always --abbrev=1)"
+fi
+
 # print version of script
-debug "running setup-lando.sh version: $(git describe --tags --always --abbrev=1)"
+debug "running setup-lando.sh script version: ${SCRIPT_VERSION}"
 
 # debug raw options
 # these are options that have not yet been validated or mutated e.g. the ones the user has supplied or defualts\

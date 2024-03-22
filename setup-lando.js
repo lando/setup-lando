@@ -1,5 +1,7 @@
 'use strict';
 
+let SCRIPT_VERSION;
+
 const core = require('@actions/core');
 const exec = require('@actions/exec');
 const fs = require('fs');
@@ -26,6 +28,16 @@ const mergeConfig = require('./utils/merge-config');
 const parseSetupCommand = require('./utils/parse-setup-command');
 const resolveVersionSpec = require('./utils/resolve-version-spec');
 
+// if there is no script version lets get it from git
+if (!SCRIPT_VERSION) {
+  const output = execSync(`git describe --tags --always --abbrev=1`, {
+    maxBuffer: 1024 * 1024 * 10,
+    encoding: 'utf-8',
+    env: {...process.env, LANDO_DEBUG: 0},
+  });
+  SCRIPT_VERSION = typeof output === 'string' ? output.trim() : 'unknown';
+}
+
 const main = async () => {
   // ensure needed RUNNER_ vars are set
   // @NOTE: this is just to ensure we can run this locally
@@ -36,6 +48,9 @@ const main = async () => {
 
   // start by getting the inputs and stuff
   const inputs = getInputs();
+
+  // debug the script version
+  core.debug(`running setup-lando.js script version: ${SCRIPT_VERSION}`);
 
   // immediately try to determine our slim status
   inputs.slim = inputs.landoVersion.endsWith('-slim');

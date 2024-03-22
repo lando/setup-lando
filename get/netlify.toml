@@ -1,0 +1,15 @@
+[build]
+  base = "./get"
+  publish = "./get"
+
+# Sets our asset optimization
+[build.processing.css]
+  bundle = true
+  minify = true
+[build.processing.js]
+  bundle = true
+  minify = true
+[build.processing.html]
+  pretty_urls = false
+[build.processing.images]
+  compress = true
