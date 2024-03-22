@@ -47620,6 +47620,8 @@ var __webpack_exports__ = {};
 "use strict";
 
 
+const SCRIPT_VERSION = '3.0.0';
+
 const core = __nccwpck_require__(2186);
 const exec = __nccwpck_require__(1514);
 const fs = __nccwpck_require__(7147);
@@ -47646,6 +47648,16 @@ const mergeConfig = __nccwpck_require__(7618);
 const parseSetupCommand = __nccwpck_require__(1215);
 const resolveVersionSpec = __nccwpck_require__(6014);
 
+// if there is no script version lets get it from git
+if (!SCRIPT_VERSION) {
+  const output = execSync(`git describe --tags --always --abbrev=1`, {
+    maxBuffer: 1024 * 1024 * 10,
+    encoding: 'utf-8',
+    env: {...process.env, LANDO_DEBUG: 0},
+  });
+  SCRIPT_VERSION = typeof output === 'string' ? output.trim() : 'unknown';
+}
+
 const main = async () => {
   // ensure needed RUNNER_ vars are set
   // @NOTE: this is just to ensure we can run this locally
@@ -47656,6 +47668,9 @@ const main = async () => {
 
   // start by getting the inputs and stuff
   const inputs = getInputs();
+
+  // debug the script version
+  core.debug(`running setup-lando.js script version: ${SCRIPT_VERSION}`);
 
   // immediately try to determine our slim status
   inputs.slim = inputs.landoVersion.endsWith('-slim');

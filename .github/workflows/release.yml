@@ -32,6 +32,8 @@ jobs:
         run: npm run lint
       - name: Prepare release
         uses: lando/prepare-release-action@v3
+        env:
+          SCRIPT_VERSION: ${{ github.event.release.tag_name }}
         with:
           commands: npm run prepare
           sync-tags: v3
