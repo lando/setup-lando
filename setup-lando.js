@@ -122,7 +122,7 @@ const main = async () => {
       await exec.exec('powershell', ['-Command', 'Stop-Service -Name docker -Force'], {ignoreReturnCode: true});
       await exec.exec('powershell', ['-Command', 'Remove-Item -Path (Get-Command docker).Source -Force'], {ignoreReturnCode: true}); // eslint-disable-line max-len
       await exec.exec('powershell', ['-Command', 'Get-Service -Name docker'], {ignoreReturnCode: true});
-      await exec.exec('docker', ['info'], {ignoreReturnCode: true});
+      await exec.exec('powershell', ['-Command', 'docker info'], {ignoreReturnCode: true});
     }
 
     // reset version information, we do this to get the source of truth on what we've downloaded
