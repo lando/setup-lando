@@ -43,7 +43,7 @@ module.exports = (spec, releases = [], dmv = 3) => {
 
     // filter based on release type and major version and validity etc
     releases = releases
-      .filter(release => includeEdge ? true : release.prerelease !== prerelease)
+      .filter(release => includeEdge ? true : release.prerelease === false)
       .filter(release => semver.valid(semver.clean(release.tag_name)) !== null)
       .filter(release => semver.satisfies(release.tag_name, `>=${mv} <${mv + 1}`,
         {loose: true, includePrerelease: true}));
