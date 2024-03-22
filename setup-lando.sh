@@ -563,7 +563,7 @@ if [[ ! -w "$PERM_DIR" ]] && ! have_sudo_access; then
   abort_multi "$(cat <<EOABORT
 ${tty_bold}${USER}${tty_reset} cannot write to ${tty_red}${DEST}${tty_reset} and is not a ${tty_bold}sudo${tty_reset} user!
 Rerun setup with a sudoer or use --dest to install to a directory ${tty_bold}${USER}${tty_reset} can write to.
-For more information on advanced usage rerurn with --help or check out: ${tty_underline}${tty_magenta}https://docs.lando.dev/install/advanced.html${tty_reset}
+For more information on advanced usage rerurn with --help or check out: ${tty_underline}${tty_magenta}https://docs.lando.dev/install${tty_reset}
 EOABORT
 )"
 fi
