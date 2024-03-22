@@ -1,0 +1,42 @@
+name: POSIX Script CURL Tests
+
+on:
+  pull_request:
+
+jobs:
+  setup-lando-os-test:
+    runs-on: ${{ matrix.os }}
+    env:
+      term: xterm
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - macos-13
+          - macos-14
+          - ubuntu-22.04
+        node-version:
+          - '18'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Install node ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - name: Install dependencies and prepare
+        run: |
+          npm clean-install --prefer-offline --frozen-lockfile
+          npm run lint
+          npm run prepare
+      - name: Lint
+        run: npm run lint
+      - name: Setup Lando version ${{ matrix.os }}
+        shell: bash
+        run: |
+          /bin/bash -c "$(curl -fsSL file://${{ github.workspace }}/dist/setup-lando.sh)"
+          lando version --all
