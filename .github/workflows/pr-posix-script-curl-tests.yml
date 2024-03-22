@@ -1,4 +1,4 @@
-name: POSIX Script CURL Tests
+name: POSIX Script cURL Tests
 
 on:
   pull_request:
