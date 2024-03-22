@@ -34,8 +34,8 @@ jobs:
           - off
           - disable
           - disabled
-          - lando setup -y
-          - lando setup --skip-common-plugins --plugin @lando/node --orchestrator 2.21.0 -y
+          - lando setup
+          - lando setup --skip-common-plugins --plugin @lando/node --orchestrator 2.21.0
           # these will fail
           # - lando.dev something
           # - oihywpihgklnw

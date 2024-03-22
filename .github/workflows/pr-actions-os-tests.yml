@@ -36,4 +36,3 @@ jobs:
 
       - name: Setup Lando version
         uses: ./
-

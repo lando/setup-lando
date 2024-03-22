@@ -20,7 +20,7 @@ All inputs are optional. If you do nothing the latest `stable` Lando will be ins
 
 | Name | Description | Default | Example |
 |---|---|---|---|
-| `auto-setup` | The lando setup command to run. | `lando setup -y` | `lando setup --skip-common-plugins --plugin @lando/core@~/path/to/core -y` |
+| `auto-setup` | The lando setup command to run. | `lando setup` | `lando setup --skip-common-plugins --plugin @lando/core@~/path/to/core` |
 | `lando-version` | The version of Lando to install. If set this has primacy over `lando-version-file`. | `stable` | `3.14.0` |
 | `lando-version-file` | A file that contains the version of Lando to install. | `.lando-version` | `.tool-versions` |
 | `config` | A list of `.` delimited config. If set these have primacy over values in `config-file` | `null` | `engineConfig.port=2376` |
@@ -116,7 +116,7 @@ outputs:
   uses: lando/setup-lando@v2
   with:
     lando-version: 3-dev
-    auto-setup: auto | off | disable | lando setup --orchestrator 2.21.0 -y
+    auto-setup: auto | off | disable | lando setup --orchestrator 2.21.0
 ```
 
 **Everything, everywhere, all at once example:**
@@ -126,7 +126,7 @@ outputs:
   uses: lando/setup-lando@v2
   with:
     architecture: x64
-    auto-setup: lando setup --orchestrator 2.22.0 --plugins @pirog/my-plugin -y
+    auto-setup: lando setup --orchestrator 2.22.0 --plugins @pirog/my-plugin
     config: |
       core.engine=docker-colima
       core.telemetry=false

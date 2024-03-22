@@ -104,7 +104,7 @@ description: Install Lando on GitHub Actions
     os: macOS
     telemetry: false
     token: ${{ github.token }}
-    setup: lando setup --orchestrator 2.22.0 --plugins @pirog/my-plugin -y
+    setup: lando setup --orchestrator 2.22.0 --plugins @pirog/my-plugin
 ```
 
 ## Inputs
@@ -117,7 +117,7 @@ All inputs are optional. If you do nothing the latest `stable` Lando will be ins
 | `lando-version-file` | A file that contains the version of Lando to install. | `.lando-version` | `.tool-versions` |
 | `config` | A list of `.` delimited config. If set these have primacy over values in `config-file` | `null` | `engineConfig.port=2376` |
 | `config-file` | The path to a Lando global config file to use. | `null` | `/config/lando-global.yml` |
-| `setup` | The lando setup command to run. | `lando setup -y` | `lando setup --skip-common-plugins --plugin @lando/core@~/path/to/core -y` |
+| `setup` | The lando setup command to run. | `lando setup` | `lando setup --skip-common-plugins --plugin @lando/core@~/path/to/core -y` |
 
 * Note that `setup` is only available in Lando 3.21+
 
