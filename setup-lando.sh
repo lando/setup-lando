@@ -428,26 +428,26 @@ test_curl() {
 
 # returns true if maj.min a is greater than maj.min b
 version_compare() (
-	yy_a="$(echo "$1" | cut -d'.' -f1)"
-	yy_b="$(echo "$2" | cut -d'.' -f1)"
-	if [ "$yy_a" -lt "$yy_b" ]; then
-		return 1
-	fi
-	if [ "$yy_a" -gt "$yy_b" ]; then
-		return 0
-	fi
-	mm_a="$(echo "$1" | cut -d'.' -f2)"
-	mm_b="$(echo "$2" | cut -d'.' -f2)"
+  yy_a="$(echo "$1" | cut -d'.' -f1)"
+  yy_b="$(echo "$2" | cut -d'.' -f1)"
+  if [ "$yy_a" -lt "$yy_b" ]; then
+    return 1
+  fi
+  if [ "$yy_a" -gt "$yy_b" ]; then
+    return 0
+  fi
+  mm_a="$(echo "$1" | cut -d'.' -f2)"
+  mm_b="$(echo "$2" | cut -d'.' -f2)"
 
-	# trim leading zeros to accommodate CalVer
-	mm_a="${mm_a#0}"
-	mm_b="${mm_b#0}"
+  # trim leading zeros to accommodate CalVer
+  mm_a="${mm_a#0}"
+  mm_b="${mm_b#0}"
 
-	if [ "${mm_a:-0}" -lt "${mm_b:-0}" ]; then
-		return 1
-	fi
+  if [ "${mm_a:-0}" -lt "${mm_b:-0}" ]; then
+    return 1
+  fi
 
-	return 0
+  return 0
 )
 
 # abort if we dont have curl, or the right version of it
