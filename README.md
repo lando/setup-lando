@@ -1,6 +1,8 @@
 # Setup Lando
 
-This repo _should_ now be the single source of truth for all things relating to the installation and setup of Lando. This currently includes:
+This repo is the single source of truth for all things relating to the installation and setup of Lando.
+
+This currently includes:
 
 * GitHub Actions action
 * Windows/WSL2 setup scripts
@@ -16,7 +18,7 @@ But could also include other things in the future like:
 
 ## Docs
 
-Check out the below for docs related to your install method
+Check out the below for docs related to your install method.
 
 * [GitHub Actions](https://docs.lando.dev/install/gha.html)
 * [macOS](https://docs.lando.dev/install/macos.html)
