@@ -21,6 +21,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PIROG_TOKEN }}
       - name: Install node ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
@@ -36,7 +38,5 @@ jobs:
           SCRIPT_VERSION: ${{ github.event.release.tag_name }}
         with:
           commands: npm run prepare
-          sync-email: mike@lando.dev
           sync-tags: v3
-          sync-username: pirog
 
