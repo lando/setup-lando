@@ -5,12 +5,11 @@ description: Install Lando from source
 
 # From Source
 
-To install from source you need to first make sure you've manually installed the below dependencies:
+Before you install from source you need to first make sure you've manually installed the below dependencies:
 
-* [the latest stable version of docker](https://docs.docker.com/engine/install/) for your operating system, set to its **factory defaults**.
 * [the latest node 18](https://nodejs.org/en/download/)
 
-Once you've completed the above then do the following:
+Once you've completed the above then install the lando CLI from source:
 
 ```sh
 # Clone the Lando source
@@ -19,24 +18,24 @@ git clone https://github.com/lando/cli.git cli
 # Install its dependencies
 cd cli && npm install
 
-# ON WINDOWS:
-# Find the current path with command prompt: cd or powershell: pwd
-# Add C:\path\from\above\bin to PATH
-# See: https://www.computerhope.com/issues/ch000549.htm
-# Remember to relaunch your terminal so the PATH changes take effect
-lando
-# Or invoke directly
-node "C:\path\from\above\bin\lando"
-
-# ON POSIX:
 # Set up a symlink
-# NOTE: we use lando.dev as a convention but you can name it whatever
-# This allows you to run stable lando and source lando side by side
 sudo mkdir -p /usr/local/bin
-sudo ln -s $(pwd)/bin/lando /usr/local/bin/lando.dev
+sudo ln -s $(pwd)/bin/lando /usr/local/bin/lando
 
 # Run lando from source
-lando.dev
+lando
+
+# Run lando setup to ensure all needed dependencies eg Docker are installed
+lando setup
 ```
 
-You may be able to use [`lando shellenv`](https://docs.lando.dev/cli/shellenv.html) to help set up `PATH` as well.
+Note that to use `bash` symlinks on Windows you need to do a bunch of other stuff first. There isn't really a great singular guide on how to do this however [this](https://stackoverflow.com/questions/5917249/git-symbolic-links-in-windows/59761201#59761201) and [this](https://github.com/orgs/community/discussions/23591) seemed to be best.
+
+It's also possible that you may be able to skip the symlink step and just directly invoke `lando shellenv` like:
+
+```sh
+# directly invoke shellenv
+node bin/lando shellenv --add
+
+# then source the rc file lando modified or open up a new terminal
+```

@@ -5,27 +5,64 @@ description: Install Lando on macOS
 
 # macOS
 
-## DMG (recommended)
+The macOS quickstart is to paste the below into a terminal and execute it.
 
-1.  Download the latest `.dmg` package from [GitHub](https://github.com/lando/lando/releases)
-2.  Mount the DMG by double-clicking it
-3.  Double-click on the `LandoInstaller.pkg`
-4.  Go through the setup workflow
-5.  Enter your username and password when prompted
+```bash
+/bin/bash -c "$(curl -fsSL https://get.lando.dev/setup-lando.sh)"
+```
 
-::: tip Choose the correct DMG for your chip architecture
-If you have a new Apple Silicon based Mac then choose the `arm64`. Use the `x64` DMG for the older Intel chip Macs.
+If you are looking to customize your install then [advanced usage](#advanced) if for you.
 
-**Note that Apple Silicon support is still a work in progress and YMMV.**
-:::
+## Advanced
 
-## HomeBrew
+The installation script has various options but you will need to download the script and invoke it directly.
 
-::: warning We do not maintain this!
-Please note that the versions of Lando and Docker installed via Homebrew are community-maintained and may not be the latest version as provided by the `.dmg` package from [GitHub](https://github.com/lando/lando/releases). **This also means that `brew` may install an unsupported version of Docker for you.**
+```bash
+# save the script
+curl -fsSL https://get.lando.dev/setup-lando.sh -o setup-lando.sh
 
-See: <https://github.com/Homebrew/homebrew-cask/blob/master/Casks/l/lando.rb>
-:::
+# make it executable
+chmod +x ./setup-lando.sh
 
-1. Ensure homebrew is installed and up-to-date.
-2. Add the lando cask: `brew install --cask lando`
+# get usage info
+bash setup-lando.sh --help
+
+# example advanced invocation
+bash setup-lando.sh \
+  --arch=arm64 \
+  --dest=/Users/pirog/bin \
+  --fat \
+  --no-setup \
+  --os=macos \
+  --version=3.22.1 \
+  --debug \
+  --yes
+```
+
+### Usage
+
+```bash
+Usage: [NONINTERACTIVE=1] [CI=1] setup-lando.sh [options]
+
+Options:
+  --arch           installs for this arch [default: arm64]
+  --dest           installs in this directory [default: /usr/local/bin]
+  --fat            installs fat cli 3.21+ <4 only, not recommended
+  --no-setup       installs without running lando setup 3.21+ <4 only
+  --os             installs for this os [default: macos]
+  --version        installs this version [default: stable]
+  --debug          shows debug messages
+  -h, --help       displays this message
+  -y, --yes        runs with all defaults and no prompts, sets NONINTERACTIVE=1
+
+Environment Variables:
+  NONINTERACTIVE   installs without prompting for user input
+  CI               installs in CI mode (e.g. does not prompt for user input)
+```
+
+Some notes on advanced usage:
+
+* If you want to install without the `sudo` password requirement then set `--dest` to a location to which your user has `write` permission. Note that you may still need `sudo` for downstream setup tasks eg if you need to install Docker Desktop.
+* If you want to customize the behavior of `lando setup` use `--no-setup` and then manually invoke [`lando setup`](https://docs.lando.dev/cli/setup.html) after install is complete.
+* If you run in a non-tty environment eg GitHub Actions then `--yes` will be assumed
+* If you use `--yes` it is equivalent to setting `NONINTERACTIVE=1`

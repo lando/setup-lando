@@ -1,144 +1,34 @@
 # Setup Lando
 
-This action installs Lando in GitHub Actions. With it you can:
+This repo _should_ now be the single source of truth for all things relating to the installation and setup of Lando. This currently includes:
 
-* Install using a version-spec-ish eg `3`, `3.12`, `3.x`, `3.14.0`
-* Install using convenience aliases eg `stable`, `4-latest`, `dev` `3-edge`
-* Install preview branches eg `pm-preview`
-* Install from a URL eg `https://github.com/lando/cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0`
-* Install from a local file eg `/home/runner/work/setup-lando/setup-lando/bin/lando`
-* Set [global Lando config](https://docs.lando.dev/core/global.html) configuration
-* Specify how, or if, `lando setup` should run
-* Toggle `lando` debugging via [GitHub Actions](https://github.blog/changelog/2022-05-24-github-actions-re-run-jobs-with-debug-logging)
-* Verify underlying `engine` and `orchestrator` dependencies are installed and correct
+* GitHub Actions action
+* Windows/WSL2 setup scripts
+* POSIX setup scripts
+* Install docs
 
-> **NOTE:** If you are using a self-hosted or custom runner you may need to install the needed Lando dependenices eg Docker and Docker Compose for Lando to work correctly!
+But could also include other things in the future like:
 
-## Inputs
+* Homebrew formula
+* Chocolatey packages
+* Installer packages
+* CI Apps
 
-All inputs are optional. If you do nothing the latest `stable` Lando will be installed.
+## Docs
 
-| Name | Description | Default | Example |
-|---|---|---|---|
-| `auto-setup` | The lando setup command to run. | `lando setup` | `lando setup --skip-common-plugins --plugin @lando/core@~/path/to/core` |
-| `lando-version` | The version of Lando to install. If set this has primacy over `lando-version-file`. | `stable` | `3.14.0` |
-| `lando-version-file` | A file that contains the version of Lando to install. | `.lando-version` | `.tool-versions` |
-| `config` | A list of `.` delimited config. If set these have primacy over values in `config-file` | `null` | `engineConfig.port=2376` |
-| `config-file` | The path to a Lando global config file to use. | `null` | `/config/lando-global.yml` |
+Check out the below for docs related to your install method
 
-* Note that `auto-setup` is only available in Lando 3 and in Lando 3.21+ specifically.
+* [GitHub Actions](https://docs.lando.dev/install/gha.html)
+* [macOS](https://docs.lando.dev/install/macos.html)
+* [Linux](https://docs.lando.dev/install/linux.html)
+* [Source](https://docs.lando.dev/install/source.html)
+* [Windows](https://docs.lando.dev/install/windows.html)
 
-## Outputs
+## Issues, Questions and Support
 
-```yaml
-outputs:
-  lando-path:
-    description: "The path to the installed version of Lando."
-    value: ${{ steps.setup-lando.outputs.lando-path }}
-```
+If you have a question or would like some community support we recommend you [join us on Slack](https://launchpass.com/devwithlando).
 
-##  Usage
-
-### Basic Usage
-
-```yaml
-- name: Setup Lando
-  uses: lando/setup-lando@v2
-```
-
-### Advanced Usage
-
-**Version examples:**
-
-```yaml
-- name: Setup Lando
-  uses: lando/setup-lando@v2
-  with:
-    lando-version: stable | edge | dev | latest | 3 | 3.14.0 | 3.11 | pm-preview
-```
-
-```yaml
-- name: Setup Lando
-  uses: lando/setup-lando@v2
-  with:
-    lando-version: https://url.to.my.lando.cli
-```
-
-```yaml
-- name: Setup Lando
-  uses: lando/setup-lando@v2
-  with:
-    lando-version: /path/to/my/lando/cli
-```
-
-**Version spec and config file example:**
-
-```yaml
-- name: Setup Lando
-  uses: lando/setup-lando@v2
-  with:
-    lando-version: ">2"
-    config-file: config.yaml
-```
-
-**Version file and config list example:**
-
-```yaml
-- name: Setup Lando
-  uses: lando/setup-lando@v2
-  with:
-    lando-version-file: .tool-versions
-    config: |
-      core.engine=docker-colima
-      core.telemetry=false
-      plugins.@lando/php=/home/runner/work/php/php
-```
-
-**Version file and config list example:**
-
-```yaml
-- name: Setup Lando
-  uses: lando/setup-lando@v2
-  with:
-    lando-version-file: .tool-versions
-    config: |
-      core.engine=docker-colima
-      core.telemetry=false
-      plugins.@lando/php=/home/runner/work/php/php
-```
-
-> **NOTE:** The above config is meant purely for illustration.
-
-**Setup example:**
-
-```yaml
-- name: Setup Lando
-  uses: lando/setup-lando@v2
-  with:
-    lando-version: 3-dev
-    auto-setup: auto | off | disable | lando setup --orchestrator 2.21.0
-```
-
-**Everything, everywhere, all at once example:**
-
-```yaml
-- name: Setup Lando
-  uses: lando/setup-lando@v2
-  with:
-    architecture: x64
-    auto-setup: lando setup --orchestrator 2.22.0 --plugins @pirog/my-plugin
-    config: |
-      core.engine=docker-colima
-      core.telemetry=false
-      plugins.@lando/php=/home/runner/work/php/php
-    config-file: config.yaml
-    debug: true
-    lando-version: 3.14.0
-    lando-version-file: .tool-versions
-    os: macOS
-    telemetry: false
-    token: ${{ github.token }}
-```
+If you'd like to report a bug or submit a feature request then please [use the issue queue](https://github.com/lando/setup-lando/issues/new/choose) in this repo.
 
 ## Changelog
 
