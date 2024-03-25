@@ -36,5 +36,7 @@ jobs:
           SCRIPT_VERSION: ${{ github.event.release.tag_name }}
         with:
           commands: npm run prepare
+          sync-email: mike@lando.dev
           sync-tags: v3
+          sync-username: pirog
 
