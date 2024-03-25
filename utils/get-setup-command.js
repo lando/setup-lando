@@ -18,7 +18,7 @@ module.exports = setup => {
     setup.toUpperCase() === 'RUN' ||
     setup.toUpperCase() === 'TRUE'
     )) {
-    setup = 'lando setup -y';
+    setup = 'lando setup';
   }
 
   // if we get here we *should* have a string command we can parse

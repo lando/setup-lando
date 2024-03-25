@@ -27,7 +27,6 @@ lando.env
 
 # Build dirs
 build
-dist
 
 # coverage reporting
 .nyc_output
@@ -40,10 +39,10 @@ coverage/
 .temp
 .cache
 _site
-dist
 cache
 temp
 config.*.timestamp-*-*.*
+docs/.vitepress/dist
 
 # YARN
 yarn.lock

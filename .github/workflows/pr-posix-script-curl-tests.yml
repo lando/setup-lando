@@ -1,4 +1,4 @@
-name: Actions OS Tests
+name: POSIX Script cURL Tests
 
 on:
   pull_request:
@@ -15,7 +15,6 @@ jobs:
           - macos-13
           - macos-14
           - ubuntu-22.04
-          - windows-2022
         node-version:
           - '18'
 
@@ -32,7 +31,12 @@ jobs:
       - name: Install dependencies and prepare
         run: |
           npm clean-install --prefer-offline --frozen-lockfile
+          npm run lint
           npm run prepare
-
-      - name: Setup Lando version
-        uses: ./
+      - name: Lint
+        run: npm run lint
+      - name: Setup Lando version ${{ matrix.os }}
+        shell: bash
+        run: |
+          /bin/bash -c "$(curl -fsSL file://${{ github.workspace }}/dist/setup-lando.sh)"
+          lando version --all

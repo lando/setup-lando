@@ -1,0 +1,19 @@
+[build]
+  base = "./dist"
+  publish = "./"
+
+[[headers]]
+  for = "/*.sh"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+    Content-Type = "text/plain; charset=utf-8"
+[[headers]]
+  for = "/*.ps1"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000"
+    Content-Type = "text/plain; charset=utf-8"
+
+[[plugins]]
+  package = "@netlify/plugin-lighthouse"
+  [plugins.inputs.audits]
+    output_path = "reports/lighthouse.html"

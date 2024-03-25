@@ -39,11 +39,11 @@ module.exports = (spec, releases = [], dmv = 3) => {
   // then attempt to resolve special "convenience" aliases to actual versions
   if (gitHubReleases.includes(spec)) {
     const mv = spec.split('-').length === 1 ? dmv : spec.split('-')[0];
-    const prerelease = spec.split('-').length === 1 ? spec.split('-')[0] === 'edge' : spec.split('-')[1] === 'edge';
+    const includeEdge = spec.split('-').length === 1 ? spec.split('-')[0] === 'edge' : spec.split('-')[1] === 'edge';
 
     // filter based on release type and major version and validity etc
     releases = releases
-      .filter(release => release.prerelease === prerelease)
+      .filter(release => includeEdge ? true : release.prerelease === false)
       .filter(release => semver.valid(semver.clean(release.tag_name)) !== null)
       .filter(release => semver.satisfies(release.tag_name, `>=${mv} <${mv + 1}`,
         {loose: true, includePrerelease: true}));

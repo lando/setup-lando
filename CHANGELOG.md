@@ -1,20 +1,32 @@
-## v3.0.0 - [December 15, 2023](https://github.com/lando/setup-lando/releases/tag/v3.0.0)
+## v3.0.0 - [March 22, 2024](https://github.com/lando/setup-lando/releases/tag/v3.0.0)
 
 ### **BREAKING CHANGES**
 
+This repo should now be the single source of truth for all things relating to the installation and setup of Lando. This currently includes:
+
+* GitHub Actions action
+* POSIX setup scripts
+* Install docs
+
+But could also include other things in the future like:
+
+* Windows/WSL2 setup scripts
+* Homebrew formula
+* Chocolatey packages
+* Installer packages
+* CI Apps
+
+### GitHub Actions
+
+* Deprecated `setup` in favor of `auto-setup`
+* Fixed `auto-setup` so it _does not_ run on Lando 4_
+* Fixed `edge` releases to also include `stable` releases from release list
 * Removed `dependency-check` in favor of mechanisms provided by `lando setup`
 
 ### New Features
 
-### Bug Fixes
-
-* Fixed `auto-setup` so it _does not_ run on Lando 4_
-
-### Internal
-
-### DEPRECATIONS
-
-* Deprecated `setup` in favor of `auto-setup`
+* Introduced `setup-lando.sh` POSIX setup script at `https://get.lando.dev/setup-lando.sh`
+* Reorganized docs to reflect broadened repo scope
 
 ## v2.3.1 - [March 13, 2024](https://github.com/lando/setup-lando/releases/tag/v2.3.1)
 

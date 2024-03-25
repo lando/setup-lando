@@ -36,11 +36,11 @@ export default defineConfig({
           text: 'Installation',
           collapsed: false,
           items: [
-            {text: 'macOS', link: 'macos'},
-            {text: 'Linux', link: 'linux'},
-            {text: 'Windows', link: 'windows'},
-            {text: 'GitHub Actions', link: 'gha'},
-            {text: 'Source', link: 'source'},
+            {text: 'macOS', link: '/macos'},
+            {text: 'Linux', link: '/linux'},
+            {text: 'Windows', link: '/windows'},
+            {text: 'GitHub Actions', link: '/gha'},
+            {text: 'Source', link: '/source'},
           ],
         },
         {

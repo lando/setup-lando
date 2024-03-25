@@ -5,74 +5,64 @@ description: Install Lando on Linux
 
 # Linux
 
-## Package (recommended)
-
-1. Install the [Docker Community Edition](https://docs.docker.com/engine/install/) for your Linux version. Visit [https://get.docker.com](https://get.docker.com/) for the "quick & easy install" script. **(at least version 19.03.1-ce)**
-2. Download the latest `.deb`, `.pacman` or `.rpm` package from [GitHub](https://github.com/lando/lando/releases)
-3. Double click on the package and install via your distributions "Software Center" or equivalent.
-4. Make sure you look at the caveats below and follow them appropriately
-
-::: tip Install from source for other Linux distros
-If your Linux distro does not support our `.deb`, `.pacman` or `.rpm` packages you can [install from source](/source)
-:::
-
-## via CLI
-
-Make sure you have `wget` installed.
-
-### Debian
+The Linux quickstart is to paste the below into a terminal and execute it.
 
 ```bash
-wget https://files.lando.dev/installer/lando-x64-stable.deb
-sudo dpkg -i lando-x64-stable.deb
+/bin/bash -c "$(curl -fsSL https://get.lando.dev/setup-lando.sh)"
 ```
 
-### Fedora
+If you are looking to customize your install then [advanced usage](#advanced) if for you.
+
+## Advanced
+
+The installation script has various options but you will need to download the script and invoke it directly.
 
 ```bash
-wget https://files.lando.dev/installer/lando-x64-stable.rpm
-sudo dnf install lando-x64-stable.rpm
+# save the script
+curl -fsSL https://get.lando.dev/setup-lando.sh -o setup-lando.sh
+
+# make it executable
+chmod +x ./setup-lando.sh
+
+# get usage info
+bash setup-lando.sh --help
+
+# example advanced invocation
+bash setup-lando.sh \
+  --arch=x64 \
+  --dest=/Users/pirog/bin \
+  --fat \
+  --no-setup \
+  --os=linux \
+  --version=3.22.1 \
+  --debug \
+  --yes
 ```
 
-### Arch
+### Usage
 
 ```bash
-wget https://files.lando.dev/installer/lando-x64-stable.pacman
-sudo pacman -U lando-x64-stable.pacman
+Usage: [NONINTERACTIVE=1] [CI=1] setup-lando.sh [options]
+
+Options:
+  --arch           installs for this arch [default: x64]
+  --dest           installs in this directory [default: /usr/local/bin]
+  --fat            installs fat cli 3.21+ <4 only, not recommended
+  --no-setup       installs without running lando setup 3.21+ <4 only
+  --os             installs for this os [default: linux]
+  --version        installs this version [default: stable]
+  --debug          shows debug messages
+  -h, --help       displays this message
+  -y, --yes        runs with all defaults and no prompts, sets NONINTERACTIVE=1
+
+Environment Variables:
+  NONINTERACTIVE   installs without prompting for user input
+  CI               installs in CI mode (e.g. does not prompt for user input)
 ```
 
-Make sure you look at the caveats below and follow them appropriately as well.
+Some notes on advanced usage:
 
-## Caveats
-
-#### `docker-ce`
-
-We set `docker-ce` as a hard dependency for our packages. This means if you have docker installed a different way it is likely installing the package will fail. You *may* be able to get around this if your package utility allows dependency ignorance
-
-```bash
-dpkg -i --ignore-depends=docker-ce lando-stable.deb
-```
-
-After installing lando this way, you may need to edit the `/var/lib/dpkg/status` file and remove `docker-ce` from the lando package dependency list in order for future `apt` related commands to work. Great care should be taken while editting this file!!!.
-
-We are currently considering whether to support alternate means of installing Docker such as with [moby-engine](https://github.com/lando/lando/issues/1294)
-
-#### Arch
-
-Lando is also available on the AUR as [lando-git](https://aur.archlinux.org/packages/lando-git/), meaning it's built directly from source.
-
-#### Additional Setup
-
-Because each Linux distribution handles things differently, these considerations may or may not apply to you:
-
-* If your distro uses a `docker` group, make sure your user is a member of it:
-
-  ```
-  sudo usermod -aG docker $USER
-  ```
-
-  You will need to log out for this change to take effect. Sometimes a reboot is necessary. See [this](https://docs.docker.com/engine/install/linux-postinstall/) for more details.
-
-* If your distro uses SystemD, make sure that both `docker.service` and `docker.socket` daemons are running.
-
-* If you are using Manjaro or another Arch-based distro, you may need to enable the [AUR repository](https://aur.archlinux.org/packages/) for dependencies.
+* If you want to install without the `sudo` password requirement then set `--dest` to a location to which your user has `write` permission. Note that you may still need `sudo` for downstream setup tasks eg if you need to install Docker Engine.
+* If you want to customize the behavior of `lando setup` use `--no-setup` and then manually invoke [`lando setup`](https://docs.lando.dev/cli/setup.html) after install is complete.
+* If you run in a non-tty environment eg GitHub Actions then `--yes` will be assumed
+* If you use `--yes` it is equivalent to setting `NONINTERACTIVE=1`
