@@ -1,22 +1,60 @@
-SCRIPT_VERSION="3.0.0"
+SCRIPT_VERSION="v3.0.0"
 #!/bin/bash
+set -u
+# Lando POSIX setup script.
+#
+# This script is the official and recommended way to setup Lando on your POSIX
+# based computer. For information on requirements, advanced usage or installing
+# in different environments (Windows, CI, GitHub Actions) you should check out:
+#
+# - https://docs.lando.dev/install
+#
+# Script source is available at https://github.com/lando/setup-lando
 
-# Lando linux/macos installer script
-# This was based on the HOMEBREW installer script and as such you may enjoy the below licensing requirement:
+#
+# Usage:
+#
+# To setup the latest stable version of Lando with all defaults you can
+# directly curlbash:
+#
+# $ /bin/bash -c "$(curl -fsSL https://get.lando.dev/setup-lando.sh)"
+#
+# If you want to customize your installation you will need to download the
+# script and invoke directly so you can pass in options:
+#
+# 1. download
+#
+#   $ curl -fsSL https://get.lando.dev/setup-lando.sh -o setup-lando.sh
+#
+# 2. make executable
+#
+#   $ chmod +x ./setup-lando.sh
+#
+# 3. print advanced usage
+#
+#   $ bash setup-lando.sh --help
+#
+# 4. run customized setup
+#
+#  $ bash setup-lando.sh --no-setup --version v3.23.1 --debug --yes
+
+#
+# This script was based on the HOMEBREW installer script and as such you may
+# enjoy the below licensing requirement:
 #
 # Copyright (c) 2009-present, Homebrew contributors
 # All rights reserved.
-
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
-
+#
 # * Redistributions of source code must retain the above copyright notice, this
 #   list of conditions and the following disclaimer.
-
+#
 # * Redistributions in binary form must reproduce the above copyright notice,
 #   this list of conditions and the following disclaimer in the documentation
 #   and/or other materials provided with the distribution.
-
+#
 # THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
 # AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 # IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
@@ -27,19 +65,17 @@ SCRIPT_VERSION="3.0.0"
 # CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
+#
 # Any code that has been modified by the original falls under
 # Copyright (c) 2009-2023, Lando.
 # All rights reserved.
 # See license in the repo: https://github.com/lando/setup-lando/blob/main/LICENSE
-
+#
 # We don't need return codes for "$(command)", only stdout is needed.
 # Allow `[[ -n "$(command)" ]]`, `func "$(command)"`, pipes, etc.
 # shellcheck disable=SC2312
 
-set -u
-
-# configuration things, at the top for quality of life
+# configuration things at the top for QOL
 LANDO_DEFAULT_MV="3"
 MACOS_OLDEST_SUPPORTED="12.0"
 REQUIRED_CURL_VERSION="7.41.0"
@@ -149,7 +185,7 @@ ${tty_green}Options:${tty_reset}
   --version        installs this version ${tty_dim}[default: ${VERSION}]${tty_reset}
   --debug          shows debug messages
   -h, --help       displays this message
-  -y, --y          runs with all defaults and no prompts, sets NONINTERACTIVE=1
+  -y, --yes        runs with all defaults and no prompts, sets NONINTERACTIVE=1
 
 ${tty_green}Environment Variables:${tty_reset}
   NONINTERACTIVE   installs without prompting for user input
@@ -393,26 +429,26 @@ test_curl() {
 
 # returns true if maj.min a is greater than maj.min b
 version_compare() (
-	yy_a="$(echo "$1" | cut -d'.' -f1)"
-	yy_b="$(echo "$2" | cut -d'.' -f1)"
-	if [ "$yy_a" -lt "$yy_b" ]; then
-		return 1
-	fi
-	if [ "$yy_a" -gt "$yy_b" ]; then
-		return 0
-	fi
-	mm_a="$(echo "$1" | cut -d'.' -f2)"
-	mm_b="$(echo "$2" | cut -d'.' -f2)"
+  yy_a="$(echo "$1" | cut -d'.' -f1)"
+  yy_b="$(echo "$2" | cut -d'.' -f1)"
+  if [ "$yy_a" -lt "$yy_b" ]; then
+    return 1
+  fi
+  if [ "$yy_a" -gt "$yy_b" ]; then
+    return 0
+  fi
+  mm_a="$(echo "$1" | cut -d'.' -f2)"
+  mm_b="$(echo "$2" | cut -d'.' -f2)"
 
-	# trim leading zeros to accommodate CalVer
-	mm_a="${mm_a#0}"
-	mm_b="${mm_b#0}"
+  # trim leading zeros to accommodate CalVer
+  mm_a="${mm_a#0}"
+  mm_b="${mm_b#0}"
 
-	if [ "${mm_a:-0}" -lt "${mm_b:-0}" ]; then
-		return 1
-	fi
+  if [ "${mm_a:-0}" -lt "${mm_b:-0}" ]; then
+    return 1
+  fi
 
-	return 0
+  return 0
 )
 
 # abort if we dont have curl, or the right version of it
@@ -528,7 +564,7 @@ if [[ ! -w "$PERM_DIR" ]] && ! have_sudo_access; then
   abort_multi "$(cat <<EOABORT
 ${tty_bold}${USER}${tty_reset} cannot write to ${tty_red}${DEST}${tty_reset} and is not a ${tty_bold}sudo${tty_reset} user!
 Rerun setup with a sudoer or use --dest to install to a directory ${tty_bold}${USER}${tty_reset} can write to.
-For more information on advanced usage rerurn with --help or check out: ${tty_underline}${tty_magenta}https://docs.lando.dev/install/advanced.html${tty_reset}
+For more information on advanced usage rerurn with --help or check out: ${tty_underline}${tty_magenta}https://docs.lando.dev/install${tty_reset}
 EOABORT
 )"
 fi

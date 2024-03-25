@@ -45460,7 +45460,7 @@ module.exports = setup => {
     setup.toUpperCase() === 'RUN' ||
     setup.toUpperCase() === 'TRUE'
     )) {
-    setup = 'lando setup -y';
+    setup = 'lando setup';
   }
 
   // if we get here we *should* have a string command we can parse
@@ -45610,11 +45610,11 @@ module.exports = (spec, releases = [], dmv = 3) => {
   // then attempt to resolve special "convenience" aliases to actual versions
   if (gitHubReleases.includes(spec)) {
     const mv = spec.split('-').length === 1 ? dmv : spec.split('-')[0];
-    const prerelease = spec.split('-').length === 1 ? spec.split('-')[0] === 'edge' : spec.split('-')[1] === 'edge';
+    const includeEdge = spec.split('-').length === 1 ? spec.split('-')[0] === 'edge' : spec.split('-')[1] === 'edge';
 
     // filter based on release type and major version and validity etc
     releases = releases
-      .filter(release => release.prerelease === prerelease)
+      .filter(release => includeEdge ? true : release.prerelease === false)
       .filter(release => semver.valid(semver.clean(release.tag_name)) !== null)
       .filter(release => semver.satisfies(release.tag_name, `>=${mv} <${mv + 1}`,
         {loose: true, includePrerelease: true}));
@@ -47620,7 +47620,7 @@ var __webpack_exports__ = {};
 "use strict";
 
 
-const SCRIPT_VERSION = '3.0.0';
+const SCRIPT_VERSION = 'v3.0.0';
 
 const core = __nccwpck_require__(2186);
 const exec = __nccwpck_require__(1514);
@@ -47736,6 +47736,14 @@ const main = async () => {
 
     core.info(`path: ${landoPath}`);
     core.endGroup();
+
+    // if on windows remove docker for windows eg windows containers
+    if (inputs.os === 'Windows') {
+      await exec.exec('powershell', ['-Command', 'Stop-Service -Name docker -Force'], {ignoreReturnCode: true});
+      await exec.exec('powershell', ['-Command', 'Remove-Item -Path (Get-Command docker).Source -Force'], {ignoreReturnCode: true}); // eslint-disable-line max-len
+      await exec.exec('powershell', ['-Command', 'Get-Service -Name docker'], {ignoreReturnCode: true});
+      await exec.exec('powershell', ['-Command', 'docker info'], {ignoreReturnCode: true});
+    }
 
     // reset version information, we do this to get the source of truth on what we've downloaded
     fs.chmodSync(landoPath, '755');
