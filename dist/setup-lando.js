@@ -117,6 +117,14 @@ const main = async () => {
     core.info(`path: ${landoPath}`);
     core.endGroup();
 
+    // if on windows remove docker for windows eg windows containers
+    if (inputs.os === 'Windows') {
+      await exec.exec('powershell', ['-Command', 'Stop-Service -Name docker -Force'], {ignoreReturnCode: true});
+      await exec.exec('powershell', ['-Command', 'Remove-Item -Path (Get-Command docker).Source -Force'], {ignoreReturnCode: true}); // eslint-disable-line max-len
+      await exec.exec('powershell', ['-Command', 'Get-Service -Name docker'], {ignoreReturnCode: true});
+      await exec.exec('powershell', ['-Command', 'docker info'], {ignoreReturnCode: true});
+    }
+
     // reset version information, we do this to get the source of truth on what we've downloaded
     fs.chmodSync(landoPath, '755');
     const output = execSync(`${landoPath} version`, {
