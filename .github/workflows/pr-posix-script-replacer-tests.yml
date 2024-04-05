@@ -27,18 +27,17 @@ jobs:
       - name: Get older Lando version ${{ matrix.old-version }}
         shell: bash
         run: |
-          sudo mkdir -p /usr/local/bin
-          sudo curl \
+          mkdir -p /usr/local/bin
+          curl \
             --fail \
             --location \
             --progress-bar \
             --output "/usr/local/bin/lando" \
             "${{ matrix.old-version }}"
-          sudo chmod +x /usr/local/bin/lando
+          chmod +x /usr/local/bin/lando
 
           which lando | grep /usr/local/bin/lando
           lando version --all
-          ls -lsa /usr/local/bin
 
       - name: Replace Lando with setup-script
         shell: bash
