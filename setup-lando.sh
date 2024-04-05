@@ -733,7 +733,9 @@ wait_for_user() {
 
 
 # determine the exec we need for sudo protected things
-if [[ ! -w "$PERM_DIR" ]]; then
+# we add /tmp in here because their are high security environments where /tmp is not universally writable
+if [[ ! -w "$PERM_DIR" ]] || [[ ! -w "/tmp" ]]; then
+  debug "auto_exec elevating to sudo because ${USER} cannot write to ${PERM_DIR} or /tmp"
   auto_exec() {
     execute_sudo "$@"
   }
@@ -781,6 +783,7 @@ if [[ ! -d "$DEST" ]]; then auto_exec mkdir -p "$DEST"; fi
 
 # LANDO
 LANDO="${DEST}/lando"
+LANDO_TMP="/tmp/${RANDOM}"
 
 # download lando
 log "${tty_magenta}downloading${tty_reset} ${tty_bold}${URL}${tty_reset} to ${tty_bold}${LANDO}${tty_reset}"
@@ -788,17 +791,24 @@ auto_exec curl \
   --fail \
   --location \
   --progress-bar \
-  --output "$LANDO" \
+  --output "$LANDO_TMP" \
   "$URL"
 
-# make executable
-auto_exec chmod +x "${LANDO}"
+# make executable and weak "it works" test
+auto_exec chmod +x "${LANDO_TMP}"
+execute "${LANDO_TMP}" version >/dev/null
+
+# if we get here we should be good to move it to its final destination
+# NOTE: we use mv here instead of cp because of https://developer.apple.com/forums/thread/130313
+auto_exec mv -f "${LANDO_TMP}" "${LANDO}"
+
+# if lando 3 then --clear
+if [[ $LMV == '3' ]]; then
+  execute "${LANDO}" --clear >/dev/null
+fi
 
 # test via log
 log "${tty_green}downloaded${tty_reset} @lando/cli ${tty_bold}$("${LANDO}" version --component @lando/cli)${tty_reset} to ${tty_bold}${LANDO}${tty_reset}"
-
-# hidden clear
-execute "${LANDO}" --clear >/dev/null
 
 # run correct setup flavor if needed
 if [[ "$SETUP" == "1" ]]; then
