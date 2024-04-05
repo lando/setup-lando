@@ -30,6 +30,7 @@ export default defineConfig({
             {text: 'How does it work?', link: 'https://docs.lando.dev/getting-started/what-it-do'},
             {text: 'Starting your first app', link: 'https://docs.lando.dev/getting-started/first-app'},
             {text: 'Requirements', link: 'https://docs.lando.dev/getting-started/requirements'},
+            {text: 'Lando 101', link: 'https://docs.lando.dev/lando-101'},
           ],
         },
         {
@@ -51,11 +52,13 @@ export default defineConfig({
             {text: 'Slack', link: 'https://www.launchpass.com/devwithlando'},
             {text: 'Contact Us', link: 'https://docs.lando.dev/support'},
             {text: 'Troubleshooting', link: 'https://docs.lando.dev/troubleshooting'},
+            {text: 'Guides', link: 'https://docs.lando.dev/guides'},
+            {text: 'Examples', link: 'https://github.com/lando/core/tree/main/examples'},
           ],
         },
         {
           text: 'Contributing',
-          collapsed: true,
+          collapsed: false,
           items: [
             {text: 'Getting Involved', link: 'https://docs.lando.dev/contrib/index'},
             {text: 'Coding', link: 'https://docs.lando.dev/contrib/coder'},
@@ -69,29 +72,11 @@ export default defineConfig({
           collapsed: false,
           items: [
             {
-              text: 'Lando 101',
-              link: 'https://docs.lando.dev/lando-101',
-            },
-            {
-              text: 'Guides',
-              link: 'https://docs.lando.dev/guides',
-            },
-            {
-              text: 'Examples',
-              link: 'https://github.com/lando/core/tree/main/examples',
-            },
-          ],
-        },
-        {
-          collapsed: false,
-          items: [
-            {
               text: 'Plugins',
               link: 'https://docs.lando.dev/plugins',
             },
           ],
         },
-
       ],
     },
   },
