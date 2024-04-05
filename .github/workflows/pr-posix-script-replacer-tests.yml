@@ -34,7 +34,8 @@ jobs:
             --progress-bar \
             --output "/usr/local/bin/lando" \
             "${{ matrix.old-version }}"
-          chmod +x /usr/local/bin/lando
+          sudo chmod +x /usr/local/bin/lando
+
           which lando | grep /usr/local/bin/lando
           lando version --all
 
