@@ -1,3 +1,9 @@
+## v3.0.2 - [April 5, 2024](https://github.com/lando/setup-lando/releases/tag/v3.0.2)
+
+### POSIX Install Script
+
+* Improved password prompt to include unwritable `/tmp` consideration
+
 ## v3.0.1 - [April 5, 2024](https://github.com/lando/setup-lando/releases/tag/v3.0.1)
 
 ### POSIX Install Script
