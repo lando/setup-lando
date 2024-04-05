@@ -1,3 +1,12 @@
+## v3.0.1 - [April 5, 2024](https://github.com/lando/setup-lando/releases/tag/v3.0.1)
+
+### POSIX Install Script
+
+* Fixed bug causing `Killed: 9` output on macOS [#25](https://github.com/lando/setup-lando/issues/25)
+* Improved `auto_exec` to also run `elevated` if `/tmp` is secured
+* Improved download so it only replaces an existing `lando` if successfull
+* Improved `lando --clear` to only run on Lando 3
+
 ## v3.0.0 - [March 22, 2024](https://github.com/lando/setup-lando/releases/tag/v3.0.0)
 
 ### **BREAKING CHANGES**
