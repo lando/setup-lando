@@ -35,13 +35,12 @@ jobs:
             --output "/usr/local/bin/lando" \
             "${{ matrix.old-version }}"
           chmod +x /usr/local/bin/lando
-
           which lando | grep /usr/local/bin/lando
           lando version --all
 
       - name: Replace Lando with setup-script
         shell: bash
         run: |
-          ./setup-lando.sh --debug
+          ./setup-lando.sh --debug --no-setup
           lando version --all
 
