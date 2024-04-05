@@ -794,14 +794,13 @@ auto_exec curl \
   --output "$LANDO_TMP" \
   "$URL"
 
-# make executable
+# make executable and weak "it works" test
 auto_exec chmod +x "${LANDO_TMP}"
-# test to ensure downloaded file actually works
 execute "${LANDO_TMP}" version >/dev/null
-# we should be good if we get here so move it to its final destination
+
+# if we get here we should be good to move it to its final destination
+# NOTE: we use mv here instead of cp because of https://developer.apple.com/forums/thread/130313
 auto_exec mv -f "${LANDO_TMP}" "${LANDO}"
-# clean up
-auto_exec rm -f "${LANDO_TMP}"
 
 # if lando 3 then --clear
 if [[ $LMV == '3' ]]; then
