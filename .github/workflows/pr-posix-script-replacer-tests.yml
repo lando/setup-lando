@@ -1,0 +1,46 @@
+name: POSIX Script OS Tests
+
+on:
+  pull_request:
+
+jobs:
+  setup-lando-os-test:
+    runs-on: ${{ matrix.os }}
+    env:
+      term: xterm
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-13
+            old-version: https://github.com/lando/cli/releases/download/v3.21.0-beta.2/lando-macos-x64-v3.21.0-beta.2-slim
+          - os: macos-14
+            old-version: https://github.com/lando/cli/releases/download/v3.21.0-beta.2/lando-macos-arm64-v3.21.0-beta.2-slim
+          - os: ubuntu-22.04
+            old-version: https://github.com/lando/cli/releases/download/v3.21.0-beta.2/lando-linux-x64-v3.21.0-beta.2-slim
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+      - name: Get older Lando version ${{ matrix.old-version }}
+        shell: bash
+        run: |
+          sudo mkdir -p /usr/local/bin
+          sudo curl \
+            --fail \
+            --location \
+            --progress-bar \
+            --output "/usr/local/bin/lando" \
+            "${{ matrix.old-version }}"
+          chmod +x /usr/local/bin/lando
+          which lando | grep /usr/local/bin/lando
+          lando version --all
+
+      - name: Replace Lando with setup-script
+        shell: bash
+        run: |
+          ./setup-lando.sh --debug
+          lando version --all
+
