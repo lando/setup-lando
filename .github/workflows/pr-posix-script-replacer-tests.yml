@@ -38,6 +38,7 @@ jobs:
 
           which lando | grep /usr/local/bin/lando
           lando version --all
+          ls -lsa /usr/local/bin
 
       - name: Replace Lando with setup-script
         shell: bash

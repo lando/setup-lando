@@ -734,10 +734,12 @@ wait_for_user() {
 
 # determine the exec we need for sudo protected things
 if [[ ! -w "$PERM_DIR" ]]; then
+  debug "auto_exec needs sudo because we cannot write to ${PERM_DIR}"
   auto_exec() {
     execute_sudo "$@"
   }
 else
+  debug "auto_exec does not need sudo because we can write to${PERM_DIR}"
   auto_exec() {
     execute "$@"
   }
