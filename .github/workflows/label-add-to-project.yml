@@ -19,9 +19,9 @@ jobs:
 
     steps:
       - name: Add issue/PR to GitHub Project
-        if: github.event.label.name == '${{ matrix.os }}'
+        if: github.event.label.name == '${{ matrix.flag }}'
         uses: actions/add-to-project@v1.0.0
         with:
           project-url: https://github.com/orgs/lando/projects/10
           github-token: ${{ secrets.SHADOW_COUNCIL_ESCALATOR }}
-          labeled: ${{ matrix.os }}
+          labeled: ${{ matrix.flag }}
