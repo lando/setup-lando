@@ -1,4 +1,4 @@
-SCRIPT_VERSION="v3.0.1"
+SCRIPT_VERSION="v3.0.2"
 #!/bin/bash
 set -u
 # Lando POSIX setup script.
@@ -551,6 +551,14 @@ fi
 PERM_DIR="$(find_first_existing_parent "$DEST")"
 debug "resolved install destination ${DEST} to a perm check on ${PERM_DIR}"
 
+needs_sudo() {
+  if [[ ! -w "$PERM_DIR" ]] || [[ ! -w "/tmp" ]]; then
+    return 0;
+  else
+    return 1;
+  fi
+}
+
 ####################################################################### pre-script errors
 
 # abort if run as root
@@ -560,7 +568,7 @@ if [[ "${EUID:-${UID}}" == "0" ]]; then
 fi
 
 # abort if dir
-if [[ ! -w "$PERM_DIR" ]] && ! have_sudo_access; then
+if needs_sudo && ! have_sudo_access; then
   abort_multi "$(cat <<EOABORT
 ${tty_bold}${USER}${tty_reset} cannot write to ${tty_red}${DEST}${tty_reset} and is not a ${tty_bold}sudo${tty_reset} user!
 Rerun setup with a sudoer or use --dest to install to a directory ${tty_bold}${USER}${tty_reset} can write to.
@@ -726,17 +734,15 @@ wait_for_user() {
   echo "Press ${tty_bold}RETURN${tty_reset}/${tty_bold}ENTER${tty_reset} to continue or any other key to abort:"
   getc c
   # we test for \r and \n because some stuff does \r instead
-  if ! [[ "${c}" == $'\r' || "${c}" == $'\n' ]]
-  then
+  if ! [[ "${c}" == $'\r' || "${c}" == $'\n' ]]; then
     exit 1
   fi
 }
 
-
 # determine the exec we need for sudo protected things
 # we add /tmp in here because their are high security environments where /tmp is not universally writable
-if [[ ! -w "$PERM_DIR" ]] || [[ ! -w "/tmp" ]]; then
-  debug "auto_exec elevating to sudo because ${USER} cannot write to ${PERM_DIR} or /tmp"
+if needs_sudo; then
+  debug "auto_exec elevating to sudo"
   auto_exec() {
     execute_sudo "$@"
   }
@@ -760,7 +766,7 @@ if [[ -z "${NONINTERACTIVE-}" ]]; then
   log "${tty_bold}this script is about to:${tty_reset}"
   log
   # sudo prompt
-  if [[ ! -w "$PERM_DIR" ]]; then log "- ${tty_green}prompt${tty_reset} for ${tty_bold}sudo${tty_reset} password"; fi
+  if needs_sudo; then log "- ${tty_green}prompt${tty_reset} for ${tty_bold}sudo${tty_reset} password"; fi
   # download
   log "- ${tty_magenta}download${tty_reset} lando ${tty_bold}${HRV}${tty_reset} to ${tty_bold}${DEST}${tty_reset}"
   # setup
@@ -774,7 +780,7 @@ if [[ -z "${NONINTERACTIVE-}" ]]; then
 fi
 
 # flag for password here if needed
-if [[ ! -w "$PERM_DIR" ]]; then
+if needs_sudo; then
   log "please enter ${tty_bold}sudo${tty_reset} password:"
   execute_sudo true
 fi
