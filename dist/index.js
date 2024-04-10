@@ -45756,25 +45756,21 @@ module.exports = (config = {}, pairs = []) => {
 /***/ }),
 
 /***/ 1215:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+/***/ ((module) => {
 
 "use strict";
 
 
-const {parseArgsStringToArgv} = __nccwpck_require__(9663);
-
-module.exports = command => {
+module.exports = (command, landoBin = 'lando') => {
   // throw if not a string
   if (typeof command !== 'string') throw new Error('Setup command must be a string!');
-  // parse string
-  command = parseArgsStringToArgv(command);
   // validate a few things
-  if (command[0] !== 'lando' || command[1] !== 'setup') {
-    throw new Error(`Setup command must begin with "lando setup"! You tried to run "${command.join(' ')}"`);
+  if (!command.includes('lando setup')) {
+    throw new Error(`Setup command must include "lando setup"! You tried to run "${command}"`);
   }
-  // remove first lando because we only care about the args
-  command.shift();
-  return command;
+
+  // return command but with lando invocations replaced with absolute paths to the landoBin
+  return command.replace(/lando /g, `${landoBin} `);
 };
 
 
@@ -47730,59 +47726,6 @@ module.exports = parseParams
 
 /***/ }),
 
-/***/ 9663:
-/***/ ((__unused_webpack_module, exports) => {
-
-"use strict";
-
-exports.__esModule = true;
-exports.parseArgsStringToArgv = void 0;
-function parseArgsStringToArgv(value, env, file) {
-    // ([^\s'"]([^\s'"]*(['"])([^\3]*?)\3)+[^\s'"]*) Matches nested quotes until the first space outside of quotes
-    // [^\s'"]+ or Match if not a space ' or "
-    // (['"])([^\5]*?)\5 or Match "quoted text" without quotes
-    // `\3` and `\5` are a backreference to the quote style (' or ") captured
-    var myRegexp = /([^\s'"]([^\s'"]*(['"])([^\3]*?)\3)+[^\s'"]*)|[^\s'"]+|(['"])([^\5]*?)\5/gi;
-    var myString = value;
-    var myArray = [];
-    if (env) {
-        myArray.push(env);
-    }
-    if (file) {
-        myArray.push(file);
-    }
-    var match;
-    do {
-        // Each call to exec returns the next regex match as an array
-        match = myRegexp.exec(myString);
-        if (match !== null) {
-            // Index 1 in the array is the captured group if it exists
-            // Index 0 is the matched text, which we use if no captured group exists
-            myArray.push(firstString(match[1], match[6], match[0]));
-        }
-    } while (match !== null);
-    return myArray;
-}
-exports["default"] = parseArgsStringToArgv;
-exports.parseArgsStringToArgv = parseArgsStringToArgv;
-// Accepts any number of arguments, and returns the first one that is a string
-// (even an empty string)
-function firstString() {
-    var args = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-        args[_i] = arguments[_i];
-    }
-    for (var i = 0; i < args.length; i++) {
-        var arg = args[i];
-        if (typeof arg === "string") {
-            return arg;
-        }
-    }
-}
-
-
-/***/ }),
-
 /***/ 2020:
 /***/ ((module) => {
 
@@ -47835,7 +47778,7 @@ var __webpack_exports__ = {};
 "use strict";
 
 
-const SCRIPT_VERSION = 'v3.0.2';
+const SCRIPT_VERSION = 'v3.0.3';
 
 const core = __nccwpck_require__(2186);
 const exec = __nccwpck_require__(1514);
@@ -48027,9 +47970,9 @@ const main = async () => {
 
       // if we get here then we should be G2G
       } else {
-        const args = parseSetupCommand(getSetupCommand(inputs.setup));
+        const command = parseSetupCommand(getSetupCommand(inputs.setup), landoPath);
         const opts = {env: {...process.env, LANDO_DEBUG: core.isDebug() || inputs.debug}};
-        await exec.exec(landoPath, args, opts);
+        await exec.exec('bash', ['-c', command], opts);
       }
     }
 
