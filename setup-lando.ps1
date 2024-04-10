@@ -1,19 +1,46 @@
-# Lando Windows Installer Script
-#
-# This script will download and install Lando on Windows.
-# It will also install Lando in all WSL2 instances.
-#
+<#
+.SYNOPSIS
+Lando Windows Installer Script.
+
+.DESCRIPTION
+This script is used to download and install Lando on Windows. It also installs Lando in all WSL2 instances.
+
+.EXAMPLE
+.\setup-lando.ps1 -arch x64 -version edge
+Installs Lando with the x64 architecture and the edge version.
+
+.EXAMPLE
+.\setup-lando.ps1 -wsl_only -version 3.21.0-beta.1
+Installs Lando version 3.21.0-beta.1 in WSL only.
+
+.EXAMPLE
+.\setup-lando.ps1 -no_wsl
+Installs Lando on Windows only, skipping the WSL setup.
+
+#>
 
 # Script parameters must be declared before any other statements
 param(
+    # Specifies the architecture to install (x64 or arm64). Defaults to the system architecture.
+    [ValidateSet("x64", "arm64")]
     [string]$arch,
+    # Enables debug output.
     [switch]$debug,
+    # Specifies the destination path for installation. Defaults to "$env:USERPROFILE\.lando\bin".
+    [ValidateNotNullOrEmpty()]
     [string]$dest = "$env:USERPROFILE\.lando\bin",
+    # Skips running Lando's built-in setup script.
     [switch]$no_setup,
+    # Skips the WSL setup.
     [switch]$no_wsl,
+    # Resumes a previous installation after a reboot.
     [switch]$resume,
+    # Specifies the version of Lando to install. Defaults to "stable".
+    [ValidateNotNullOrEmpty()]
     [string]$version = "stable",
+    # Only installs Lando in WSL.
     [switch]$wsl_only,
+    # Displays the help message.
     [switch]$help
 )
 
@@ -43,18 +70,6 @@ $Host.PrivateData.DebugBackgroundColor = $Host.UI.RawUI.BackgroundColor
 [Console]::OutputEncoding = [System.Text.Encoding]::Unicode
 
 Write-Host "Lando Windows Installer" -ForegroundColor Cyan
-
-function Show-Help {
-    Write-Host "Usage: setup-lando.ps1 [-arch <x64|arm64>] [-dest <path>] [-no_setup] [-no_wsl] [-version <version>] [-debug] [-help]"
-    Write-Host "  -arch <x64|arm64>  : Architecture to install (defaults to system architecture)"
-    Write-Host "  -dest <path>       : Destination path (default: $env:USERPROFILE/.lando/bin)"
-    Write-Host "  -no_setup          : Skip setup script"
-    Write-Host "  -no_wsl            : Skip WSL setup"
-    Write-Host "  -version <version> : Version to install (default: stable)"
-    Write-Host "  -wsl_only          : Only install Lando in WSL"
-    Write-Host "  -debug             : Enable debug output"
-    Write-Host "  -help              : Display this help message"
-}
 
 # Validates whether the system environment is supported
 function Confirm-Environment {
@@ -557,10 +572,11 @@ Write-Debug "  -no_wsl: $no_wsl"
 Write-Debug "  -resume: $resume"
 Write-Debug "  -version: $version"
 Write-Debug "  -wsl_only: $wsl_only"
+Write-Debug "  -help: $help"
 
 # It's okay to ask for help
 if ($help) {
-    Show-Help
+    Get-Help $MyInvocation.MyCommand.Path -Detailed
     return
 }
 
