@@ -4,7 +4,7 @@ on:
   pull_request:
 
 jobs:
-  setup-lando-os-test:
+  setup-lando-actions-setup-test:
     runs-on: ${{ matrix.os }}
     env:
       term: xterm
@@ -36,6 +36,7 @@ jobs:
           - disabled
           - lando setup
           - lando setup --skip-common-plugins --plugin @lando/node --orchestrator 2.21.0
+          - lando plugin-add @lando/php && lando setup
           # these will fail
           # - lando.dev something
           # - oihywpihgklnw
