@@ -8,6 +8,6 @@ module.exports = (command, landoBin = 'lando') => {
     throw new Error(`Setup command must include "lando setup"! You tried to run "${command}"`);
   }
 
-  // return command with absolute paths so the landoPath
-  return command.replace(/lando/g, landoBin);
+  // return command but with lando invocations replaced with absolute paths to the landoBin
+  return command.replace(/lando /g, `${landoBin} `);
 };
