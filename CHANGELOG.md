@@ -1,3 +1,9 @@
+## v3.0.3 - [April 10, 2024](https://github.com/lando/setup-lando/releases/tag/v3.0.3)
+
+### GitHub Actions
+
+* Relaxed `auto-setup` validation so it only needs to contain `lando setup`
+
 ## v3.0.2 - [April 5, 2024](https://github.com/lando/setup-lando/releases/tag/v3.0.2)
 
 ### POSIX Install Script

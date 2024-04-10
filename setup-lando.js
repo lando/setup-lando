@@ -192,9 +192,9 @@ const main = async () => {
 
       // if we get here then we should be G2G
       } else {
-        const args = parseSetupCommand(getSetupCommand(inputs.setup));
+        const command = parseSetupCommand(getSetupCommand(inputs.setup), landoPath);
         const opts = {env: {...process.env, LANDO_DEBUG: core.isDebug() || inputs.debug}};
-        await exec.exec(landoPath, args, opts);
+        await exec.exec('bash', ['-c', command], opts);
       }
     }
 
