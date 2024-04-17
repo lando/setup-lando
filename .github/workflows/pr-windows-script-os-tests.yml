@@ -5,20 +5,16 @@ on:
 
 jobs:
   setup-lando-windows-os-test:
-    runs-on: ${{ matrix.os }}
+    runs-on: windows-2022
     strategy:
       fail-fast: false
-      matrix:
-        os:
-          - windows-2019 # Windows 10
-          - windows-2022 # Windows 11
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Setup Lando version ${{ matrix.os }}
+      - name: Setup Lando version windows-2022
         shell: powershell # 5.1
         run: |
           .\setup-lando.ps1 -debug
