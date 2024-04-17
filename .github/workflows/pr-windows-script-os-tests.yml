@@ -12,9 +12,6 @@ jobs:
         os:
           - windows-2019 # Windows 10
           - windows-2022 # Windows 11
-        shell:
-          - powershell # 5.1
-          - pwsh # Latest
 
     steps:
       - name: Checkout code
@@ -22,7 +19,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Setup Lando version ${{ matrix.os }}
-        shell: ${{ matrix.shell }}
+        shell: powershell # 5.1
         run: |
           .\setup-lando.ps1 --debug
           lando version --all
