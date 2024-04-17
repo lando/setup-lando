@@ -31,6 +31,7 @@ All inputs are optional. If you do nothing the latest `stable` Lando will be ins
 | `config-file` | The path to a Lando global config file to use. | `null` | `/config/lando-global.yml` |
 
 * Note that `auto-setup` is only available in Lando 3 and in Lando 3.21+ specifically.
+* Also note that if you customize the `auto-setup` command it _must_ contain `lando setup`.
 
 ## Outputs
 
