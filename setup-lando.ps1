@@ -81,7 +81,7 @@ function Confirm-Environment {
         throw "This script is only supported on Windows."
     }
 
-    Write-Debug "PowerShell version: $PSVersionTable.PSVersion"
+    Write-Debug "PowerShell version: $($PSVersionTable.PSVersion.ToString())"
 
     # Windows 10 version 1903 (build 18362) or higher is required for WSL2 support
     $minVersion = [Version]::new(10, 0, 18362, 0)
@@ -547,6 +547,7 @@ Write-Debug "Running script with:"
 Write-Debug "  -arch: $arch"
 Write-Debug "  -debug: $debug"
 Write-Debug "  -dest: $dest"
+Write-Debug "  -fat: $fat"
 Write-Debug "  -no_setup: $no_setup"
 Write-Debug "  -no_wsl: $no_wsl"
 Write-Debug "  -resume: $resume"

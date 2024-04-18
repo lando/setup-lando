@@ -33,12 +33,12 @@ jobs:
       - name: Setup Lando version ${{ matrix.success-version }}
         shell: powershell # 5.1
         run: |
-          ./setup-lando.ps1 -version=${{ matrix.success-version }} -no-setup ${{ matrix.fat }}
+          ./setup-lando.ps1 -version=${{ matrix.success-version }} -no_setup ${{ matrix.fat }}
           lando version --all
 
           # test slim|fat on lando 3
           if (lando version | Select-String "v3.") {
-            if (${{ matrix.fat }} -eq "--fat") {
+            if (${{ matrix.fat }} -eq "-fat") {
               lando config --path cli.slim | Select-String "false"
             }
             else {
