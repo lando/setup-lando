@@ -1,0 +1,34 @@
+name: Windows Script Shell Tests
+
+on:
+  pull_request:
+
+jobs:
+  setup-lando-windows-shell-test:
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        shell:
+          - powershell
+          - pwsh
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - if: matrix.shell == 'powershell'
+        name: Setup Lando windows-2022 on PS5.1
+        shell: powershell
+        run: |
+          .\setup-lando.ps1 -debug
+          lando version --all
+
+      - if: matrix.shell == 'pwsh'
+        name: Setup Lando windows-2022 on PS7
+        shell: pwsh
+        run: |
+          .\setup-lando.ps1 -debug
+          lando version --all
