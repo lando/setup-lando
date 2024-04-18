@@ -47,8 +47,9 @@ param(
 )
 
 $LANDO_DEFAULT_MV = "3"
-#$LANDO_SETUP_SH_URL = "https://raw.githubusercontent.com/lando/setup-lando/main/setup-lando.sh"
-$LANDO_SETUP_SH_URL = "https://raw.githubusercontent.com/lando/setup-lando/v3/setup-lando.sh"
+#$LANDO_SETUP_PS1_URL = "https://raw.githubusercontent.com/lando/setup-lando/main/setup-lando.ps1"
+$LANDO_SETUP_PS1_URL = "https://raw.githubusercontent.com/lando/setup-lando/v3/setup-lando.ps1"
+$LANDO_SETUP_SH_URL = "https://raw.githubusercontent.com/lando/setup-lando/main/setup-lando.sh"
 $LANDO_APPDATA = "$env:LOCALAPPDATA\Lando"
 
 $issueEncountered = $false
@@ -581,14 +582,14 @@ if (-not (Test-Path "$LANDO_APPDATA" -ErrorAction SilentlyContinue)) {
 $runOnceKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
 $runOnceName = "LandoSetup"
 if (-not $wsl_only -and -not $resume) {
-    # When the script is invoked from a piped web request, save the script block
-    # to a file so we can run it again after "lando setup" restarts Windows.
+    # When the script is invoked from a piped web request, the script path is not available.
+    # Detect this and save the script to a known location so it can be resumed after a reboot.
     $localScriptPath = $MyInvocation.MyCommand.Path
     if ($null -eq $localScriptPath) {
         $localScriptPath = "$LANDO_APPDATA\setup-lando.ps1"
         Write-Debug "Saving script to $localScriptPath..."
-        $scriptBlock = $MyInvocation.MyCommand.ScriptBlock
-        $scriptBlock | Set-Content -Path $localScriptPath -Encoding utf8 -Force
+        $scriptContent = (Invoke-WebRequest -Uri $LANDO_SETUP_PS1_URL -UseBasicParsing).Content
+        Set-Content -Path $localScriptPath -Value $scriptContent
     }
 
     # Install Lando in Windows
