@@ -27,4 +27,6 @@ jobs:
           fetch-depth: 0
       - name: Setup Lando version ${{ matrix.bad-version }}
         shell: powershell
-        run: .\setup-lando.ps1 -version=${{ matrix.bad-version }} -no_setup || echo "$?" | Select-String -Pattern 1
+        run: |
+          .\setup-lando.ps1 -version ${{ matrix.bad-version }} -no_setup
+          echo "$?" | Select-String -Pattern 1
