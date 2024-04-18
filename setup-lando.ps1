@@ -23,7 +23,7 @@ Installs Lando on Windows only, skipping the WSL setup.
 param(
     # Specifies the architecture to install (x64 or arm64). Defaults to the system architecture.
     [ValidateSet("x64", "arm64")]
-    [string]$arch,
+    [string]$arch = "x64",
     # Enables debug output.
     [switch]$debug,
     # Specifies the destination path for installation. Defaults to "$env:USERPROFILE\.lando\bin".
