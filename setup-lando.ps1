@@ -29,6 +29,8 @@ param(
     # Specifies the destination path for installation. Defaults to "$env:USERPROFILE\.lando\bin".
     [ValidateNotNullOrEmpty()]
     [string]$dest = "$env:USERPROFILE\.lando\bin",
+    # Download the fat v3 lando binary that comes with official plugins built-in.
+    [switch]$fat,
     # Skips running Lando's built-in setup script.
     [switch]$no_setup,
     # Skips the WSL setup.
@@ -78,6 +80,8 @@ function Confirm-Environment {
     if ($env:OS -ne "Windows_NT") {
         throw "This script is only supported on Windows."
     }
+
+    Write-Debug "PowerShell version: $PSVersionTable.PSVersion"
 
     # Windows 10 version 1903 (build 18362) or higher is required for WSL2 support
     $minVersion = [Version]::new(10, 0, 18362, 0)
@@ -184,6 +188,7 @@ function Resolve-VersionAlias {
 
     Write-Debug "Resolving version alias '$Version'..."
     $originalVersion = $Version
+    $baseUrl = "https://github.com/lando/cli/releases/download/"
 
     $aliasMap = @{
         "3"      = "3-stable";
@@ -199,53 +204,25 @@ function Resolve-VersionAlias {
         $Version = $($aliasMap[$Version])
     }
 
-    # Resolving release aliases
-    switch ($Version) {
-        "4-stable" {
-            Write-Debug "Fetching release alias '4-STABLE' from GitHub..."
-            $Version = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lando/cli/main/release-aliases/4-STABLE" -UseBasicParsing).Content -replace '\s'
-            $downloadUrl = "https://github.com/lando/cli/releases/download/${Version}/lando-win-${arch}-${Version}.exe"
+    # Resolve release aliases to download URLs.
+    # Default to slim variant for 3.x unless -fat is specified.
+    switch -Regex ($Version) {
+        "^(3|4)-(stable|edge)$" {
+            Write-Debug "Fetching release alias '$($Version.ToUpper())' from GitHub..."
+            $VersionLabel = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lando/cli/main/release-aliases/$($Version.ToUpper())" -UseBasicParsing).Content -replace '\s'
+            $variant = if ($Version -match "^3-" -and !$fat) { "-slim" } else { "" }
+            $downloadUrl = "${baseUrl}${VersionLabel}/lando-win-${arch}-${VersionLabel}${variant}.exe"
         }
-        "3-stable" {
-            Write-Debug "Fetching release alias '3-STABLE' from GitHub..."
-            $Version = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lando/cli/main/release-aliases/3-STABLE" -UseBasicParsing).Content -replace '\s'
-            $downloadUrl = "https://github.com/lando/cli/releases/download/${Version}/lando-win-${arch}-${Version}.exe"
-        }
-        "3-stable-slim" {
-            Write-Debug "Fetching release alias '3-STABLE' from GitHub..."  
-            $Version = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lando/cli/main/release-aliases/3-STABLE" -UseBasicParsing).Content -replace '\s'
-            $downloadUrl = "https://github.com/lando/cli/releases/download/${Version}/lando-win-${arch}-${Version}-slim.exe"
-        }
-        "4-edge" {
-            Write-Debug "Fetching release alias '4-EDGE' from GitHub..."
-            $Version = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lando/cli/main/release-aliases/4-EDGE" -UseBasicParsing).Content -replace '\s'
-            $downloadUrl = "https://github.com/lando/cli/releases/download/${Version}/lando-win-${arch}-${Version}.exe"
-        }
-        "3-edge" {
-            Write-Debug "Fetching release alias '3-EDGE' from GitHub..."
-            $Version = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lando/cli/main/release-aliases/3-EDGE" -UseBasicParsing).Content -replace '\s'
-            $downloadUrl = "https://github.com/lando/cli/releases/download/${Version}/lando-win-${arch}-${Version}.exe"
-        }
-        "3-edge-slim" {
-            Write-Debug "Fetching release alias '3-EDGE' from GitHub..."
-            $Version = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lando/cli/main/release-aliases/3-EDGE" -UseBasicParsing).Content -replace '\s'
-            $downloadUrl = "https://github.com/lando/cli/releases/download/${Version}/lando-win-${arch}-${Version}-slim.exe"
-        }
-        "3-dev" {
-            $downloadUrl = "https://files.lando.dev/cli/lando-win-${arch}-dev.exe"
-        }
-        "3-dev-slim" {
-            $downloadUrl = "https://files.lando.dev/cli/lando-win-${arch}-dev-slim.exe"
-        }
-        "4-dev" {
-            $downloadUrl = "https://files.lando.dev/cli/lando-win-${arch}-dev.exe"
+        "^(3|4)-dev$" {
+            $variant = if ($Version -match "^3-" -and !$fat) { "-slim" } else { "" }
+            $downloadUrl = "https://files.lando.dev/cli/lando-win-${arch}-${Version}${variant}.exe"
         }
         Default {
             Write-Debug "Version '$Version' is a semantic version"
             if (-not $Version.StartsWith("v")) {
                 $Version = "v$Version"
             }
-            $downloadUrl = "https://github.com/lando/cli/releases/download/${Version}/lando-win-${arch}-${Version}.exe"
+            $downloadUrl = "${baseUrl}${Version}/lando-win-${arch}-${Version}.exe"
         }
     }
 
@@ -496,6 +473,9 @@ function Install-LandoInWSL {
     }
     if ($arch) {
         $setupParams += "--arch=$arch"
+    }
+    if ($fat) {
+        $setupParams += "--fat"
     }
     if ($no_setup) {
         $setupParams += "--no-setup"
