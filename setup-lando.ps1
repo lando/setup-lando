@@ -580,7 +580,7 @@ if (-not (Test-Path "$LANDO_APPDATA" -ErrorAction SilentlyContinue)) {
 # Add a RunOnce registry key so Windows will automatically resume the script when interrupted by a reboot
 $runOnceKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
 $runOnceName = "LandoSetup"
-if (-not $no_wsl -and -not $resume) {
+if (-not $wsl_only -and -not $resume) {
     # When the script is invoked from a piped web request, save the script block
     # to a file so we can run it again after "lando setup" restarts Windows.
     $localScriptPath = $MyInvocation.MyCommand.Path
