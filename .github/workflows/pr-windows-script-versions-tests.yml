@@ -10,7 +10,7 @@ jobs:
       fail-fast: false
       matrix:
         fat:
-          - --fat
+          - -fat
           - ''
         success-version:
           - '3'
