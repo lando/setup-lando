@@ -1,0 +1,30 @@
+name: Windows Script Bad Version Tests
+
+on:
+  pull_request:
+
+jobs:
+  setup-lando-windows-bad-versions-test:
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-2022
+        bad-version:
+          - 'something'
+          - '5.1.2'
+          - '3.1.14'
+          - 'pm-preview'
+          - 'https://github.com/lando/cli/releases/download/v3.18.0/lando-windows-x64-v3.18.0'
+          - '.\\setup-lando\\bin\\lando'
+          - '.\\bin\\lando'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Lando version ${{ matrix.bad-version }}
+        shell: powershell
+        run: .\\setup-lando.ps1 -version=${{ matrix.bad-version }} -no_setup || echo "$?" | Select-String -Pattern 1

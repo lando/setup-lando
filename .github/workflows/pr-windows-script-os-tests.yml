@@ -17,5 +17,5 @@ jobs:
       - name: Setup Lando version windows-2022
         shell: powershell # 5.1
         run: |
-          .\setup-lando.ps1 -debug
+          .\\setup-lando.ps1 -debug
           lando version --all
