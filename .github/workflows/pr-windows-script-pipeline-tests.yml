@@ -24,7 +24,6 @@ jobs:
         shell: powershell
         run: |
           Invoke-WebRequest "file://${{ github.workspace }}/setup-lando.ps1" | Invoke-Expression
-          # Check that $env:LOCALAPPDATA\Lando\setup-lando.ps1 exists
           Test-Path $env:LOCALAPPDATA\Lando\setup-lando.ps1
           lando version --all
       
@@ -32,7 +31,8 @@ jobs:
         name: Invoke from pipeline with PowerShell 7
         shell: pwsh
         run: |
-          Invoke-WebRequest "file://${{ github.workspace }}/setup-lando.ps1" | Invoke-Expression
+          Get-Content "${{ github.workspace }}/setup-lando.ps1" -Raw | Invoke-Expression
+          Test-Path $env:LOCALAPPDATA\Lando\setup-lando.ps1
           lando version --all
       
 
