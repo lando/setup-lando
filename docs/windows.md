@@ -5,7 +5,7 @@ description: Install Lando on Windows using PowerShell script
 
 # Windows
 
-Installing Lando using the PowerShell script method will set up Lando along with Docker Desktop in a configuration optimized for Windows and WSL2. This ensures the lando command is available on your PowerShell, Command Prompt, or other Windows shell, and also to the default user's shells within your WSL2 instances.
+Installing Lando using the PowerShell script method will set up Lando along with Docker Desktop in a configuration optimized for Windows and WSL2. This ensures the `lando` command is available on your PowerShell, Command Prompt, or other Windows shell, and also on the default user's shells within your WSL2 Linux instances.
 
 ## Quick Start
 
@@ -55,4 +55,8 @@ Some notes on advanced usage:
 
 ## Performance Note
 
-While using Docker containers through Lando on Windows, you may experience slower performance due to the process of accessing and translating files between the native Windows and the Linux file system used by Docker. This is not a limitation of Lando or Docker itself, but rather of the file system transition. For most projects, this setup still performs adequately and integrates seamlessly with Windows applications and IDEs. More advanced users, comfortable with Linux, may prefer to store their project files within the Linux environment in WSL2 to optimize performance.
+While using Docker containers through Lando on Windows, you may experience slower performance due to the process of accessing and translating files between the native Windows file system and the Linux file system used by Docker. This is not a limitation of Lando or Docker itself, but rather of the file system transition. For most projects, this setup still performs adequately and integrates seamlessly with Windows applications and IDEs. More advanced users, comfortable with Linux, may prefer to store their project files within the Linux environment in WSL2 to optimize performance.
+
+## Installation in a WSL2 Linux Environment
+
+If you have already set up a Linux environment within WSL2, the PowerShell script will automatically install Lando within this environment. For those who prefer working exclusively within WSL2, no additional Windows-based installation is necessary. You can install Lando directly within the Linux environment by following the [Linux installation instructions](./linux.md). Note that having Docker Desktop for Windows makes Docker available across all your WSL2 environments, eliminating the need to install Docker Engine separately.
