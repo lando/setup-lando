@@ -48,7 +48,7 @@ param(
 
 $LANDO_DEFAULT_MV = "3"
 #$LANDO_SETUP_PS1_URL = "https://raw.githubusercontent.com/lando/setup-lando/main/setup-lando.ps1"
-$LANDO_SETUP_PS1_URL = "https://raw.githubusercontent.com/lando/setup-lando/v3/setup-lando.ps1"
+$LANDO_SETUP_PS1_URL = "https://raw.githubusercontent.com/lando/setup-lando/setup-windoze/setup-lando.ps1"
 $LANDO_SETUP_SH_URL = "https://raw.githubusercontent.com/lando/setup-lando/main/setup-lando.sh"
 $LANDO_APPDATA = "$env:LOCALAPPDATA\Lando"
 
@@ -588,7 +588,7 @@ if (-not $wsl_only -and -not $resume) {
     if ($null -eq $localScriptPath) {
         $localScriptPath = "$LANDO_APPDATA\setup-lando.ps1"
         Write-Debug "Saving script to $localScriptPath..."
-        $scriptContent = (Invoke-WebRequest -Uri $LANDO_SETUP_PS1_URL -UseBasicParsing).Content
+        $scriptContent = (Invoke-WebRequest -Uri "$LANDO_SETUP_PS1_URL" -UseBasicParsing).Content
         Set-Content -Path $localScriptPath -Value $scriptContent
     }
 
