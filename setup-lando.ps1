@@ -47,9 +47,8 @@ param(
 )
 
 $LANDO_DEFAULT_MV = "3"
-#$LANDO_SETUP_PS1_URL = "https://raw.githubusercontent.com/lando/setup-lando/main/setup-lando.ps1"
-$LANDO_SETUP_PS1_URL = "https://raw.githubusercontent.com/lando/setup-lando/setup-windoze/setup-lando.ps1"
-$LANDO_SETUP_SH_URL = "https://raw.githubusercontent.com/lando/setup-lando/main/setup-lando.sh"
+$LANDO_SETUP_PS1_URL = "https://get.lando.dev/setup-lando.ps1"
+$LANDO_SETUP_SH_URL = "https://get.lando.dev/setup-lando.sh"
 $LANDO_APPDATA = "$env:LOCALAPPDATA\Lando"
 
 $issueEncountered = $false
