@@ -7,6 +7,8 @@ description: Install Lando on Windows
 
 ## Installer (recommended)
 
+This will install the `lando` command to be available on your "native" Powershell, Command Prompt, or other shell. Docker Desktop utilizes WSL2 to run a thin virtual environment for Docker to run within, powering your install.
+
 ::: warning YOU MUST HAVE WSL2 ENABLED
 Make sure that the [WSL2 feature is enabled](https://learn.microsoft.com/en-us/windows/wsl/install) or the Lando installer will fail.
 
@@ -18,3 +20,7 @@ If you want to use the older [Hyper-V](https://learn.microsoft.com/en-us/virtual
 3.  Double-click on `lando.exe`
 4.  Go through the setup workflow
 5.  Approve various UAC prompts during install
+
+## Manual Installation in WSL2
+
+If you want to use Lando within a Linux environment that you have created within WSL2, you can follow the [Linux installation instructions](./linux.md).
