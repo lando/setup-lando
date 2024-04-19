@@ -5,6 +5,8 @@ description: Install Lando on Windows
 
 # Windows
 
+Before you start, make sure you've [installed Docker Desktop for Windows](https://docs.docker.com/desktop/install/windows-install/).
+
 ## Installer (recommended)
 
 This will install the `lando` command to be available on your "native" Powershell, Command Prompt, or other shell.
