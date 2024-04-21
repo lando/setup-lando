@@ -1,8 +1,7 @@
-name: Package Windows Installer
+name: Windows Installer Packaging
   
 
 on:
-  workflow_dispatch:
   push:
     paths:
       - 'setup-lando.ps1'
