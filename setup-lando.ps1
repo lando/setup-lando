@@ -6,15 +6,15 @@ Lando Windows Installer Script.
 This script is used to download and install Lando on Windows. It also installs Lando in all WSL2 instances.
 
 .EXAMPLE
-.\setup-lando.ps1 -arch x64 -version edge
+.\setup-lando.ps1 -Arch x64 -Version edge
 Installs Lando with the x64 architecture and the edge version.
 
 .EXAMPLE
-.\setup-lando.ps1 -wsl_only -version 3.21.0-beta.1
+.\setup-lando.ps1 -WSLOnly -Version 3.21.0-beta.1
 Installs Lando version 3.21.0-beta.1 in WSL only.
 
 .EXAMPLE
-.\setup-lando.ps1 -no_wsl
+.\setup-lando.ps1 -NoWSL
 Installs Lando on Windows only, skipping the WSL setup.
 
 #>
@@ -23,27 +23,27 @@ Installs Lando on Windows only, skipping the WSL setup.
 param(
     # Specifies the architecture to install (x64 or arm64). Defaults to the system architecture.
     [ValidateSet("x64", "arm64")]
-    [string]$arch = "x64",
+    [string]$Arch = "x64",
     # Enables debug output.
-    [switch]$debug,
+    [switch]$Debug,
     # Specifies the destination path for installation. Defaults to "$env:USERPROFILE\.lando\bin".
     [ValidateNotNullOrEmpty()]
-    [string]$dest = "$env:USERPROFILE\.lando\bin",
+    [string]$Dest = "$env:USERPROFILE\.lando\bin",
     # Download the fat v3 lando binary that comes with official plugins built-in.
-    [switch]$fat,
+    [switch]$Fat,
     # Skips running Lando's built-in setup script.
-    [switch]$no_setup,
+    [switch]$NoSetup,
     # Skips the WSL setup.
-    [switch]$no_wsl,
+    [switch]$NoWSL,
     # Resumes a previous installation after a reboot.
-    [switch]$resume,
+    [switch]$Resume,
     # Specifies the version of Lando to install. Defaults to "stable".
     [ValidateNotNullOrEmpty()]
-    [string]$version = "stable",
+    [string]$Version = "stable",
     # Only installs Lando in WSL.
-    [switch]$wsl_only,
+    [switch]$WSLOnly,
     # Displays the help message.
-    [switch]$help
+    [switch]$Help
 )
 
 $SCRIPT_VERSION = $null
@@ -62,9 +62,9 @@ Set-StrictMode -Version 1
 $ErrorActionPreference = "Stop"
 
 # Normalize debug preference
-$DebugPreference = If ($debug) { "Continue" } Else { $DebugPreference }
+$DebugPreference = If ($Debug) { "Continue" } Else { $DebugPreference }
 if ($DebugPreference -eq "Inquire" -or $DebugPreference -eq "Continue") {
-    $debug = $true
+    $Debug = $true
 }
 $Host.PrivateData.DebugForegroundColor = "Gray"
 $Host.PrivateData.DebugBackgroundColor = $Host.UI.RawUI.BackgroundColor
@@ -109,10 +109,10 @@ function Confirm-Environment {
     }
     if (-not $wslVersion) {
         Write-Debug "WSL is not installed."
-        if (-not $no_wsl) {
-            $Script:no_wsl = $true
+        if (-not $NoWSL) {
+            $Script:NoWSL = $true
         }
-        if ($wsl_only) {
+        if ($WSLOnly) {
             throw "WSL is not installed. Cannot install Lando in WSL."
         }
     }
@@ -123,28 +123,28 @@ function Select-Architecture {
     $procArch = $(if ($Env:PROCESSOR_ARCHITEW6432) { $Env:PROCESSOR_ARCHITEW6432 } Else { $Env:PROCESSOR_ARCHITECTURE })
     Write-Debug "Processor architecture: $procArch"
 
-    if (-not $arch) {
-        $arch = "x64"  # Default architecture is x64
+    if (-not $Arch) {
+        $Arch = "x64"  # Default architecture is x64
         if ($procArch -eq "ARM64") {
-            $arch = "arm64"
+            $Arch = "arm64"
         }
     }
-    Write-Debug "Selected architecture: $arch"
+    Write-Debug "Selected architecture: $Arch"
 
-    if ($arch -notmatch "x64|arm64") {
+    if ($Arch -notmatch "x64|arm64") {
         throw "Unsupported architecture provided. Only x64 and arm64 are supported."
     }
 
-    if ($arch -eq "x64" -and $procArch -eq "ARM64") {
+    if ($Arch -eq "x64" -and $procArch -eq "ARM64") {
         $script:issueEncountered = $true
         Write-Warning "You are attempting to install the x64 version of Lando on an arm64 system. This may not work."
     }
-    if ($arch -eq "arm64" -and $procArch -eq "AMD64") {
+    if ($Arch -eq "arm64" -and $procArch -eq "AMD64") {
         $script:issueEncountered = $true
         Write-Warning "You are attempting to install the arm64 version of Lando on an x64 system. This may not work."
     }
 
-    return $arch
+    return $Arch
 }
 
 # Checks for existing Lando installation and uninstalls it
@@ -183,7 +183,7 @@ function Uninstall-LegacyLando {
 }
 
 # Resolves a version alias to a download URL
-#  -version <version> : Version to resolve
+#  -Version <version> : Version to resolve
 function Resolve-VersionAlias {
     param([string]$Version)
 
@@ -206,16 +206,16 @@ function Resolve-VersionAlias {
     }
 
     # Resolve release aliases to download URLs.
-    # Default to slim variant for 3.x unless -fat is specified.
+    # Default to slim variant for 3.x unless -Fat is specified.
     switch -Regex ($Version) {
         "^(3|4)-(stable|edge)$" {
             Write-Debug "Fetching release alias '$($Version.ToUpper())' from GitHub..."
             $VersionLabel = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lando/cli/main/release-aliases/$($Version.ToUpper())" -UseBasicParsing).Content -replace '\s'
-            $variant = if ($Version -match "^3-" -and !$fat) { "-slim" } else { "" }
+            $variant = if ($Version -match "^3-" -and !$Fat) { "-slim" } else { "" }
             $downloadUrl = "${baseUrl}${VersionLabel}/lando-win-${arch}-${VersionLabel}${variant}.exe"
         }
         "^(3|4)-dev$" {
-            $variant = if ($Version -match "^3-" -and !$fat) { "-slim" } else { "" }
+            $variant = if ($Version -match "^3-" -and !$Fat) { "-slim" } else { "" }
             $downloadUrl = "https://files.lando.dev/cli/lando-win-${arch}-${Version}${variant}.exe"
         }
         Default {
@@ -300,9 +300,9 @@ function Get-ResumeCommand {
             "-$($_.Key) `"$($_.Value)`""
         }
     }
-    $argString = ($arguments += "-resume") -join " "
+    $argString = ($arguments += "-Resume") -join " "
     if ($script:resolvedVersion) {
-        $argString += " -version `"$script:resolvedVersion`""
+        $argString += " -Version `"$script:resolvedVersion`""
     }
     $command = ("PowerShell -NoLogo -NoExit -ExecutionPolicy Bypass -Command `"$ScriptPath`" $argString").Trim()
 
@@ -315,14 +315,14 @@ function Install-Lando {
     Write-Debug "Installing Lando in Windows..."
     # Resolve the version alias to a download URL
     try {
-        $script:resolvedVersion, $downloadUrl = Resolve-VersionAlias -Version $version
+        $script:resolvedVersion, $downloadUrl = Resolve-VersionAlias -Version $Version
     }
     catch {
-        throw "Could not resolve the provided version alias '$version'. Error: $_"
+        throw "Could not resolve the provided version alias '$Version'. Error: $_"
     }
 
     if (-not $downloadUrl) {
-        throw "Could not resolve the download URL for version '$version'."
+        throw "Could not resolve the download URL for version '$Version'."
     }
 
     $filename = $downloadUrl.Split('/')[-1]
@@ -384,12 +384,12 @@ function Install-Lando {
     Write-Progress -Activity "Downloading Lando $script:resolvedVersion" -Completed
     Write-Host "Installing Lando..."
 
-    if (-not (Test-Path $dest)) {
-        Write-Debug "Creating destination directory $dest..."
-        New-Item -ItemType Directory -Path $dest | Out-Null
+    if (-not (Test-Path $Dest)) {
+        Write-Debug "Creating destination directory $Dest..."
+        New-Item -ItemType Directory -Path $Dest | Out-Null
     }
 
-    $symlinkPath = "$dest\lando.exe"
+    $symlinkPath = "$Dest\lando.exe"
     if (Test-Path $symlinkPath) {
         Write-Debug "Removing existing file or link at $symlinkPath..."
         Remove-Item -Path $symlinkPath -Force
@@ -400,7 +400,7 @@ function Install-Lando {
         $QuotedPath = '"{0}"' -f $symlinkPath
         $QuotedTarget = '"{0}"' -f $downloadDest
         $mklink = @('mklink', $QuotedPath, $QuotedTarget)
-        (-not $debug -and ($mklink += @('>nul', '2>&1'))) | Out-Null
+        (-not $Debug -and ($mklink += @('>nul', '2>&1'))) | Out-Null
 
         # Try to create the link
         Write-Debug "> $($mklink -join ' ')"
@@ -410,7 +410,7 @@ function Install-Lando {
         if ($process.ExitCode) {
             Write-Debug "Symlink creation failed with exit code $($process.ExitCode). Trying hard link..."
             $mklink = @('mklink', '/H', $QuotedPath, $QuotedTarget)
-            (-not $debug -and ($mklink += @('>nul', '2>&1'))) | Out-Null
+            (-not $Debug -and ($mklink += @('>nul', '2>&1'))) | Out-Null
 
             Write-Debug "> $($mklink -join ' ')"
             $process = Start-Process -FilePath 'cmd.exe' -ArgumentList "/D /C $($mklink -join ' ')" -NoNewWindow -Wait -PassThru
@@ -425,12 +425,12 @@ function Install-Lando {
         throw "Failed to create symlink from $symlinkPath to $downloadDest.`nError: $_"
     }
 
-    # Add $dest to system PATH if not already present
-    Add-ToPath -NewPath $dest
+    # Add $Dest to system PATH if not already present
+    Add-ToPath -NewPath $Dest
 
     # Clear the cache so that new Lando commands are available
     $landoClearCommand = "$symlinkPath --clear"
-    ($debug -and ($landoClearCommand += " --debug")) | Out-Null
+    ($Debug -and ($landoClearCommand += " --debug")) | Out-Null
     Write-Debug "Running '$landoClearCommand'"
     try {
         Invoke-Expression $landoClearCommand
@@ -469,20 +469,20 @@ function Install-LandoInWSL {
 
     # We will pass some of our parameters to the setup script in WSL
     $setupParams = @()
-    if ($debug) {
+    if ($Debug) {
         $setupParams += "--debug"
     }
-    if ($arch) {
-        $setupParams += "--arch=$arch"
+    if ($Arch) {
+        $setupParams += "--Arch=$Arch"
     }
-    if ($fat) {
+    if ($Fat) {
         $setupParams += "--fat"
     }
-    if ($no_setup) {
+    if ($NoSetup) {
         $setupParams += "--no-setup"
     }
-    if ($version) {
-        $setupParams += "--version=$(if ($script:resolvedVersion) { $script:resolvedVersion } Else { $version })"
+    if ($Version) {
+        $setupParams += "--version=$(if ($script:resolvedVersion) { $script:resolvedVersion } Else { $Version })"
     }
 
     Write-Host ""
@@ -528,8 +528,8 @@ function Invoke-LandoSetup {
         return
     }
 
-    $landoSetupCommand = "$dest\lando.exe setup -y"
-    ($debug -and ($landoSetupCommand += " --debug")) | Out-Null
+    $landoSetupCommand = "$Dest\lando.exe setup -y"
+    ($Debug -and ($landoSetupCommand += " --debug")) | Out-Null
 
     Write-Debug "Running '$landoSetupCommand'"
     try {
@@ -550,24 +550,24 @@ if ([string]::IsNullOrEmpty($SCRIPT_VERSION)) {
 }
 
 Write-Debug "Running script $SCRIPT_VERSION with:"
-Write-Debug "  -arch: $arch"
-Write-Debug "  -debug: $debug"
-Write-Debug "  -dest: $dest"
-Write-Debug "  -fat: $fat"
-Write-Debug "  -no_setup: $no_setup"
-Write-Debug "  -no_wsl: $no_wsl"
-Write-Debug "  -resume: $resume"
-Write-Debug "  -version: $version"
-Write-Debug "  -wsl_only: $wsl_only"
-Write-Debug "  -help: $help"
+Write-Debug "  -Arch: $Arch"
+Write-Debug "  -Debug: $Debug"
+Write-Debug "  -Dest: $Dest"
+Write-Debug "  -Fat: $Fat"
+Write-Debug "  -NoSetup: $NoSetup"
+Write-Debug "  -NoWSL: $NoWSL"
+Write-Debug "  -Resume: $Resume"
+Write-Debug "  -Version: $Version"
+Write-Debug "  -WSLOnly: $WSLOnly"
+Write-Debug "  -Help: $Help"
 
 # It's okay to ask for help
-if ($help) {
+if ($Help) {
     Get-Help $MyInvocation.MyCommand.Path -Detailed
     return
 }
 
-if ($resume) {
+if ($Resume) {
     Write-Host "Lando installation was previously interrupted by a Windows restart. Resuming..."
 }
 
@@ -575,7 +575,7 @@ if ($resume) {
 Confirm-Environment
 
 # Select the appropriate architecture
-$arch = Select-Architecture
+$Arch = Select-Architecture
 
 # Set up our working directory
 if (-not (Test-Path "$LANDO_APPDATA" -ErrorAction SilentlyContinue)) {
@@ -586,7 +586,7 @@ if (-not (Test-Path "$LANDO_APPDATA" -ErrorAction SilentlyContinue)) {
 # Add a RunOnce registry key so Windows will automatically resume the script when interrupted by a reboot
 $runOnceKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
 $runOnceName = "LandoSetup"
-if (-not $wsl_only -and -not $resume) {
+if (-not $WSLOnly -and -not $Resume) {
     # When the script is invoked from a piped web request, the script path is not available.
     # Detect this and save the script to a known location so it can be resumed after a reboot.
     $localScriptPath = $MyInvocation.MyCommand.Path
@@ -598,12 +598,12 @@ if (-not $wsl_only -and -not $resume) {
     }
 
     # Install Lando in Windows
-    if (-not $wsl_only) {
+    if (-not $WSLOnly) {
         Uninstall-LegacyLando
 
         Install-Lando
 
-        if (-not $no_setup) {
+        if (-not $NoSetup) {
             # Dependency installation may trigger a reboot so make sure we can resume after
             $resumeCommand = Get-ResumeCommand $localScriptPath $MyInvocation.BoundParameters
 
@@ -624,13 +624,13 @@ if (-not $wsl_only -and -not $resume) {
 }
 
 # Lando setup may have been interrupted by the reboot. Run it again.
-if ($resume -and -not $no_setup -and -not $wsl_only) {
+if ($Resume -and -not $NoSetup -and -not $WSLOnly) {
     Invoke-LandoSetup
 }
 
 # Install in WSL after lando setup runs because Docker Desktop WSL
 # instances may not be available until after reboot.
-if (-not $no_wsl) {
+if (-not $NoWSL) {
     Install-LandoInWSL
 }
 

@@ -27,31 +27,31 @@ Invoke-WebRequest -Uri 'https://get.lando.dev/setup-lando.ps1' -OutFile 'setup-l
 Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
 
 # Show usage info:
-.\setup-lando.ps1 -help
+.\setup-lando.ps1 -Help
 
 # An example advanced invocation:
-.\setup-lando.ps1 -dest 'C:\Users\aaron\bin' -fat -version 3.22.1 -debug
+.\setup-lando.ps1 -Dest 'C:\Users\aaron\bin' -Fat -Version 3.22.1 -Debug
 ```
 
 ### Usage
 
 ```powershell
-.\setup-lando.ps1 [-arch <x64|arm64>] [-debug] [-dest <path>] [-fat] [-no_setup] [-no_wsl] [-resume] [-version <version>] [-wsl_only] [-help]
+.\setup-lando.ps1 [-Arch <x64|arm64>] [-Debug] [-Dest <path>] [-Fat] [-NoSetup] [-NoWSL] [-Resume] [-Version <version>] [-WSLOnly] [-Help]
 ```
-- `-arch <x64|arm64>`: Specifies the architecture to install (x64 or arm64). Defaults to the system architecture.
-- `-debug`: Enables debug output.
-- `-dest <path>`: Specifies the destination path for installation. Defaults to "$env:USERPROFILE\.lando\bin".
-- `-fat`: Download the fat v3 Lando binary that comes with official plugins built-in.
-- `-no_setup`: Skips running Lando's built-in setup script.
-- `-no_wsl`: Skips the Windows Subsystem for Linux (WSL) setup.
-- `-resume`: Resumes a previous installation after a reboot.
-- `-version <version>`: Specifies the version of Lando to install. Defaults to "stable".
-- `-wsl_only`: Only installs Lando in WSL.
-- `-help`: Displays the help message.
+- `-Arch <x64|arm64>`: Specifies the architecture to install (x64 or arm64). Defaults to the system architecture.
+- `-Debug`: Enables debug output.
+- `-Dest <path>`: Specifies the destination path for installation. Defaults to "$env:USERPROFILE\.lando\bin".
+- `-Fat`: Download the fat v3 Lando binary that comes with official plugins built-in.
+- `-NoSetup`: Skips running Lando's built-in setup script.
+- `-NoWSL`: Skips the Windows Subsystem for Linux (WSL) setup.
+- `-Resume`: Resumes a previous installation after a reboot.
+- `-Version <version>`: Specifies the version of Lando to install. Defaults to "stable".
+- `-WSLOnly`: Only installs Lando in WSL.
+- `-Help`: Displays the help message.
 
 Some notes on advanced usage:
 
-* If you want to customize the behavior of `lando setup` use `-no_setup` and then manually invoke [`lando setup`](https://docs.lando.dev/cli/setup.html) after install is complete.
+* If you want to customize the behavior of `lando setup` use `-NoSetup` and then manually invoke [`lando setup`](https://docs.lando.dev/cli/setup.html) after install is complete.
 
 ## Performance Note
 

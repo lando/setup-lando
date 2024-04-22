@@ -27,7 +27,7 @@ jobs:
         shell: powershell
         run: |
           try {
-            .\setup-lando.ps1 -version ${{ matrix.bad-version }} -no_setup
+            .\setup-lando.ps1 -Version ${{ matrix.bad-version }} -NoSetup
             exit 1
           } catch {
             exit 0

@@ -1,3 +1,9 @@
+## v3.1.1 - [April 22, 2024](https://github.com/lando/setup-lando/releases/tag/v3.1.1)
+
+### Windows/WSL Install Script
+
+* Updated `windows` installer script switch names to follow PowerShell convention
+
 ## v3.1.0 - [April 22, 2024](https://github.com/lando/setup-lando/releases/tag/v3.1.0)
 
 ### Windows/WSL Install Script
