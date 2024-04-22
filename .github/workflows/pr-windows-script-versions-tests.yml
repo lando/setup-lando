@@ -1,0 +1,48 @@
+name: Windows Script Version Tests
+
+on:
+  pull_request:
+
+jobs:
+  setup-lando-windows-versions-test:
+    runs-on: windows-2022
+    strategy:
+      fail-fast: false
+      matrix:
+        fat:
+          - -fat
+          - ''
+        success-version:
+          - '3'
+          - 'v3.21.0-beta.10'
+          - '3-stable'
+          - '3-edge'
+          - '3-edge'
+          - '3-latest'
+          - '3-dev'
+          - 'stable'
+          - 'edge'
+          - 'latest'
+          - 'dev'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Lando version ${{ matrix.success-version }} ${{ matrix.fat }}
+        shell: powershell # 5.1
+        run: |
+          .\setup-lando.ps1 -version=${{ matrix.success-version }} -no_setup ${{ matrix.fat }} -Debug
+          lando version --all
+
+          # test slim|fat on lando 3
+          if (lando version | Select-String "v3.") {
+            if (${{ matrix.fat }} -eq "-fat") {
+              lando config --path cli.slim | Select-String "false"
+            }
+            else {
+              lando config --path cli.slim | Select-String "true"
+            }
+          }
+
