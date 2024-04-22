@@ -1,4 +1,3 @@
-$LANDO_SCRIPT_VERSION = "3.0.9"
 <#
 .SYNOPSIS
 Lando Windows Installer Script.
@@ -19,6 +18,13 @@ Installs Lando version 3.21.0-beta.1 in WSL only.
 Installs Lando on Windows only, skipping the WSL setup.
 
 #>
+
+$SCRIPT_VERSION = "3.0.10"
+
+# reset to a git derived dev version of above is not set
+if ([string]::IsNullOrEmpty($SCRIPT_VERSION)) {
+    $SCRIPT_VERSION = Invoke-Expression "git describe --tags --always --abbrev=1"
+}
 
 # Script parameters must be declared before any other statements
 param(
@@ -542,12 +548,6 @@ function Invoke-LandoSetup {
         $script:issueEncountered = $true
         Write-Host "Failed to run 'lando setup'. You may need to manually run this command to complete the setup. `nError: $_" -ForegroundColor Red
     }
-}
-
-# If this is not set then we set it to "dev" but ideally it returns the same valus as this:
-# https://github.com/lando/setup-lando/blob/main/setup-lando.sh#L326
-if ([string]::IsNullOrEmpty($SCRIPT_VERSION)) {
-    $SCRIPT_VERSION = "dev"
 }
 
 Write-Debug "Running script $SCRIPT_VERSION with:"
