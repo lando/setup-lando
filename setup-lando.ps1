@@ -544,9 +544,8 @@ function Invoke-LandoSetup {
 }
 
 # If this is not set then we set it to "dev" but ideally it returns the same valus as this:
-# https://github.com/lando/setup-lando/blob/main/setup-lando.sh#L326
 if ([string]::IsNullOrEmpty($SCRIPT_VERSION)) {
-    $SCRIPT_VERSION = "dev"
+    $SCRIPT_VERSION = Invoke-Expression "git describe --tags --always --abbrev=1"
 }
 
 Write-Debug "Running script $SCRIPT_VERSION with:"
