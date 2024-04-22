@@ -1,10 +1,10 @@
-name: POSIX Script cURL Tests
+name: Release tests
 
 on:
   pull_request:
 
 jobs:
-  setup-lando-posix-curl-test:
+  release:
     runs-on: ${{ matrix.os }}
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -13,8 +13,6 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - macos-13
-          - macos-14
           - ubuntu-22.04
         node-version:
           - '18'
@@ -22,8 +20,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
       - name: Install node ${{ matrix.node-version }}
         uses: actions/setup-node@v3
         with:
@@ -34,8 +30,3 @@ jobs:
           npm clean-install --prefer-offline --frozen-lockfile
           npm run lint
           npm run prepare
-      - name: Setup Lando version ${{ matrix.os }}
-        shell: bash
-        run: |
-          /bin/bash -c "$(curl -fsSL file://${{ github.workspace }}/dist/setup-lando.sh)"
-          lando version --all

@@ -1,4 +1,3 @@
-$LANDO_SCRIPT_VERSION = "3.0.9"
 <#
 .SYNOPSIS
 Lando Windows Installer Script.
@@ -47,6 +46,7 @@ param(
     [switch]$help
 )
 
+$SCRIPT_VERSION = "3.0.11"
 $LANDO_DEFAULT_MV = "3"
 $LANDO_SETUP_PS1_URL = "https://get.lando.dev/setup-lando.ps1"
 $LANDO_SETUP_SH_URL = "https://get.lando.dev/setup-lando.sh"
@@ -544,10 +544,9 @@ function Invoke-LandoSetup {
     }
 }
 
-# If this is not set then we set it to "dev" but ideally it returns the same valus as this:
-# https://github.com/lando/setup-lando/blob/main/setup-lando.sh#L326
+# reset to a git derived dev version of above is not set
 if ([string]::IsNullOrEmpty($SCRIPT_VERSION)) {
-    $SCRIPT_VERSION = "dev"
+    $SCRIPT_VERSION = Invoke-Expression "git describe --tags --always --abbrev=1"
 }
 
 Write-Debug "Running script $SCRIPT_VERSION with:"

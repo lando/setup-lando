@@ -26,5 +26,9 @@ jobs:
       - name: Setup Lando version ${{ matrix.bad-version }}
         shell: powershell
         run: |
-          .\setup-lando.ps1 -version ${{ matrix.bad-version }} -no_setup
-          echo "$?" | Select-String -Pattern 1
+          try {
+            .\setup-lando.ps1 -version ${{ matrix.bad-version }} -no_setup
+            exit 1
+          } catch {
+            exit 0
+          }
