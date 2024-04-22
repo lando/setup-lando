@@ -46,7 +46,7 @@ param(
     [switch]$help
 )
 
-$SCRIPT_VERSION = "3.0.11"
+$SCRIPT_VERSION = "v3.1.0"
 $LANDO_DEFAULT_MV = "3"
 $LANDO_SETUP_PS1_URL = "https://get.lando.dev/setup-lando.ps1"
 $LANDO_SETUP_SH_URL = "https://get.lando.dev/setup-lando.sh"

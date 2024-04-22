@@ -47778,7 +47778,7 @@ var __webpack_exports__ = {};
 "use strict";
 
 
-const SCRIPT_VERSION = '3.0.11';
+const SCRIPT_VERSION = 'v3.1.0';
 
 const core = __nccwpck_require__(2186);
 const exec = __nccwpck_require__(1514);
