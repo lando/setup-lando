@@ -1,4 +1,4 @@
-SCRIPT_VERSION="3.0.10"
+SCRIPT_VERSION="3.0.11"
 #!/bin/bash
 set -u
 # Lando POSIX setup script.

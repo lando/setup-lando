@@ -19,13 +19,6 @@ Installs Lando on Windows only, skipping the WSL setup.
 
 #>
 
-$SCRIPT_VERSION = "3.0.10"
-
-# reset to a git derived dev version of above is not set
-if ([string]::IsNullOrEmpty($SCRIPT_VERSION)) {
-    $SCRIPT_VERSION = Invoke-Expression "git describe --tags --always --abbrev=1"
-}
-
 # Script parameters must be declared before any other statements
 param(
     # Specifies the architecture to install (x64 or arm64). Defaults to the system architecture.
@@ -53,6 +46,7 @@ param(
     [switch]$help
 )
 
+$SCRIPT_VERSION = "3.0.11"
 $LANDO_DEFAULT_MV = "3"
 $LANDO_SETUP_PS1_URL = "https://get.lando.dev/setup-lando.ps1"
 $LANDO_SETUP_SH_URL = "https://get.lando.dev/setup-lando.sh"
@@ -548,6 +542,11 @@ function Invoke-LandoSetup {
         $script:issueEncountered = $true
         Write-Host "Failed to run 'lando setup'. You may need to manually run this command to complete the setup. `nError: $_" -ForegroundColor Red
     }
+}
+
+# reset to a git derived dev version of above is not set
+if ([string]::IsNullOrEmpty($SCRIPT_VERSION)) {
+    $SCRIPT_VERSION = Invoke-Expression "git describe --tags --always --abbrev=1"
 }
 
 Write-Debug "Running script $SCRIPT_VERSION with:"
