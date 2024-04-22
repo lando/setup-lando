@@ -1,3 +1,9 @@
+## v3.1.0 - [April 22, 2024](https://github.com/lando/setup-lando/releases/tag/v3.1.0)
+
+### Windows/WSL Install Script
+
+* Introduced new `windows` and `wsl` installer script
+
 ## v3.0.3 - [April 10, 2024](https://github.com/lando/setup-lando/releases/tag/v3.0.3)
 
 ### GitHub Actions
