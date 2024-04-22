@@ -1,3 +1,4 @@
+$LANDO_SCRIPT_VERSION = "3.0.9"
 <#
 .SYNOPSIS
 Lando Windows Installer Script.

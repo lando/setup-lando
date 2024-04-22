@@ -43,4 +43,17 @@ if (!upsxScript.includes(POSIX_PREPENDER)) {
   console.log(`updated ${psxScriptPath} to SCRIPT_VERSION=${VERSION}`);
 }
 
-// @TODO: windows scripts
+// WINDOWS SCRIPT
+const WIN_PREPENDER = `$LANDO_SCRIPT_VERSION = "${VERSION}"`;
+const winScriptPath = path.join(DIST, 'setup-lando.ps1');
+const owinScript = fs.readFileSync(winScriptPath, {encoding: 'utf8'});
+const vwinScript = `${WIN_PREPENDER}\r\n${owinScript}`;
+fs.writeFileSync(winScriptPath, vwinScript, {encoding: 'utf8'});
+
+// WINDOWS VALIDATE
+const uwinScript = fs.readFileSync(winScriptPath, {encoding: 'utf8'});
+if (!uwinScript.includes(WIN_PREPENDER)) {
+  throw Error(`${winScriptPath} does not seem to have the correct SCRIPT_VERSION=${VERSION}`);
+} else {
+  console.log(`updated ${winScriptPath} to SCRIPT_VERSION=${VERSION}`);
+}
