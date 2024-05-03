@@ -23,12 +23,12 @@ jobs:
         name: Execute ps1 with PowerShell 5.1
         shell: powershell
         run: |
-          .\setup-lando.ps1 -debug
+          .\setup-lando.ps1 -Debug
           lando version --all
 
       - if: matrix.shell == 'pwsh'
         name: Execute ps1 with PowerShell 7
         shell: pwsh
         run: |
-          .\setup-lando.ps1 -debug
+          .\setup-lando.ps1 -Debug
           lando version --all
