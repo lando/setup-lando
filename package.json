@@ -1,7 +1,7 @@
 {
   "name": "@lando/setup-lando",
   "description": "GitHub Action to setup Lando on GitHub Actions.",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "author": "Mike Pirog @pirog",
   "main": "setup-lando.js",
   "license": "GPL-3.0",
