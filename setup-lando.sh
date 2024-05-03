@@ -129,7 +129,7 @@ tty_yellow="$(tty_escape 33)"
 
 get_installer_arch() {
   local arch
-  arch="$(/usr/bin/uname -m)"
+  arch="$(/usr/bin/uname -m || /usr/bin/arch || uname -m || arch)"
   if [[ "${arch}" == "arm64" ]] || [[ "${arch}" == "aarch64" ]]; then
     INSTALLER_ARCH="arm64"
   elif [[ "${arch}" == "x86_64" ]] || [[ "${arch}" == "x64" ]]; then
