@@ -76,6 +76,7 @@ set -u
 
 # configuration things at the top for QOL
 LANDO_DEFAULT_MV="3"
+LANDO_TMPDIR=${TMPDIR:-/tmp}
 MACOS_OLDEST_SUPPORTED="12.0"
 REQUIRED_CURL_VERSION="7.41.0"
 SEMVER_REGEX='^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*))?(\+([0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*))?$'
@@ -551,7 +552,7 @@ PERM_DIR="$(find_first_existing_parent "$DEST")"
 debug "resolved install destination ${DEST} to a perm check on ${PERM_DIR}"
 
 needs_sudo() {
-  if [[ ! -w "$PERM_DIR" ]] || [[ ! -w "/tmp" ]]; then
+  if [[ ! -w "$PERM_DIR" ]] || [[ ! -w "$LANDO_TMPDIR" ]]; then
     return 0;
   else
     return 1;
@@ -784,12 +785,13 @@ if needs_sudo; then
   execute_sudo true
 fi
 
-# Create directory if we need to
+# Create directories if we need to
 if [[ ! -d "$DEST" ]]; then auto_exec mkdir -p "$DEST"; fi
+if [[ ! -d "$LANDO_TMPDIR" ]]; then auto_exec mkdir -p "$LANDO_TMPDIR"; fi
 
 # LANDO
 LANDO="${DEST}/lando"
-LANDO_TMP="/tmp/${RANDOM}"
+LANDO_TMPFILE="${LANDO_TMPDIR}/${RANDOM}"
 
 # download lando
 log "${tty_magenta}downloading${tty_reset} ${tty_bold}${URL}${tty_reset} to ${tty_bold}${LANDO}${tty_reset}"
@@ -797,16 +799,16 @@ auto_exec curl \
   --fail \
   --location \
   --progress-bar \
-  --output "$LANDO_TMP" \
+  --output "$LANDO_TMPFILE" \
   "$URL"
 
 # make executable and weak "it works" test
-auto_exec chmod +x "${LANDO_TMP}"
-execute "${LANDO_TMP}" version >/dev/null
+auto_exec chmod +x "${LANDO_TMPFILE}"
+execute "${LANDO_TMPFILE}" version >/dev/null
 
 # if we get here we should be good to move it to its final destination
 # NOTE: we use mv here instead of cp because of https://developer.apple.com/forums/thread/130313
-auto_exec mv -f "${LANDO_TMP}" "${LANDO}"
+auto_exec mv -f "${LANDO_TMPFILE}" "${LANDO}"
 
 # if lando 3 then --clear
 if [[ $LMV == '3' ]]; then
