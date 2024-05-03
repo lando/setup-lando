@@ -1,8 +1,8 @@
-## v3.1.1 - [April 22, 2024](https://github.com/lando/setup-lando/releases/tag/v3.1.1)
+## v3.2.0 - [May 3, 2024](https://github.com/lando/setup-lando/releases/tag/v3.2.0)
 
-### Windows/WSL Install Script
-
-* Updated `windows` installer script switch names to follow PowerShell convention
+* Improved `$TMPDIR` handling for non standard `/tmp` usage [#41](https://github.com/lando/setup-lando/issues/41)
+* Improved `arch` detection with fallbacks [#42](https://github.com/lando/setup-lando/issues/42)
+* Updated `windows` installer script switch names to follow `PowerShell` convention
 
 ## v3.1.0 - [April 22, 2024](https://github.com/lando/setup-lando/releases/tag/v3.1.0)
 
