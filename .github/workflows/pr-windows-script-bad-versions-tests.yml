@@ -19,7 +19,6 @@ jobs:
           - 'https://github.com/lando/cli/releases/download/v3.18.0/lando-windows-x64-v3.18.0'
           - '.\setup-lando\bin\lando'
           - '.\bin\lando'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

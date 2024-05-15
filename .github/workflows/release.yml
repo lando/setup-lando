@@ -8,6 +8,8 @@ on:
 jobs:
   release:
     runs-on: ${{ matrix.os }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
@@ -15,7 +17,6 @@ jobs:
           - ubuntu-22.04
         node-version:
           - '18'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

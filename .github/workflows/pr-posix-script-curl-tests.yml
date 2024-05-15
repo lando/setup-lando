@@ -32,7 +32,6 @@ jobs:
       - name: Install dependencies and prepare
         run: |
           npm clean-install --prefer-offline --frozen-lockfile
-          npm run lint
           npm run prepare
       - name: Setup Lando version ${{ matrix.os }}
         shell: bash

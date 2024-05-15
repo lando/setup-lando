@@ -17,7 +17,6 @@ jobs:
         shell:
           - powershell
           - pwsh
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -31,9 +30,7 @@ jobs:
       - name: Install dependencies and prepare
         run: |
           npm clean-install --prefer-offline --frozen-lockfile
-          npm run lint
           npm run prepare
-
       - if: matrix.shell == 'powershell'
         name: Invoke from pipeline with PowerShell 5.1
         shell: powershell

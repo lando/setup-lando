@@ -14,20 +14,17 @@ jobs:
         shell:
           - powershell
           - pwsh
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
       - if: matrix.shell == 'powershell'
         name: Execute ps1 with PowerShell 5.1
         shell: powershell
         run: |
           .\setup-lando.ps1 -Debug
           lando version --all
-
       - if: matrix.shell == 'pwsh'
         name: Execute ps1 with PowerShell 7
         shell: pwsh
