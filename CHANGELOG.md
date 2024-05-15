@@ -1,4 +1,6 @@
-{{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
+## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
+
+v3.2.1 - [May 15, 2024](https://github.com/lando/setup-lando/releases/tag/v3.2.1)
 
 * Fixed bug preventing `Unrecognized option` message from showing correctly [#44](https://github.com/lando/setup-lando/issues/44)
 
