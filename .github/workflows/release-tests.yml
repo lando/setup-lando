@@ -7,7 +7,6 @@ jobs:
   release:
     runs-on: ${{ matrix.os }}
     env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       SCRIPT_VERSION: "v3-gha-${{ github.sha }}}"
     strategy:
       fail-fast: false
