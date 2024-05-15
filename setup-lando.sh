@@ -192,7 +192,9 @@ ${tty_green}Environment Variables:${tty_reset}
   CI               installs in CI mode (e.g. does not prompt for user input)
 
 EOS
-  exit "${1:-0}"
+  if [[ "${1:-0}" != "noexit" ]]; then
+    exit "${1:-0}"
+  fi
 }
 
 while [[ $# -gt 0 ]]; do
@@ -249,8 +251,8 @@ while [[ $# -gt 0 ]]; do
       shift
       ;;
     *)
-      warn "Unrecognized option: '$1'"
-      usage 1
+      usage "noexit"
+      abort "${tty_red}Unrecognized option${tty_reset} ${tty_bold}$1${tty_reset}! See available options in usage above."
       ;;
   esac
 done

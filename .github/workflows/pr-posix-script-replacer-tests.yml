@@ -7,7 +7,7 @@ jobs:
   setup-lando-posix-replacer-test:
     runs-on: ${{ matrix.os }}
     env:
-      term: xterm
+      LANDO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
@@ -18,7 +18,6 @@ jobs:
             old-version: https://github.com/lando/cli/releases/download/v3.21.0-beta.2/lando-macos-arm64-v3.21.0-beta.2-slim
           - os: ubuntu-22.04
             old-version: https://github.com/lando/cli/releases/download/v3.21.0-beta.2/lando-linux-x64-v3.21.0-beta.2-slim
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -37,7 +36,6 @@ jobs:
           chmod +x /usr/local/bin/lando
           which lando | grep /usr/local/bin/lando
           lando version --all
-
       - name: Replace Lando with setup-script
         shell: bash
         run: |

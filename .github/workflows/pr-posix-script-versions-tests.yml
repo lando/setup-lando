@@ -7,7 +7,7 @@ jobs:
   setup-lando-posix-versions-test:
     runs-on: ${{ matrix.os }}
     env:
-      term: xterm
+      LANDO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
@@ -28,7 +28,6 @@ jobs:
           - 'edge'
           - 'latest'
           - 'dev'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

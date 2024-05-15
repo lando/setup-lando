@@ -6,6 +6,8 @@ on:
 jobs:
   setup-lando-windows-bad-versions-test:
     runs-on: windows-2022
+    env:
+      LANDO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
@@ -17,7 +19,6 @@ jobs:
           - 'https://github.com/lando/cli/releases/download/v3.18.0/lando-windows-x64-v3.18.0'
           - '.\setup-lando\bin\lando'
           - '.\bin\lando'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

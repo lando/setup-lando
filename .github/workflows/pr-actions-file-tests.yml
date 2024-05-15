@@ -7,7 +7,7 @@ jobs:
   setup-lando-actions-file-test:
     runs-on: ${{ matrix.os }}
     env:
-      term: xterm
+      LANDO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
@@ -18,7 +18,6 @@ jobs:
         lando-version-file:
           - '.lando-version'
           - '.tool-versions'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -33,7 +32,6 @@ jobs:
         run: |
           npm clean-install --prefer-offline --frozen-lockfile
           npm run prepare
-
       - name: Setup Lando version ${{ matrix.lando-version-file }}
         uses: ./
         with:

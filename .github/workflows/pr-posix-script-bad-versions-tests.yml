@@ -7,7 +7,7 @@ jobs:
   setup-lando-posix-bad-versions-test:
     runs-on: ${{ matrix.os }}
     env:
-      term: xterm
+      LANDO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
@@ -21,7 +21,6 @@ jobs:
           - 'https://github.com/lando/cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0'
           - '/home/runner/work/setup-lando/setup-lando/bin/lando'
           - './bin/lando'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

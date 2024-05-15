@@ -9,6 +9,8 @@ on:
 jobs:
   add_to_project:
     runs-on: ${{ matrix.os }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
@@ -16,7 +18,6 @@ jobs:
           - ubuntu-22.04
         flag:
           - flag
-
     steps:
       - name: Add issue/PR to GitHub Project
         if: github.event.label.name == '${{ matrix.flag }}'

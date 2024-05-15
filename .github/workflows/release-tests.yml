@@ -16,7 +16,6 @@ jobs:
           - ubuntu-22.04
         node-version:
           - '18'
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

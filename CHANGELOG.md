@@ -1,3 +1,7 @@
+{{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
+
+* Fixed bug preventing `Unrecognized option` message from showing correctly [#44](https://github.com/lando/setup-lando/issues/44)
+
 ## v3.2.0 - [May 3, 2024](https://github.com/lando/setup-lando/releases/tag/v3.2.0)
 
 * Improved `$TMPDIR` handling for non standard `/tmp` usage [#41](https://github.com/lando/setup-lando/issues/41)
