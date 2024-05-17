@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+* Fixed `windows` setup script passing incorrect parameter to `wsl` setup script [#46](https://github.com/lando/setup-lando/issues/44)
+
 ## v3.2.1 - [May 15, 2024](https://github.com/lando/setup-lando/releases/tag/v3.2.1)
 
 * Fixed bug preventing `Unrecognized option` message from showing correctly [#44](https://github.com/lando/setup-lando/issues/44)
