@@ -46,7 +46,7 @@ param(
     [switch]$Help
 )
 
-$SCRIPT_VERSION = "v3.2.1"
+$SCRIPT_VERSION = "v3.2.2"
 $LANDO_DEFAULT_MV = "3"
 $LANDO_SETUP_PS1_URL = "https://get.lando.dev/setup-lando.ps1"
 $LANDO_SETUP_SH_URL = "https://get.lando.dev/setup-lando.sh"
@@ -473,7 +473,7 @@ function Install-LandoInWSL {
         $setupParams += "--debug"
     }
     if ($Arch) {
-        $setupParams += "--Arch=$Arch"
+        $setupParams += "--arch=$Arch"
     }
     if ($Fat) {
         $setupParams += "--fat"

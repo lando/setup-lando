@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+## v3.2.2 - [May 17, 2024](https://github.com/lando/setup-lando/releases/tag/v3.2.2)
+
 * Fixed `windows` setup script passing incorrect parameter to `wsl` setup script [#46](https://github.com/lando/setup-lando/issues/44)
 
 ## v3.2.1 - [May 15, 2024](https://github.com/lando/setup-lando/releases/tag/v3.2.1)
