@@ -473,7 +473,7 @@ function Install-LandoInWSL {
         $setupParams += "--debug"
     }
     if ($Arch) {
-        $setupParams += "--Arch=$Arch"
+        $setupParams += "--arch=$Arch"
     }
     if ($Fat) {
         $setupParams += "--fat"
