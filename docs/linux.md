@@ -28,13 +28,15 @@ chmod +x ./setup-lando.sh
 bash setup-lando.sh --help
 
 # example advanced invocation
+# note you will need to change these values to ones that make sense for you
+# consult the usage and notes below for more into
 bash setup-lando.sh \
   --arch=x64 \
   --dest=/Users/pirog/bin \
   --fat \
   --no-setup \
   --os=linux \
-  --version=3.22.1 \
+  --version=3.21.2 \
   --debug \
   --yes
 ```
@@ -42,23 +44,24 @@ bash setup-lando.sh \
 ### Usage
 
 ```bash
-Usage: [NONINTERACTIVE=1] [CI=1] setup-lando.sh [options]
-
-Options:
-  --arch           installs for this arch [default: x64]
-  --dest           installs in this directory [default: /usr/local/bin]
-  --fat            installs fat cli 3.21+ <4 only, not recommended
-  --no-setup       installs without running lando setup 3.21+ <4 only
-  --os             installs for this os [default: linux]
-  --version        installs this version [default: stable]
-  --debug          shows debug messages
-  -h, --help       displays this message
-  -y, --yes        runs with all defaults and no prompts, sets NONINTERACTIVE=1
-
-Environment Variables:
-  NONINTERACTIVE   installs without prompting for user input
-  CI               installs in CI mode (e.g. does not prompt for user input)
+[NONINTERACTIVE=1] [CI=1] setup-lando.sh \
+  [--arch <x64|arm64] \
+  [--debug] \
+  [--dest <path>] \
+  [--fat ] \
+  [--no-setup] \
+  [--version <version>] \
+  [--yes]
 ```
+
+* `--arch <x64|arm64>`: Specifies the architecture to install (x64 or arm64). Defaults to the system architecture.
+* `--debug`: Enables debug output.
+* `--dest <path>`: Specifies the destination path for installation. Defaults to `/usr/local/bin`.
+* `--fat`: Download the fat v3 Lando binary that comes with official plugins built-in.
+* `--no-setup`: Skips running Lando's built-in setup script.
+* `--version <version>`: Specifies the version of Lando to install. Defaults to `stable`.
+* `--help`: Displays the help message.
+* `--yes`: Skips all interactive prompts and installs with defaults
 
 Some notes on advanced usage:
 
