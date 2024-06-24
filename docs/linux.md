@@ -45,7 +45,7 @@ bash setup-lando.sh \
 
 ```bash
 [NONINTERACTIVE=1] [CI=1] setup-lando.sh \
-  [--arch <x64|arm64] \
+  [--arch <x64|arm64>] \
   [--debug] \
   [--dest <path>] \
   [--fat ] \
