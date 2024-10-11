@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+* Removed automatic `lando update` from `setup-lando.sh` to be consistent with other install pathways and because it makes `--version` sort of pointless 😉
+
 ## v3.2.2 - [May 17, 2024](https://github.com/lando/setup-lando/releases/tag/v3.2.2)
 
 * Fixed `windows` setup script passing incorrect parameter to `wsl` setup script [#46](https://github.com/lando/setup-lando/issues/44)

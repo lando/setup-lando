@@ -773,8 +773,6 @@ if [[ -z "${NONINTERACTIVE-}" ]]; then
   log "- ${tty_magenta}download${tty_reset} lando ${tty_bold}${HRV}${tty_reset} to ${tty_bold}${DEST}${tty_reset}"
   # setup
   if [[ "$SETUP" == "1" ]]; then log "- ${tty_blue}run${tty_reset} ${tty_bold}lando setup${tty_reset}"; fi
-  # update
-  log "- ${tty_blue}run${tty_reset} ${tty_bold}lando update${tty_reset}"
   # shellenv
   log "- ${tty_blue}run${tty_reset} ${tty_bold}lando shellenv --add${tty_reset}"
   # block for user
@@ -828,10 +826,6 @@ if [[ "$SETUP" == "1" ]]; then
     execute "${LANDO}" setup "${LANDO_DEBUG-}"
   fi
 fi
-
-# update
-log "${tty_blue}updating${tty_reset} ${tty_bold}lando${tty_reset}"
-execute "${LANDO}" update --yes "${LANDO_DEBUG-}"
 
 # shell env
 log "${tty_blue}adding${tty_reset} ${tty_bold}${DEST}${tty_reset} to ${tty_bold}PATH${tty_reset}"
