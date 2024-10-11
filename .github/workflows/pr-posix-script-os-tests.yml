@@ -14,10 +14,10 @@ jobs:
         os:
           - macos-13
           - macos-14
-          - ubuntu-22.04
+          - ubuntu-24.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Run setup-lando.sh on ${{ matrix.os }}
