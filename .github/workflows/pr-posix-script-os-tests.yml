@@ -28,6 +28,7 @@ jobs:
           lando version --all
       - name: Run setup-lando.sh on ${{ matrix.os }}
         if: runner.os == 'macOS'
+        shell: bash
         run: |
           ./setup-lando.sh --debug --no-setup
           lando setup -y --debug --skip-networking
