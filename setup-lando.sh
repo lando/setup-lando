@@ -776,7 +776,7 @@ if [[ -z "${NONINTERACTIVE-}" ]]; then
   # setup
   if [[ "$SETUP" == "1" ]]; then log "- ${tty_blue}run${tty_reset} ${tty_bold}lando setup${tty_reset}"; fi
   # update
-  if [[ -z "$VERSION_PROVIDED" ]]; then log "- ${tty_blue}run${tty_reset} ${tty_bold}lando update${tty_reset}"; fi
+  if [[ -z "${VERSION_PROVIDED-}" ]]; then log "- ${tty_blue}run${tty_reset} ${tty_bold}lando update${tty_reset}"; fi
   # shellenv
   log "- ${tty_blue}run${tty_reset} ${tty_bold}lando shellenv --add${tty_reset}"
   # block for user
@@ -832,7 +832,7 @@ if [[ "$SETUP" == "1" ]]; then
 fi
 
 # update
-if [[ -z "$VERSION_PROVIDED" ]]; then
+if [[ -z "${VERSION_PROVIDED-}" ]]; then
   log "${tty_blue}updating${tty_reset} ${tty_bold}lando${tty_reset}"
   execute "${LANDO}" update --yes "${LANDO_DEBUG-}"
 fi
