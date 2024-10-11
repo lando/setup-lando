@@ -20,9 +20,15 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-      - name: Setup Lando version ${{ matrix.os }}
+      - name: Run setup-lando.sh on ${{ matrix.os }}
+        if: runner.os == 'Linux'
         shell: bash
         run: |
           ./setup-lando.sh --debug
           lando version --all
-
+      - name: Run setup-lando.sh on ${{ matrix.os }}
+        if: runner.os == 'macOS'
+        run: |
+          ./setup-lando.sh --debug --no-setup
+          lando setup -y --debug --skip-networking
+          lando version --all
