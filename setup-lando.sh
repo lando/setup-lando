@@ -241,10 +241,12 @@ while [[ $# -gt 0 ]]; do
     --version)
       VERSION="$2"
       shift 2
+      VERSION_PROVIDED=1
       ;;
     --version=*)
       VERSION="${1#*=}"
       shift
+      VERSION_PROVIDED=1
       ;;
     -y | --yes)
       NONINTERACTIVE="1"
@@ -774,7 +776,7 @@ if [[ -z "${NONINTERACTIVE-}" ]]; then
   # setup
   if [[ "$SETUP" == "1" ]]; then log "- ${tty_blue}run${tty_reset} ${tty_bold}lando setup${tty_reset}"; fi
   # update
-  log "- ${tty_blue}run${tty_reset} ${tty_bold}lando update${tty_reset}"
+  if [[ -z "$VERSION_PROVIDED" ]]; then log "- ${tty_blue}run${tty_reset} ${tty_bold}lando update${tty_reset}"; fi
   # shellenv
   log "- ${tty_blue}run${tty_reset} ${tty_bold}lando shellenv --add${tty_reset}"
   # block for user
@@ -830,8 +832,10 @@ if [[ "$SETUP" == "1" ]]; then
 fi
 
 # update
-log "${tty_blue}updating${tty_reset} ${tty_bold}lando${tty_reset}"
-execute "${LANDO}" update --yes "${LANDO_DEBUG-}"
+if [[ -z "$VERSION_PROVIDED" ]]; then
+  log "${tty_blue}updating${tty_reset} ${tty_bold}lando${tty_reset}"
+  execute "${LANDO}" update --yes "${LANDO_DEBUG-}"
+fi
 
 # shell env
 log "${tty_blue}adding${tty_reset} ${tty_bold}${DEST}${tty_reset} to ${tty_bold}PATH${tty_reset}"
