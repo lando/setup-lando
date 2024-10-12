@@ -73,8 +73,10 @@ const main = async () => {
 
   // try/catch
   try {
-    const releases =
-      await octokit.paginate('GET /repos/{owner}/{repo}/releases', {owner: 'lando', repo: 'cli', per_page: 100});
+    const releases = await Promise.all([
+      await octokit.paginate('GET /repos/{owner}/{repo}/releases', {owner: 'lando', repo: 'core', per_page: 100}),
+      await octokit.paginate('GET /repos/{owner}/{repo}/releases', {owner: 'lando', repo: 'core-next', per_page: 100}),
+    ].flat(Number.POSITIVE_INFINITY));
     core.debug(`found ${releases.length} valid releases`);
 
     // attempt to resolve the spec
