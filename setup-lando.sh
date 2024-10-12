@@ -500,7 +500,7 @@ elif [[ "${VERSION}" == "3-edge" ]]; then
 
 # DEV
 elif [[ "${VERSION}" == "4-dev" ]] || [[ "${VERSION}" == "4-latest" ]]; then
-  URL="https://files.lando.dev/core-next/lando4-${OS}-${ARCH}-dev"
+  URL="https://files.lando.dev/core-next/lando-${OS}-${ARCH}-dev"
   VERSION_DEV=1
 
 elif [[ "${VERSION}" == "3-dev" ]] || [[ "${VERSION}" == "3-latest" ]]; then

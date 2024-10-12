@@ -41,6 +41,6 @@ module.exports = (version, {os, architecture, slim = false} = {}) => {
   }
 
   // otherwise github?
-  if (version.startsWith('v4')) return `https://github.com/lando/core-next/releases/download/${filename}`;
-  else return `https://github.com/lando/core/releases/download/${filename}`;
+  if (version.startsWith('v4')) return `https://github.com/lando/core-next/releases/download/${version}/${filename}`;
+  else return `https://github.com/lando/core/releases/download/${version}/${filename}`;
 };
