@@ -3,9 +3,6 @@
 const isValidUrl = require('./is-valid-url');
 const {s3Releases} = require('./get-convenience-aliases');
 
-const s3Base = 'https://files.lando.dev/cli';
-const gitHubBase = 'https://github.com/lando/cli/releases/download';
-
 module.exports = (version, {os, architecture, slim = false} = {}) => {
   // if version is actually a downlaod url then just return that right away
   if (isValidUrl(version)) return version;
@@ -37,7 +34,13 @@ module.exports = (version, {os, architecture, slim = false} = {}) => {
   // and add special handling for windows
   const filename = os === 'Windows' ? `${parts.join('-')}.exe` : parts.join('-');
 
-  // return the correct filename
-  return s3Releases.includes(version) || version.includes('preview')
-    ? `${s3Base}/${filename}` : `${gitHubBase}/${version}/${filename}`;
+  // if an s3 release alias
+  if (s3Releases.includes(version) || version.includes('preview')) {
+    if (version.includes('4')) return `https://files.lando.dev/core-next/${filename}`;
+    else return `https://files.lando.dev/core/${filename}`;
+  }
+
+  // otherwise github?
+  if (version.startsWith('v4')) return `https://github.com/lando/core-next/releases/download/${filename}`;
+  else return `https://github.com/lando/core/releases/download/${filename}`;
 };
