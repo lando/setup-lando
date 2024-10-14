@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+* Updated download locations to standardize on relevant `core` and `core-next` pathways
+
 ## v3.3.0 - [October 11, 2024](https://github.com/lando/setup-lando/releases/tag/v3.3.0)
 
 * Removed automatic `lando update` from `setup-lando.sh` to be consistent with other install pathways and because it makes `--version` sort of pointless 😉
