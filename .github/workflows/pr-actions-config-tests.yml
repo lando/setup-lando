@@ -41,6 +41,7 @@ jobs:
       - name: Setup Lando version
         uses: ./
         with:
+          auto-setup: lando setup --yes --skip-networking
           config-file: test-config.yaml
           config: |
             pirog=5001
