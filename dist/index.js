@@ -44713,9 +44713,6 @@ exports.gitHubReleases = [
 const isValidUrl = __nccwpck_require__(5142);
 const {s3Releases} = __nccwpck_require__(9734);
 
-const s3Base = 'https://files.lando.dev/cli';
-const gitHubBase = 'https://github.com/lando/cli/releases/download';
-
 module.exports = (version, {os, architecture, slim = false} = {}) => {
   // if version is actually a downlaod url then just return that right away
   if (isValidUrl(version)) return version;
@@ -44747,9 +44744,15 @@ module.exports = (version, {os, architecture, slim = false} = {}) => {
   // and add special handling for windows
   const filename = os === 'Windows' ? `${parts.join('-')}.exe` : parts.join('-');
 
-  // return the correct filename
-  return s3Releases.includes(version) || version.includes('preview')
-    ? `${s3Base}/${filename}` : `${gitHubBase}/${version}/${filename}`;
+  // if an s3 release alias
+  if (s3Releases.includes(version) || version.includes('preview')) {
+    if (version.includes('4')) return `https://files.lando.dev/core-next/${filename}`;
+    else return `https://files.lando.dev/core/${filename}`;
+  }
+
+  // otherwise github?
+  if (version.startsWith('v4')) return `https://github.com/lando/core-next/releases/download/${version}/${filename}`;
+  else return `https://github.com/lando/core/releases/download/${version}/${filename}`;
 };
 
 
@@ -44768,7 +44771,7 @@ const path = __nccwpck_require__(1017);
 
 module.exports = file => {
   // if no file then return right away
-  if (!file) return;
+  if (!file || file === false) return;
 
   // if file is not absolute then prepend some bases as needed
   if (!path.isAbsolute(file)) file = path.join(process.env.GITHUB_WORKSPACE || process.cwd(), file);
@@ -45031,6 +45034,7 @@ module.exports = (config = {}, pairs = []) => {
 "use strict";
 
 
+
 module.exports = (command, landoBin = 'lando') => {
   // throw if not a string
   if (typeof command !== 'string') throw new Error('Setup command must be a string!');
@@ -45038,9 +45042,8 @@ module.exports = (command, landoBin = 'lando') => {
   if (!command.includes('lando setup')) {
     throw new Error(`Setup command must include "lando setup"! You tried to run "${command}"`);
   }
-
   // return command but with lando invocations replaced with absolute paths to the landoBin
-  return command.replace(/lando /g, `${landoBin} `);
+  return command.replace(/lando /g, `"${landoBin.replace(/\\/g, '\\\\')}" `);
 };
 
 
@@ -47048,7 +47051,7 @@ var __webpack_exports__ = {};
 "use strict";
 
 
-const SCRIPT_VERSION = 'v3.3.0';
+const SCRIPT_VERSION = 'v3.4.0';
 
 const core = __nccwpck_require__(2186);
 const exec = __nccwpck_require__(1514);
@@ -47112,7 +47115,7 @@ const main = async () => {
   inputs.setup = inputs.autoSetup ?? inputs.setup;
 
   // determine lando version spec to install
-  const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
+  const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || get(process, 'env.LANDO_VERSION') || 'stable'; // eslint-disable-line max-len
   core.debug(`rolling with "${spec}" as version spec`);
 
   // get a pagination vibed octokit so we can get ALL release data
@@ -47121,8 +47124,10 @@ const main = async () => {
 
   // try/catch
   try {
-    const releases =
-      await octokit.paginate('GET /repos/{owner}/{repo}/releases', {owner: 'lando', repo: 'cli', per_page: 100});
+    const releases = await Promise.all([
+      await octokit.paginate('GET /repos/{owner}/{repo}/releases', {owner: 'lando', repo: 'core', per_page: 100}),
+      await octokit.paginate('GET /repos/{owner}/{repo}/releases', {owner: 'lando', repo: 'core-next', per_page: 100}),
+    ].flat(Number.POSITIVE_INFINITY));
     core.debug(`found ${releases.length} valid releases`);
 
     // attempt to resolve the spec
@@ -47242,7 +47247,7 @@ const main = async () => {
       } else {
         const command = parseSetupCommand(getSetupCommand(inputs.setup), landoPath);
         const opts = {env: {...process.env, LANDO_DEBUG: core.isDebug() || inputs.debug}};
-        await exec.exec('bash', ['-c', command], opts);
+        await exec.exec(command, [], opts);
       }
     }
 

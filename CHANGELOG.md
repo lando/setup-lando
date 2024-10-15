@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+## v3.4.0 - [October 15, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.0)
+
 ## New Features
 
 * Added `LANDO_VERSION` as a way to set the `version` in the install pathways
