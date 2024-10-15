@@ -64,7 +64,7 @@ const main = async () => {
   inputs.setup = inputs.autoSetup ?? inputs.setup;
 
   // determine lando version spec to install
-  const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
+  const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || get(process, 'env.LANDO_VERSION') || 'stable'; // eslint-disable-line max-len
   core.debug(`rolling with "${spec}" as version spec`);
 
   // get a pagination vibed octokit so we can get ALL release data
