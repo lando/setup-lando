@@ -1,6 +1,15 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+## New Features
+
+* Added `LANDO_VERSION` as a way to set the `version` in the install pathways
+
+## Fixes
+
 * Fixed bug causing `@lando/setup-lando` GitHub Action to fail on Windows using `bash`
+
+## Internal
+
 * Updated download locations to standardize on relevant `core` and `core-next` pathways
 
 ## v3.3.0 - [October 11, 2024](https://github.com/lando/setup-lando/releases/tag/v3.3.0)

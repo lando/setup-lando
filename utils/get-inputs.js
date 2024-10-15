@@ -29,7 +29,7 @@ const getOS = () => {
 
 module.exports = () => ({
   // primary inputs
-  landoVersion: String(core.getInput('lando-version')),
+  landoVersion: String(core.getInput('lando-version')) || get(process, 'env.LANDO_VERSION'),
   landoVersionFile: core.getInput('lando-version-file'),
   config: core.getMultilineInput('config'),
   configFile: core.getInput('config-file'),
