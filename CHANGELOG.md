@@ -1,5 +1,6 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+* Fixed bug causing `@lando/setup-lando` GitHub Action to fail on Windows using `bash`
 * Updated download locations to standardize on relevant `core` and `core-next` pathways
 
 ## v3.3.0 - [October 11, 2024](https://github.com/lando/setup-lando/releases/tag/v3.3.0)
