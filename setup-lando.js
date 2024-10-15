@@ -196,7 +196,7 @@ const main = async () => {
       } else {
         const command = parseSetupCommand(getSetupCommand(inputs.setup), landoPath);
         const opts = {env: {...process.env, LANDO_DEBUG: core.isDebug() || inputs.debug}};
-        await exec.exec('bash', ['-c', command], opts);
+        await exec.exec(command, [], opts);
       }
     }
 
