@@ -23,34 +23,25 @@ Installs Lando on Windows only, skipping the WSL setup.
 param(
     # Specifies the architecture to install (x64 or arm64). Defaults to the system architecture.
     [ValidateSet("x64", "arm64")]
-    [string]$Arch = "x64"
-
+    [string]$Arch = "x64",
     # Enables debug output.
-    [switch]$Debug
+    [switch]$Debug,
     # Specifies the destination path for installation. Defaults to "$env:USERPROFILE\.lando\bin".
-
     [ValidateNotNullOrEmpty()]
-    [string]$Dest = "$env:USERPROFILE\.lando\bin"
-
+    [string]$Dest = "$env:USERPROFILE\.lando\bin",
     # Download the fat v3 lando binary that comes with official plugins built-in.
-    [switch]$Fat
-
+    [switch]$Fat,
     # Skips running Lando's built-in setup script.
-    [switch]$NoSetup
-
+    [switch]$NoSetup,
     # Skips the WSL setup.
-    [switch]$NoWSL
-
+    [switch]$NoWSL,
     # Resumes a previous installation after a reboot.
-    [switch]$Resume
-
+    [switch]$Resume,
     # Specifies the version of Lando to install. Defaults to "stable".
     [ValidateNotNullOrEmpty()]
-    [string]$Version = if ($env:LANDO_VERSION -ne $null) { $env:LANDO_VERSION } else { "stable" }
-
+    [string]$Version = if ($env:LANDO_VERSION -ne $null) { $env:LANDO_VERSION } else { "stable" },
     # Only installs Lando in WSL.
-    [switch]$WSLOnly
-
+    [switch]$WSLOnly,
     # Displays the help message.
     [switch]$Help
 )
