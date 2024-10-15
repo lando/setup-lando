@@ -27,6 +27,7 @@ jobs:
           - 'edge'
           - 'latest'
           - 'dev'
+          - 'skip'
 
     steps:
       - name: Checkout code
@@ -36,7 +37,14 @@ jobs:
       - name: Setup Lando version ${{ matrix.success-version }} ${{ matrix.fat }}
         shell: powershell # 5.1
         run: |
-          .\setup-lando.ps1 -Version=${{ matrix.success-version }} -NoSetup ${{ matrix.fat }} -Debug
+          # skip command
+          if ("${{ matrix.success-version }}" -eq "skip") {
+            $env:LANDO_VERSION = "v3.22.0"
+            .\setup-lando.ps1 -NoSetup ${{ matrix.fat }} -Debug
+          } else {
+            .\setup-lando.ps1 -Version=${{ matrix.success-version }} -NoSetup ${{ matrix.fat }} -Debug
+          }
+
           lando version --all
 
           # test slim|fat on lando 3
