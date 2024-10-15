@@ -39,12 +39,17 @@ param(
     [switch]$Resume,
     # Specifies the version of Lando to install. Defaults to "stable".
     [ValidateNotNullOrEmpty()]
-    [string]$Version = if ($env:LANDO_VERSION -ne $null) { $env:LANDO_VERSION } else { "stable" },
+    [string]$Version = "stable",
     # Only installs Lando in WSL.
     [switch]$WSLOnly,
     # Displays the help message.
     [switch]$Help
 )
+
+# If version is "stable" AND LANDO_VERSION is set (and not empty), then prefer the version from LANDO_VERSION
+if ($env:LANDO_VERSION -ne $null -and $env:LANDO_VERSION -ne "" -and $Version -eq "stable") {
+    $Version = $env:LANDO_VERSION
+}
 
 $SCRIPT_VERSION = $null
 $LANDO_DEFAULT_MV = "3"
