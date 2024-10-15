@@ -60,3 +60,4 @@ jobs:
         uses: ./
         with:
           lando-version: ${{ matrix.lando-version }}
+          lando-version-file: false

@@ -7,7 +7,7 @@ const path = require('path');
 
 module.exports = file => {
   // if no file then return right away
-  if (!file) return;
+  if (!file || file === false) return;
 
   // if file is not absolute then prepend some bases as needed
   if (!path.isAbsolute(file)) file = path.join(process.env.GITHUB_WORKSPACE || process.cwd(), file);
