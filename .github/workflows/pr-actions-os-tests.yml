@@ -34,3 +34,5 @@ jobs:
           npm run prepare
       - name: Setup Lando version
         uses: ./
+        with:
+          auto-setup: lando setup --yes --skip-networking
