@@ -37,6 +37,7 @@ jobs:
           - lando setup
           - lando setup --skip-common-plugins --plugin @lando/node --orchestrator 2.21.0
           - lando plugin-add @lando/php && lando setup
+          - lando config && lando setup && echo things
           # these will fail
           # - lando.dev something
           # - oihywpihgklnw
