@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+* Fixed bug causing `&&` separated `auto-setup` command strings to not run correctly
+
 ## v3.4.0 - [October 15, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.0)
 
 ## New Features
