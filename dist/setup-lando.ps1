@@ -51,7 +51,7 @@ if ($env:LANDO_VERSION -ne $null -and $env:LANDO_VERSION -ne "" -and $Version -e
     $Version = $env:LANDO_VERSION
 }
 
-$SCRIPT_VERSION = "v3.4.0"
+$SCRIPT_VERSION = "v3.4.1"
 $LANDO_DEFAULT_MV = "3"
 $LANDO_SETUP_PS1_URL = "https://get.lando.dev/setup-lando.ps1"
 $LANDO_SETUP_SH_URL = "https://get.lando.dev/setup-lando.sh"

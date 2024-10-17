@@ -45042,8 +45042,12 @@ module.exports = (command, landoBin = 'lando') => {
   if (!command.includes('lando setup')) {
     throw new Error(`Setup command must include "lando setup"! You tried to run "${command}"`);
   }
-  // return command but with lando invocations replaced with absolute paths to the landoBin
-  return command.replace(/lando /g, `"${landoBin.replace(/\\/g, '\\\\')}" `);
+
+  // break command into pieces if there are multiple commands
+  return command
+    .split('&&')
+    .map(command => command.replace(/lando /g, `"${landoBin.replace(/\\/g, '\\\\')}" `))
+    .map(command => command.trim());
 };
 
 
@@ -47051,7 +47055,7 @@ var __webpack_exports__ = {};
 "use strict";
 
 
-const SCRIPT_VERSION = 'v3.4.0';
+const SCRIPT_VERSION = 'v3.4.1';
 
 const core = __nccwpck_require__(2186);
 const exec = __nccwpck_require__(1514);
@@ -47245,9 +47249,11 @@ const main = async () => {
 
       // if we get here then we should be G2G
       } else {
-        const command = parseSetupCommand(getSetupCommand(inputs.setup), landoPath);
+        const commands = parseSetupCommand(getSetupCommand(inputs.setup), landoPath);
         const opts = {env: {...process.env, LANDO_DEBUG: core.isDebug() || inputs.debug}};
-        await exec.exec(command, [], opts);
+        for (const command of commands) {
+          await exec.exec(command, [], opts);
+        }
       }
     }
 
