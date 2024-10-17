@@ -9,9 +9,11 @@ module.exports = (command, landoBin = 'lando') => {
     throw new Error(`Setup command must include "lando setup"! You tried to run "${command}"`);
   }
 
+  return command.replace(/lando /g, `"${landoBin.replace(/\\/g, '\\\\')}" `);
+
   // break command into pieces if there are multiple commands
-  return command
-    .split('&&')
-    .map(command => command.replace(/lando /g, `"${landoBin.replace(/\\/g, '\\\\')}" `))
-    .map(command => command.trim());
+  // return command
+  //   .split('&&')
+  //   .map(command => command.replace(/lando /g, `"${landoBin.replace(/\\/g, '\\\\')}" `))
+  //   .map(command => command.trim());
 };
