@@ -80,7 +80,7 @@ const main = async () => {
     core.debug(`found ${releases.length} valid releases`);
 
     // attempt to resolve the spec
-    let version = resolveVersionSpec(spec, releases);
+    let version = resolveVersionSpec(spec, releases, 3, inputs);
 
     // throw error if we cannot resolve a version
     if (!version) throw new Error(`Could not resolve "${spec}" into an installable version of Lando`);
