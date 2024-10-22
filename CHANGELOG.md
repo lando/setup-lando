@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+* Fixed bug causing GitHub convenience aliases eg `3-edge-slim` to incorrectly resolve to releases with hitherto unpopulated assets
+
 ## v3.4.1 - [October 17, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.1)
 
 * Fixed bug causing `&&` separated `auto-setup` command strings to not run correctly

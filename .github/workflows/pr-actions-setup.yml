@@ -64,4 +64,4 @@ jobs:
           telemetry: false
           config: |
             setup.skipCommonPlugins=true
-            setup.plugins.@lando/core=latest
+            setup.plugins.@lando/core=edge
