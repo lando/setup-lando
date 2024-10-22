@@ -44711,38 +44711,16 @@ exports.gitHubReleases = [
 
 
 const isValidUrl = __nccwpck_require__(5142);
+const getFilename = __nccwpck_require__(7358);
+
 const {s3Releases} = __nccwpck_require__(9734);
 
 module.exports = (version, {os, architecture, slim = false} = {}) => {
   // if version is actually a downlaod url then just return that right away
   if (isValidUrl(version)) return version;
 
-  // otherwise start by building the lando file string
-  const parts = ['lando'];
-  parts.push(os === 'Windows' ? 'win' : os.toLowerCase());
-  parts.push(architecture.toLowerCase());
-
-  // if version is a dev release from s3
-  // @TODO: we allow s3 convenience aliases with major version stuff eg 4-dev but we dont actually
-  // have those releases labeled in S3, thats fine with just Lando 3 but with Lando 4 we probably need
-  // to have ALL of the below
-  //
-  // https://files.lando.dev/cli/lando-macos-arm64-dev
-  // https://files.lando.dev/cli/lando-macos-arm64-3-dev
-  // https://files.lando.dev/cli/lando-macos-arm64-4-dev
-  //
-  // right now we basically just strip the version
-  if (s3Releases.includes(version)) {
-    // add the s3 alias
-    parts.push(version.split('-').length === 2 ? version.split('-')[1] : version.split('-')[0]);
-  // otherwise append the version
-  } else parts.push(version);
-
-  // add slim if needed
-  if (slim) parts.push('slim');
-
-  // and add special handling for windows
-  const filename = os === 'Windows' ? `${parts.join('-')}.exe` : parts.join('-');
+  // otherwise construct the filename
+  const filename = getFilename(version, {os, architecture, slim});
 
   // if an s3 release alias
   if (s3Releases.includes(version) || version.includes('preview')) {
@@ -44796,6 +44774,46 @@ module.exports = file => {
   } catch {
     core.error(`Error reading version file ${file}`);
   }
+};
+
+
+/***/ }),
+
+/***/ 7358:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const {s3Releases} = __nccwpck_require__(9734);
+
+module.exports = (version, {os, architecture, slim = false} = {}) => {
+  // start by building the lando file string
+  const parts = ['lando'];
+  parts.push(os === 'Windows' ? 'win' : os.toLowerCase());
+  parts.push(architecture.toLowerCase());
+
+  // if version is a dev release from s3
+  // @TODO: we allow s3 convenience aliases with major version stuff eg 4-dev but we dont actually
+  // have those releases labeled in S3, thats fine with just Lando 3 but with Lando 4 we probably need
+  // to have ALL of the below
+  //
+  // https://files.lando.dev/cli/lando-macos-arm64-dev
+  // https://files.lando.dev/cli/lando-macos-arm64-3-dev
+  // https://files.lando.dev/cli/lando-macos-arm64-4-dev
+  //
+  // right now we basically just strip the version
+  if (s3Releases.includes(version)) {
+    // add the s3 alias
+    parts.push(version.split('-').length === 2 ? version.split('-')[1] : version.split('-')[0]);
+  // otherwise append the version
+  } else parts.push(version);
+
+  // add slim if needed
+  if (slim) parts.push('slim');
+
+  // and add special handling for windows
+  return os === 'Windows' ? `${parts.join('-')}.exe` : parts.join('-');
 };
 
 
@@ -45065,10 +45083,11 @@ const path = __nccwpck_require__(1017);
 const semver = __nccwpck_require__(1383);
 const tc = __nccwpck_require__(7784);
 
+const getFilename = __nccwpck_require__(7358);
 const isValidUrl = __nccwpck_require__(5142);
 const {s3Releases, gitHubReleases} = __nccwpck_require__(9734);
 
-module.exports = (spec, releases = [], dmv = 3) => {
+module.exports = (spec, releases = [], dmv = 3, {os, architecture, slim = false} = {}) => {
   // if spec is a file that exists relative to GITHUB_WORKSPACE then set spec to absolute path based on that
   if (!path.isAbsolute(spec) && fs.existsSync(path.join(process.env['GITHUB_WORKSPACE'], spec))) {
     spec = path.join(process.env['GITHUB_WORKSPACE'], spec);
@@ -45099,13 +45118,20 @@ module.exports = (spec, releases = [], dmv = 3) => {
   if (gitHubReleases.includes(spec)) {
     const mv = spec.split('-').length === 1 ? dmv : spec.split('-')[0];
     const includeEdge = spec.split('-').length === 1 ? spec.split('-')[0] === 'edge' : spec.split('-')[1] === 'edge';
+    const fparts = getFilename('REPLACE', {os, architecture, slim}).split('REPLACE');
+    const assetmatcher = new RegExp(`^${fparts[0]}v[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.]+)${fparts[1]}$`);
 
     // filter based on release type and major version and validity etc
     releases = releases
       .filter(release => includeEdge ? true : release.prerelease === false)
       .filter(release => semver.valid(semver.clean(release.tag_name)) !== null)
-      .filter(release => semver.satisfies(release.tag_name, `>=${mv} <${mv + 1}`,
-        {loose: true, includePrerelease: true}));
+      .filter(release => semver.satisfies(release.tag_name, `>=${mv} <${mv + 1}`, {loose: true, includePrerelease: true})) // eslint-disable-line max-len
+      .filter(release => Array.isArray(release.assets))
+      .map(release => ({
+        ...release,
+        binaries: release.assets.map(asset => asset.name).filter(name => assetmatcher.test(name)),
+      }))
+      .filter(release => release.binaries.length > 0);
 
     // theoretically our spec should be at the top so reset to that
     spec = releases[0].tag_name;
@@ -47055,7 +47081,7 @@ var __webpack_exports__ = {};
 "use strict";
 
 
-const SCRIPT_VERSION = 'v3.4.1';
+const SCRIPT_VERSION = 'v3.4.2';
 
 const core = __nccwpck_require__(2186);
 const exec = __nccwpck_require__(1514);
@@ -47135,7 +47161,7 @@ const main = async () => {
     core.debug(`found ${releases.length} valid releases`);
 
     // attempt to resolve the spec
-    let version = resolveVersionSpec(spec, releases);
+    let version = resolveVersionSpec(spec, releases, 3, inputs);
 
     // throw error if we cannot resolve a version
     if (!version) throw new Error(`Could not resolve "${spec}" into an installable version of Lando`);

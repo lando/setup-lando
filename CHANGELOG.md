@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+## v3.4.2 - [October 22, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.2)
+
 * Fixed bug causing GitHub convenience aliases eg `3-edge-slim` to incorrectly resolve to releases with hitherto unpopulated assets
 
 ## v3.4.1 - [October 17, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.1)
