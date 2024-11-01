@@ -27,5 +27,7 @@ jobs:
         run: npm clean-install --prefer-offline --frozen-lockfile
       - name: Run linter
         run: npm run lint
+      - name: Test mvb
+        run: npm run docs:mvb
       - name: Test build
         run: npm run docs:build
