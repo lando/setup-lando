@@ -7,16 +7,17 @@ description: Install Lando from source
 
 Before you install from source you need to first make sure you've manually installed the below dependencies:
 
-* [the latest node 18](https://nodejs.org/en/download/)
+* [git](https://git-scm.com/downloads)
+* [the latest node 20](https://nodejs.org/en/download/)
 
-Once you've completed the above then install the lando CLI from source:
+Once you've completed the above then install LAndo from source:
 
 ```sh
-# Clone the Lando source
-git clone https://github.com/lando/cli.git cli
+# Clone
+git clone https://github.com/lando/core.git core
 
 # Install its dependencies
-cd cli && npm install
+cd core && npm install
 
 # Set up a symlink
 sudo mkdir -p /usr/local/bin
