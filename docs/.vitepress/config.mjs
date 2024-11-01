@@ -21,7 +21,7 @@ export default defineConfig({
   ],
   themeConfig: {
     multiVersionBuild: {
-      build: 'dev',
+      build: 'stable',
       satisfies: '>=3.0.0',
     },
     sidebar: {
