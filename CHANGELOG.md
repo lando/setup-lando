@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+* Updated docs
+
 ## v3.4.3 - [November 1, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.3)
 
 * Updated docs
