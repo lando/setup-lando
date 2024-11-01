@@ -41,7 +41,7 @@
   },
   "scripts": {
     "docs:build": "VPL_MVB_VERSION=$(git describe --tags --always --abbrev=1 --match=\"v[0-9].*\") vitepress build docs",
-    "docs:dev": "VPL_MVB_VERSION=$(git describe --tags --always --abbrev=1 --match=\"v[0-9].*\") vitepress dev docsq",
+    "docs:dev": "VPL_MVB_VERSION=$(git describe --tags --always --abbrev=1 --match=\"v[0-9].*\") vitepress dev docs",
     "docs:mvb": "npx mvb docs",
     "docs:preview": "vitepress preview docs",
     "lint": "eslint . --ext .js --ext .mjs && shellcheck setup-lando.sh",

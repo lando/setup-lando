@@ -20,6 +20,10 @@ export default defineConfig({
     ['link', {rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml'}],
   ],
   themeConfig: {
+    multiVersionBuild: {
+      build: 'dev',
+      satisfies: '>=3.0.0',
+    },
     sidebar: {
       '/': [
         {
