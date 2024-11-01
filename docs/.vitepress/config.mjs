@@ -7,11 +7,6 @@ const require = createRequire(import.meta.url);
 const {name, version} = require('../../package.json');
 const landoPlugin = name.replace('@lando/', '');
 
-const sidebarEnder = {
-  text: version,
-  collapsed: true,
-};
-
 export default defineConfig({
   title: 'Lando',
   description: 'The offical Lando installation guide.',
@@ -29,7 +24,7 @@ export default defineConfig({
       build: 'dev',
       satisfies: '>=3.0.0',
     },
-    sidebarEnder,
+    sidebarEnder: false,
     sidebar: {
       '/': [
         {
