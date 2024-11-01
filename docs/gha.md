@@ -51,7 +51,7 @@ Here are some examples of advanced things:
 * Install preview branches eg `pm-preview`
 * Install from a URL eg `https://github.com/lando/cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0`
 * Install from a local file eg `/home/runner/work/setup-lando/setup-lando/bin/lando`
-* Set [global Lando config](https://docs.lando.dev/core/v3/global.html) configuration
+* Set [global Lando config](https://docs.lando.dev/config/global.html) configuration
 * Specify how, or if, `lando setup` should run
 * Toggle `lando` debugging via [GitHub Actions](https://github.blog/changelog/2022-05-24-github-actions-re-run-jobs-with-debug-logging/)
 

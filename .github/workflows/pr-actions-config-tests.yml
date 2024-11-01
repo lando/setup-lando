@@ -20,7 +20,7 @@ jobs:
           - true
           - false
         node-version:
-          - '18'
+          - '20'
         debug:
           - true
           - false

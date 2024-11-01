@@ -16,10 +16,14 @@ export default defineConfig({
   base: '/install/',
   head: [
     ['meta', {name: 'viewport', content: 'width=device-width, initial-scale=1'}],
-    ['link', {rel: 'icon', href: '/core/favicon.ico', size: 'any'}],
-    ['link', {rel: 'icon', href: '/core/favicon.svg', type: 'image/svg+xml'}],
+    ['link', {rel: 'icon', href: '/favicon.ico', size: 'any'}],
+    ['link', {rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml'}],
   ],
   themeConfig: {
+    multiVersionBuild: {
+      build: 'dev',
+      satisfies: '>=3.0.0',
+    },
     sidebar: {
       '/': [
         {
@@ -46,22 +50,20 @@ export default defineConfig({
         },
         {
           text: 'Help & Support',
-          collapsed: false,
+          collapsed: true,
           items: [
             {text: 'GitHub', link: 'https://github.com/lando/dotnet/issues/new/choose'},
             {text: 'Slack', link: 'https://www.launchpass.com/devwithlando'},
             {text: 'Contact Us', link: 'https://docs.lando.dev/support'},
-            {text: 'Troubleshooting', link: 'https://docs.lando.dev/troubleshooting'},
-            {text: 'Guides', link: 'https://docs.lando.dev/guides'},
-            {text: 'Examples', link: 'https://github.com/lando/core/tree/main/examples'},
           ],
         },
         {
           text: 'Contributing',
-          collapsed: false,
+          collapsed: true,
           items: [
             {text: 'Getting Involved', link: 'https://docs.lando.dev/contrib/index'},
             {text: 'Coding', link: 'https://docs.lando.dev/contrib/coder'},
+            {text: 'Development', link: 'https://docs.lando.dev/contrib/development'},
             {text: 'Evangelizing', link: 'https://docs.lando.dev/contrib/evangelist'},
             {text: 'Sponsoring', link: 'https://docs.lando.dev/contrib/sponsoring'},
             {text: 'Security', link: 'https://docs.lando.dev/security'},
@@ -71,10 +73,9 @@ export default defineConfig({
         {
           collapsed: false,
           items: [
-            {
-              text: 'Plugins',
-              link: 'https://docs.lando.dev/plugins',
-            },
+            {text: 'Guides', link: 'https://docs.lando.dev/guides'},
+            {text: 'Troubleshooting', link: 'https://docs.lando.dev/troubleshooting'},
+            {text: 'Examples', link: 'https://github.com/lando/core/tree/main/examples'},
           ],
         },
       ],
