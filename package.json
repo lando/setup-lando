@@ -37,7 +37,7 @@
     "shellcheck": "^2.2.0",
     "shx": "^0.3.4",
     "ua-parser-js": "^1.0.37",
-    "vitepress": "^1.0.0-rc.42"
+    "vitepress": "^1.4.3"
   },
   "scripts": {
     "docs:build": "VPL_MVB_VERSION=$(git describe --tags --always --abbrev=1 --match=\"v[0-9].*\") vitepress build docs",
