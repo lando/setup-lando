@@ -1,2 +1,3 @@
-build-*
+build-*/
 setup-lando.ps1
+setup-lando-win-*.exe

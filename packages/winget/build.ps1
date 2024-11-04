@@ -132,12 +132,33 @@ Continuing with x64 build only. Use -SkipArm to suppress this warning.
     $SkipArm = $true
 }
 
-# Clean up any existing build directories
-if (Test-Path "build-x64") {
-    Remove-Item -Recurse -Force "build-x64"
+# Create dist directory if it doesn't exist and copy PS1 script
+$distPath = Join-Path (Resolve-Path "..\..\").Path "dist"
+if (-not (Test-Path $distPath)) {
+    Write-Error @"
+dist directory not found. Please ensure setup-lando.ps1 exists in ../../dist/
+"@
+    exit 1
 }
-if (-not $SkipArm -and (Test-Path "build-arm64")) {
-    Remove-Item -Recurse -Force "build-arm64"
+
+# Copy PS1 script from dist
+$sourcePsScript = Join-Path $distPath "setup-lando.ps1"
+if (-not (Test-Path $sourcePsScript)) {
+    Write-Error "setup-lando.ps1 not found in ../../dist/"
+    exit 1
+}
+
+Copy-Item $sourcePsScript -Destination "setup-lando.ps1"
+
+# Remove existing executables if they exist
+$x64Exe = "setup-lando-win-x64.exe"
+$arm64Exe = "setup-lando-win-arm64.exe"
+
+if (Test-Path $x64Exe) {
+    Remove-Item $x64Exe -Force
+}
+if (-not $SkipArm -and (Test-Path $arm64Exe)) {
+    Remove-Item $arm64Exe -Force
 }
 
 # Strip 'v' prefix if present
@@ -167,23 +188,6 @@ $generator = "Visual Studio $vsVersion 2022"
 
 Write-Host "Using generator: $generator" -ForegroundColor Green
 
-# Create dist directory if it doesn't exist
-$distPath = Join-Path (Resolve-Path "..\..\").Path "dist"
-if (-not (Test-Path $distPath)) {
-        New-Item -ItemType Directory -Path $distPath -Force
-}
-
-# Remove existing executables if they exist
-$x64Exe = Join-Path $distPath "setup-lando-win-x64.exe"
-$arm64Exe = Join-Path $distPath "setup-lando-win-arm64.exe"
-
-if (Test-Path $x64Exe) {
-        Remove-Item $x64Exe -Force
-}
-if (-not $SkipArm -and (Test-Path $arm64Exe)) {
-        Remove-Item $arm64Exe -Force
-}
-
 Write-Host "Building x64 version..." -ForegroundColor Green
 cmake -G $generator -A x64 -B build-x64 .
 if ($LASTEXITCODE -ne 0) {
@@ -191,13 +195,35 @@ if ($LASTEXITCODE -ne 0) {
     exit $LASTEXITCODE
 }
 
-# Ensure the dist directory exists before building
-New-Item -ItemType Directory -Path $distPath -Force -ErrorAction SilentlyContinue
-
 cmake --build build-x64 --config Release
 if ($LASTEXITCODE -ne 0) {
     Write-Error "Failed to build x64 version"
     exit $LASTEXITCODE
+}
+
+# Try both possible locations
+$possiblePaths = @(
+    "build-x64\Release\setup-lando.exe",
+    "build-x64\setup-lando.exe",
+    "..\..\dist\setup-lando-win-x64.exe"
+)
+
+$foundPath = $null
+foreach ($path in $possiblePaths) {
+    if (Test-Path $path) {
+        $foundPath = $path
+        break
+    }
+}
+
+if ($foundPath) {
+    Copy-Item $foundPath $x64Exe -Force
+} else {
+    Write-Error @"
+Could not find built executable. Searched in:
+$($possiblePaths -join "`n")
+"@
+    exit 1
 }
 
 if (-not $SkipArm) {
@@ -213,7 +239,17 @@ if (-not $SkipArm) {
         Write-Error "Failed to build ARM64 version"
         exit $LASTEXITCODE
     }
+
+    # Copy the built executable to current directory
+    Copy-Item "build-arm64\Release\setup-lando.exe" $arm64Exe
 }
 
 Write-Host "Build completed successfully!" -ForegroundColor Green
-Write-Host "Executables can be found in ../../dist/" -ForegroundColor Green
+Write-Host "Executables can be found in the current directory:" -ForegroundColor Green
+Write-Host "  - $x64Exe" -ForegroundColor Green
+if (-not $SkipArm) {
+    Write-Host "  - $arm64Exe" -ForegroundColor Green
+}
+
+# Clean up copied PS1 script
+Remove-Item "setup-lando.ps1" -Force
