@@ -1,19 +1,45 @@
 import {createRequire} from 'module';
+import {HttpClient} from '@actions/http-client';
 
 import {defineConfig} from '@lando/vitepress-theme-default-plus/config';
 
+const channel = 'stable';
+const http = new HttpClient();
 const require = createRequire(import.meta.url);
+const url = `https://raw.githubusercontent.com/lando/core/refs/heads/main/release-aliases/3-${channel.toUpperCase()}`;
 
+// plugin info
 const {name, version} = require('../../package.json');
 const landoPlugin = name.replace('@lando/', '');
+let v = `v${version}`;
+
+// attempt to update version information from alias
+try {
+  const response = await http.get(url);
+  const body = await response.readBody();
+  v = body.trim();
+} catch (error) {
+  console.error(error);
+}
 
 const sidebarEnder = {
-  text: version,
+  text: v,
   collapsed: true,
+  items: [
+    {
+      text: 'Other Doc Versions',
+      items: [
+        {rel: 'mvb', text: 'stable', target: '_blank', link: '/v/stable/'},
+        {rel: 'mvb', text: 'edge', target: '_blank', link: '/v/edge'},
+        {rel: 'mvb', text: '<strong>see all versions</strong>', link: '/v/'},
+      ],
+    },
+    {text: 'Other Releases', link: 'https://github.com/lando/setup-lando/releases'},
+  ],
 };
 
 export default defineConfig({
-  title: 'Lando',
+  title: 'Lando 3',
   description: 'The offical Lando installation guide.',
   landoDocs: 3,
   landoPlugin,
@@ -26,7 +52,7 @@ export default defineConfig({
   ],
   themeConfig: {
     multiVersionBuild: {
-      build: 'dev',
+      build: channel,
       satisfies: '>=3.0.0',
     },
     sidebarEnder,
