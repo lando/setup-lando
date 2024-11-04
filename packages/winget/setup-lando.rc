@@ -1,0 +1,68 @@
+#include <windows.h>
+#include <winres.h>
+
+// Embed the PowerShell script as a resource
+// Note: The ID must be a number for proper resource embedding
+#define SCRIPT_RESOURCE 101
+SCRIPT_RESOURCE RCDATA "setup-lando.ps1"
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     1.0.0
+PRODUCTVERSION  1.0.0
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904E4"
+        BEGIN
+            VALUE "CompanyName",      "Lando"
+            VALUE "FileDescription",  "Lando Setup"
+            VALUE "FileVersion",      "1.0.0"
+            VALUE "InternalName",     "setup-lando"
+            VALUE "ProductName",      "Lando Setup"
+            VALUE "ProductVersion",   "1.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 1252
+    END
+END 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
