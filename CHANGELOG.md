@@ -1,10 +1,10 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
-* Updated docs
+* Updated to [@lando/vitepress-theme-default-plus@v1.1.0-beta.18](https://github.com/lando/vitepress-theme-default-plus/releases/tag/v1.1.0-beta.18)
 
 ## v3.4.3 - [November 1, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.3)
 
-* Updated docs
+* Updated to [@lando/vitepress-theme-default-plus@v1.1.0-beta.16](https://github.com/lando/vitepress-theme-default-plus/releases/tag/v1.1.0-beta.16)
 
 ## v3.4.2 - [October 22, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.2)
 
