@@ -169,7 +169,7 @@ FAT="${LANDO_INSTALLER_FAT:-0}"
 OS="${LANDO_INSTALLER_OS:-"$INSTALLER_OS"}"
 SUDO="${LANDO_INSTALLER_SUDO:-1}"
 SETUP="${LANDO_INSTALLER_SETUP:-1}"
-VERSION="${LANDO_INSTALLER_VERSION:-"stable"}"
+VERSION="${LANDO_VERSION:-${LANDO_INSTALLER_VERSION:-stable}}"
 ORIGOPTS="$*"
 
 usage() {
@@ -488,29 +488,23 @@ fi
 
 # STABLE
 if [[ "${VERSION}" == "4-stable" ]]; then
-  VERSION="$($CURL -fsSL https://raw.githubusercontent.com/lando/cli/main/release-aliases/4-STABLE | tr -s '[:blank:]')"
-  URL="https://github.com/lando/cli/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
-
+  VERSION="$($CURL -fsSL https://raw.githubusercontent.com/lando/core-next/main/release-aliases/4-STABLE | tr -s '[:blank:]')"
 elif [[ "${VERSION}" == "3-stable" ]]; then
-  VERSION="$($CURL -fsSL https://raw.githubusercontent.com/lando/cli/main/release-aliases/3-STABLE | tr -s '[:blank:]')"
-  URL="https://github.com/lando/cli/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
+  VERSION="$($CURL -fsSL https://raw.githubusercontent.com/lando/core/main/release-aliases/3-STABLE | tr -s '[:blank:]')"
 
 # EDGE
 elif [[ "${VERSION}" == "4-edge" ]]; then
-  VERSION="$($CURL -fsSL https://raw.githubusercontent.com/lando/cli/main/release-aliases/4-EDGE | tr -s '[:blank:]')"
-  URL="https://github.com/lando/cli/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
-
+  VERSION="$($CURL -fsSL https://raw.githubusercontent.com/lando/core-next/main/release-aliases/4-EDGE | tr -s '[:blank:]')"
 elif [[ "${VERSION}" == "3-edge" ]]; then
-  VERSION="$($CURL -fsSL https://raw.githubusercontent.com/lando/cli/main/release-aliases/3-EDGE | tr -s '[:blank:]')"
-  URL="https://github.com/lando/cli/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
+  VERSION="$($CURL -fsSL https://raw.githubusercontent.com/lando/core/main/release-aliases/3-EDGE | tr -s '[:blank:]')"
 
 # DEV
 elif [[ "${VERSION}" == "4-dev" ]] || [[ "${VERSION}" == "4-latest" ]]; then
-  URL="https://files.lando.dev/cli/lando-${OS}-${ARCH}-dev"
+  URL="https://files.lando.dev/core-next/lando-${OS}-${ARCH}-dev"
   VERSION_DEV=1
 
 elif [[ "${VERSION}" == "3-dev" ]] || [[ "${VERSION}" == "3-latest" ]]; then
-  URL="https://files.lando.dev/cli/lando-${OS}-${ARCH}-dev"
+  URL="https://files.lando.dev/core/lando-${OS}-${ARCH}-dev"
   VERSION_DEV=1
 
 # CUSTOM
@@ -518,7 +512,6 @@ else
   if [[ $VERSION != v* ]]; then
     VERSION="v${VERSION}"
   fi
-  URL="https://github.com/lando/cli/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
 fi
 
 # Set some helper things
@@ -530,6 +523,13 @@ if [[ -z "${VERSION_DEV-}" ]]; then
 else
   LMV="$(echo "$VERSION" | cut -c1)"
   HRV="$VERSION"
+fi
+
+# set url depending on non-dev LMVs
+if [[ $LMV == '3' ]] && [[ -z "${VERSION_DEV-}" ]]; then
+  URL="https://github.com/lando/core/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
+elif [[ $LMV == '4' ]] && [[ -z "${VERSION_DEV-}" ]]; then
+  URL="https://github.com/lando/core-next/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
 fi
 
 # autoslim all v3 urls by default
@@ -773,8 +773,6 @@ if [[ -z "${NONINTERACTIVE-}" ]]; then
   log "- ${tty_magenta}download${tty_reset} lando ${tty_bold}${HRV}${tty_reset} to ${tty_bold}${DEST}${tty_reset}"
   # setup
   if [[ "$SETUP" == "1" ]]; then log "- ${tty_blue}run${tty_reset} ${tty_bold}lando setup${tty_reset}"; fi
-  # update
-  log "- ${tty_blue}run${tty_reset} ${tty_bold}lando update${tty_reset}"
   # shellenv
   log "- ${tty_blue}run${tty_reset} ${tty_bold}lando shellenv --add${tty_reset}"
   # block for user
@@ -828,10 +826,6 @@ if [[ "$SETUP" == "1" ]]; then
     execute "${LANDO}" setup "${LANDO_DEBUG-}"
   fi
 fi
-
-# update
-log "${tty_blue}updating${tty_reset} ${tty_bold}lando${tty_reset}"
-execute "${LANDO}" update --yes "${LANDO_DEBUG-}"
 
 # shell env
 log "${tty_blue}adding${tty_reset} ${tty_bold}${DEST}${tty_reset} to ${tty_bold}PATH${tty_reset}"

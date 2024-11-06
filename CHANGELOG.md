@@ -1,5 +1,39 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+## v3.4.4 - [November 4, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.4)
+
+* Updated to [@lando/vitepress-theme-default-plus@v1.1.0-beta.18](https://github.com/lando/vitepress-theme-default-plus/releases/tag/v1.1.0-beta.18)
+
+## v3.4.3 - [November 1, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.3)
+
+* Updated to [@lando/vitepress-theme-default-plus@v1.1.0-beta.16](https://github.com/lando/vitepress-theme-default-plus/releases/tag/v1.1.0-beta.16)
+
+## v3.4.2 - [October 22, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.2)
+
+* Fixed bug causing GitHub convenience aliases eg `3-edge-slim` to incorrectly resolve to releases with hitherto unpopulated assets
+
+## v3.4.1 - [October 17, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.1)
+
+* Fixed bug causing `&&` separated `auto-setup` command strings to not run correctly
+
+## v3.4.0 - [October 15, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.0)
+
+## New Features
+
+* Added `LANDO_VERSION` as a way to set the `version` in the install pathways
+
+## Fixes
+
+* Fixed bug causing `@lando/setup-lando` GitHub Action to fail on Windows using `bash`
+
+## Internal
+
+* Updated download locations to standardize on relevant `core` and `core-next` pathways
+
+## v3.3.0 - [October 11, 2024](https://github.com/lando/setup-lando/releases/tag/v3.3.0)
+
+* Removed automatic `lando update` from `setup-lando.sh` to be consistent with other install pathways and because it makes `--version` sort of pointless 😉
+
 ## v3.2.2 - [May 17, 2024](https://github.com/lando/setup-lando/releases/tag/v3.2.2)
 
 * Fixed `windows` setup script passing incorrect parameter to `wsl` setup script [#46](https://github.com/lando/setup-lando/issues/44)

@@ -46,6 +46,11 @@ param(
     [switch]$Help
 )
 
+# If version is "stable" AND LANDO_VERSION is set (and not empty), then prefer the version from LANDO_VERSION
+if ($env:LANDO_VERSION -ne $null -and $env:LANDO_VERSION -ne "" -and $Version -eq "stable") {
+    $Version = $env:LANDO_VERSION
+}
+
 $SCRIPT_VERSION = $null
 $LANDO_DEFAULT_MV = "3"
 $LANDO_SETUP_PS1_URL = "https://get.lando.dev/setup-lando.ps1"
@@ -189,7 +194,8 @@ function Resolve-VersionAlias {
 
     Write-Debug "Resolving version alias '$Version'..."
     $originalVersion = $Version
-    $baseUrl = "https://github.com/lando/cli/releases/download/"
+    $baseUrl3 = "https://github.com/lando/core/releases/download/"
+    $baseUrl4 = "https://github.com/lando/core-next/releases/download/"
 
     $aliasMap = @{
         "3"      = "3-stable";
@@ -208,22 +214,36 @@ function Resolve-VersionAlias {
     # Resolve release aliases to download URLs.
     # Default to slim variant for 3.x unless -Fat is specified.
     switch -Regex ($Version) {
-        "^(3|4)-(stable|edge)$" {
+        "^4-(stable|edge)$" {
             Write-Debug "Fetching release alias '$($Version.ToUpper())' from GitHub..."
-            $VersionLabel = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lando/cli/main/release-aliases/$($Version.ToUpper())" -UseBasicParsing).Content -replace '\s'
+            $VersionLabel = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lando/core-next/main/release-aliases/$($Version.ToUpper())" -UseBasicParsing).Content -replace '\s'
             $variant = if ($Version -match "^3-" -and !$Fat) { "-slim" } else { "" }
-            $downloadUrl = "${baseUrl}${VersionLabel}/lando-win-${arch}-${VersionLabel}${variant}.exe"
+            $downloadUrl = "${baseUrl4}${VersionLabel}/lando-win-${arch}-${VersionLabel}${variant}.exe"
         }
-        "^(3|4)-dev$" {
+        "^3-(stable|edge)$" {
+            Write-Debug "Fetching release alias '$($Version.ToUpper())' from GitHub..."
+            $VersionLabel = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lando/core/main/release-aliases/$($Version.ToUpper())" -UseBasicParsing).Content -replace '\s'
             $variant = if ($Version -match "^3-" -and !$Fat) { "-slim" } else { "" }
-            $downloadUrl = "https://files.lando.dev/cli/lando-win-${arch}-${Version}${variant}.exe"
+            $downloadUrl = "${baseUrl3}${VersionLabel}/lando-win-${arch}-${VersionLabel}${variant}.exe"
+        }
+        "^4-dev$" {
+            $downloadUrl = "https://files.lando.dev/core-next/lando-win-${arch}-${Version}.exe"
+        }
+        "^3-dev$" {
+            $variant = if ($Version -match "^3-" -and !$Fat) { "-slim" } else { "" }
+            $downloadUrl = "https://files.lando.dev/core/lando-win-${arch}-${Version}${variant}.exe"
         }
         Default {
             Write-Debug "Version '$Version' is a semantic version"
             if (-not $Version.StartsWith("v")) {
                 $Version = "v$Version"
             }
-            $downloadUrl = "${baseUrl}${Version}/lando-win-${arch}-${Version}.exe"
+            if ($Version.StartsWith("v4")) {
+                $downloadUrl = "${baseUrl4}${Version}/lando-win-${arch}-${Version}.exe"
+            }
+            else {
+                $downloadUrl = "${baseUrl3}${Version}/lando-win-${arch}-${Version}.exe"
+            }
         }
     }
 

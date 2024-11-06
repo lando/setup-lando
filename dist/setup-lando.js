@@ -64,7 +64,7 @@ const main = async () => {
   inputs.setup = inputs.autoSetup ?? inputs.setup;
 
   // determine lando version spec to install
-  const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || 'stable';
+  const spec = inputs.landoVersion || getFileVersion(inputs.landoVersionFile) || get(process, 'env.LANDO_VERSION') || 'stable'; // eslint-disable-line max-len
   core.debug(`rolling with "${spec}" as version spec`);
 
   // get a pagination vibed octokit so we can get ALL release data
@@ -73,12 +73,14 @@ const main = async () => {
 
   // try/catch
   try {
-    const releases =
-      await octokit.paginate('GET /repos/{owner}/{repo}/releases', {owner: 'lando', repo: 'cli', per_page: 100});
+    const releases = await Promise.all([
+      await octokit.paginate('GET /repos/{owner}/{repo}/releases', {owner: 'lando', repo: 'core', per_page: 100}),
+      await octokit.paginate('GET /repos/{owner}/{repo}/releases', {owner: 'lando', repo: 'core-next', per_page: 100}),
+    ].flat(Number.POSITIVE_INFINITY));
     core.debug(`found ${releases.length} valid releases`);
 
     // attempt to resolve the spec
-    let version = resolveVersionSpec(spec, releases);
+    let version = resolveVersionSpec(spec, releases, 3, inputs);
 
     // throw error if we cannot resolve a version
     if (!version) throw new Error(`Could not resolve "${spec}" into an installable version of Lando`);
@@ -192,9 +194,11 @@ const main = async () => {
 
       // if we get here then we should be G2G
       } else {
-        const command = parseSetupCommand(getSetupCommand(inputs.setup), landoPath);
+        const commands = parseSetupCommand(getSetupCommand(inputs.setup), landoPath);
         const opts = {env: {...process.env, LANDO_DEBUG: core.isDebug() || inputs.debug}};
-        await exec.exec('bash', ['-c', command], opts);
+        for (const command of commands) {
+          await exec.exec(command, [], opts);
+        }
       }
     }
 

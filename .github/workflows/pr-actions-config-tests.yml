@@ -14,23 +14,23 @@ jobs:
         os:
           - macos-13
           - macos-14
-          - ubuntu-22.04
+          - ubuntu-24.04
           - windows-2022
         telemetry:
           - true
           - false
         node-version:
-          - '18'
+          - '20'
         debug:
           - true
           - false
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Install node ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -41,6 +41,7 @@ jobs:
       - name: Setup Lando version
         uses: ./
         with:
+          auto-setup: lando setup --yes --skip-networking
           config-file: test-config.yaml
           config: |
             pirog=5001

@@ -14,14 +14,14 @@ jobs:
         os:
           # - macos-13
           # - macos-14
-          - ubuntu-22.04
+          - ubuntu-24.04
           # - windows-2022
         lando-version:
           # - '3.14.0'
           - '3-dev'
           # - 'stable'
         node-version:
-          - '18'
+          - '20'
         setup-string:
           - 1
           - auto
@@ -37,16 +37,17 @@ jobs:
           - lando setup
           - lando setup --skip-common-plugins --plugin @lando/node --orchestrator 2.21.0
           - lando plugin-add @lando/php && lando setup
+          - mkdir -p test && lando setup
           # these will fail
           # - lando.dev something
           # - oihywpihgklnw
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Install node ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -63,4 +64,4 @@ jobs:
           telemetry: false
           config: |
             setup.skipCommonPlugins=true
-            setup.plugins.@lando/core=latest
+            setup.plugins.@lando/core=edge

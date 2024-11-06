@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-22.04
+          - ubuntu-24.04
         fat:
           - --fat
           - ''
@@ -28,15 +28,22 @@ jobs:
           - 'edge'
           - 'latest'
           - 'dev'
+          - 'skip'
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Setup Lando version ${{ matrix.success-version }}
         shell: bash
         run: |
-          ./setup-lando.sh --version=${{ matrix.success-version }} --no-setup ${{ matrix.fat }}
+          if [[ "${{ matrix.success-version }}" == "skip" ]]; then
+            LANDO_VERSION=v3.22.0 ./setup-lando.sh --no-setup ${{ matrix.fat }}
+          else
+            ./setup-lando.sh --version=${{ matrix.success-version }} --no-setup ${{ matrix.fat }}
+          fi
+
           lando version --all
 
           # test slim|fat on lando 3

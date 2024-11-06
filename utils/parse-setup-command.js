@@ -1,5 +1,6 @@
 'use strict';
 
+
 module.exports = (command, landoBin = 'lando') => {
   // throw if not a string
   if (typeof command !== 'string') throw new Error('Setup command must be a string!');
@@ -8,6 +9,9 @@ module.exports = (command, landoBin = 'lando') => {
     throw new Error(`Setup command must include "lando setup"! You tried to run "${command}"`);
   }
 
-  // return command but with lando invocations replaced with absolute paths to the landoBin
-  return command.replace(/lando /g, `${landoBin} `);
+  // break command into pieces if there are multiple commands
+  return command
+    .split('&&')
+    .map(command => command.replace(/lando /g, `"${landoBin.replace(/\\/g, '\\\\')}" `))
+    .map(command => command.trim());
 };

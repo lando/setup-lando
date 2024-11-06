@@ -12,9 +12,9 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-22.04
+          - ubuntu-24.04
         node-version:
-          - '18'
+          - '20'
         lando-version:
           - '3.x'
           - '>2'
@@ -38,14 +38,15 @@ jobs:
           - 'https://github.com/lando/cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0'
           - '/home/runner/work/setup-lando/setup-lando/bin/lando'
           - './bin/lando'
+          - ''
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - name: Install node ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -54,6 +55,9 @@ jobs:
           npm clean-install --prefer-offline --frozen-lockfile
           npm run prepare
       - name: Setup Lando version ${{ matrix.lando-version }}
+        env:
+          LANDO_VERSION: 3.22.0
         uses: ./
         with:
           lando-version: ${{ matrix.lando-version }}
+          lando-version-file: false
