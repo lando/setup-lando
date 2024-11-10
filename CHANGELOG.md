@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+## v3.4.5 - [November 10, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.5)
+
 * Updated to [@lando/vitepress-theme-default-plus@v1.1.0-beta.19](https://github.com/lando/vitepress-theme-default-plus/releases/tag/v1.1.0-beta.19)
 
 ## v3.4.4 - [November 4, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.4)
