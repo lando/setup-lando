@@ -816,7 +816,7 @@ if [[ $LMV == '3' ]]; then
 fi
 
 # test via log
-log "${tty_green}downloaded${tty_reset} @lando/cli ${tty_bold}$("${LANDO}" version --component @lando/cli)${tty_reset} to ${tty_bold}${LANDO}${tty_reset}"
+log "${tty_green}downloaded${tty_reset} lando ${tty_bold}$("${LANDO}" version --component @lando/cli)${tty_reset} to ${tty_bold}${LANDO}${tty_reset}"
 
 # run correct setup flavor if needed
 if [[ "$SETUP" == "1" ]]; then

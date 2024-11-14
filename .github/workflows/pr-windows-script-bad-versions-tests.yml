@@ -16,7 +16,7 @@ jobs:
           - '5.1.2'
           - '3.1.14'
           - 'pm-preview'
-          - 'https://github.com/lando/cli/releases/download/v3.18.0/lando-windows-x64-v3.18.0'
+          - 'https://github.com/lando/legacy-cli/releases/download/v3.18.0/lando-windows-x64-v3.18.0'
           - '.\setup-lando\bin\lando'
           - '.\bin\lando'
     steps:

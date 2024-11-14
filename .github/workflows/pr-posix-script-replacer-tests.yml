@@ -13,11 +13,11 @@ jobs:
       matrix:
         include:
           - os: macos-13
-            old-version: https://github.com/lando/cli/releases/download/v3.21.0-beta.2/lando-macos-x64-v3.21.0-beta.2-slim
+            old-version: https://github.com/lando/legacy-cli/releases/download/v3.21.0-beta.2/lando-macos-x64-v3.21.0-beta.2-slim
           - os: macos-14
-            old-version: https://github.com/lando/cli/releases/download/v3.21.0-beta.2/lando-macos-arm64-v3.21.0-beta.2-slim
+            old-version: https://github.com/lando/legacy-cli/releases/download/v3.21.0-beta.2/lando-macos-arm64-v3.21.0-beta.2-slim
           - os: ubuntu-24.04
-            old-version: https://github.com/lando/cli/releases/download/v3.21.0-beta.2/lando-linux-x64-v3.21.0-beta.2-slim
+            old-version: https://github.com/lando/legacy-cli/releases/download/v3.21.0-beta.2/lando-linux-x64-v3.21.0-beta.2-slim
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

@@ -35,7 +35,7 @@ jobs:
           - 'latest'
           - 'dev'
           - 'pm-preview'
-          - 'https://github.com/lando/cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0'
+          - 'https://github.com/lando/legacy-cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0'
           - '/home/runner/work/setup-lando/setup-lando/bin/lando'
           - './bin/lando'
           - ''

@@ -49,7 +49,7 @@ Here are some examples of advanced things:
 * Install using a version-spec-ish eg `3`, `3.12`, `3.x`, `3.14.0`
 * Install using convenience aliases eg `stable`, `4-latest`, `dev` `3-edge`
 * Install preview branches eg `pm-preview`
-* Install from a URL eg `https://github.com/lando/cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0`
+* Install from a URL eg `https://github.com/lando/legacy-cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0`
 * Install from a local file eg `/home/runner/work/setup-lando/setup-lando/bin/lando`
 * Set [global Lando config](https://docs.lando.dev/config/global.html) configuration
 * Specify how, or if, `lando setup` should run
