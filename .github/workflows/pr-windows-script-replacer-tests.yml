@@ -28,6 +28,8 @@ jobs:
       - name: Get older Lando version ${{ matrix.old-version }}
         shell: powershell
         run: |
+          Get-ChildItem Env: | ForEach-Object { "$($_.Name)=$($_.Value)" }
+
           $LandoBin = Join-Path -Path $env:HOME -ChildPath '.lando/bin'
           New-Item -ItemType Directory -Force -Path /tmp/bin | Out-Null
           New-Item -ItemType Directory -Force -Path $LandoBin | Out-Null
