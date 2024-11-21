@@ -780,21 +780,16 @@ cd "/usr" || exit 1
 if [[ -z "${NONINTERACTIVE-}" ]]; then
   log "${tty_bold}this script is about to:${tty_reset}"
   log
-
   # sudo prompt
   if needs_sudo; then log "- ${tty_green}prompt${tty_reset} for ${tty_bold}sudo${tty_reset} password"; fi
-
   # download
   if [[ $URL != file://* ]]; then log "- ${tty_magenta}download${tty_reset} lando ${tty_bold}${HRV}${tty_reset} to ${tty_bold}${DEST}${tty_reset}"
   # or move
   else log "- ${tty_magenta}move${tty_reset} lando ${tty_bold}${ORIGINAL_VERSION}${tty_reset} to ${tty_bold}${DEST}${tty_reset}"; fi
-
   # setup
   if [[ "$SETUP" == "1" ]]; then log "- ${tty_blue}run${tty_reset} ${tty_bold}lando setup${tty_reset}"; fi
-
   # shellenv
   log "- ${tty_blue}run${tty_reset} ${tty_bold}lando shellenv --add${tty_reset}"
-
   # block for user
   wait_for_user
 fi
@@ -805,13 +800,17 @@ if needs_sudo; then
   execute_sudo true
 fi
 
+# LANDO
+LANDO="${DEST}/lando"
+LANDO_BINDIR="$HOME/.lando/bin"
+LANDO_PLUGINSDIR="$HOME/.lando/plugins"
+LANDO_TMPFILE="${LANDO_TMPDIR}/${RANDOM}"
+
 # Create directories if we need to
 if [[ ! -d "$DEST" ]]; then auto_exec mkdir -p "$DEST"; fi
 if [[ ! -d "$LANDO_TMPDIR" ]]; then auto_exec mkdir -p "$LANDO_TMPDIR"; fi
-
-# LANDO
-LANDO="${DEST}/lando"
-LANDO_TMPFILE="${LANDO_TMPDIR}/${RANDOM}"
+if [[ ! -d "$LANDO_BINDIR" ]]; then execute mkdir -p "$LANDO_BINDIR"; fi
+if [[ ! -d "$LANDO_PLUGINSDIR" ]]; then execute mkdir -p "$LANDO_PLUGINSDIR"; fi
 
 # download lando
 log "${tty_magenta}downloading${tty_reset} ${tty_bold}${URL}${tty_reset} to ${tty_bold}${LANDO}${tty_reset}"
@@ -829,6 +828,9 @@ execute "${LANDO_TMPFILE}" version >/dev/null
 # if we get here we should be good to move it to its final destination
 # NOTE: we use mv here instead of cp because of https://developer.apple.com/forums/thread/130313
 auto_exec mv -f "${LANDO_TMPFILE}" "${LANDO}"
+
+# force symlink landobin to ensure PATH primacy as best we can
+ln -sf "${LANDO}" "$LANDO_BINDIR/lando"
 
 # if lando 3 then --clear
 if [[ $LMV == '3' ]]; then

@@ -29,7 +29,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Add tempbin to PATH
-        run: echo "PATH=$HOME/.lando/bin:/tmp/bin:$PATH" >> $GITHUB_ENV
+        run: echo "PATH=$HOME/.lando/bin:$PATH" >> $GITHUB_ENV
       - name: Get older Lando version ${{ matrix.old-version }}
         shell: bash
         run: |
@@ -53,13 +53,12 @@ jobs:
         run: |
           which lando | grep "$HOME/.lando/bin/lando"
           readlink -f $(which lando) | grep /tmp/bin/lando
-
           lando version | grep ${{ matrix.old-version }}
       - name: Replace Lando with setup-script
         shell: bash
         run: |
           ./setup-lando.sh --version="${{ matrix.version }}" --no-setup
 
-          which lando
-          readlink -f $(which lando)
-          lando version
+          which lando | grep "$HOME/.lando/bin/lando"
+          readlink -f $(which lando) | grep /usr/local/bin/lando
+          lando version | grep ${{ matrix.version }}

@@ -1,6 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
 * Added `path` based installation to POSIX `setup-lando.sh` script
+* Fixed bug causing POSIX/Windows script from replacing existing `lando` installations
 
 ## v3.4.5 - [November 10, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.5)
 
