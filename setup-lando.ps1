@@ -347,7 +347,7 @@ function Install-Lando {
 
     $filename = $downloadUrl.Split('/')[-1]
 
-    Write-Host "Downloading Lando CLI..."
+    Write-Host "Downloading Lando..."
     $downloadDest = "$LANDO_APPDATA\$filename"
     Write-Debug "From $downloadUrl to $downloadDest..."
     Write-Progress -Activity "Downloading Lando $script:resolvedVersion" -Status "Preparing..." -PercentComplete 0

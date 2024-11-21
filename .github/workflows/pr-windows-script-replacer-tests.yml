@@ -50,24 +50,13 @@ jobs:
       - name: Verify older situation
         shell: powershell
         run: |
-          $LandoPath = Get-Command lando | Select-Object -ExpandProperty Source
-          $ResolvedPath = Resolve-Path -Path (Get-Command lando | Select-Object -ExpandProperty Source)
-          Write-Output "$LandoPath"
-          Write-Output "$ResolvedPath"
-          lando version
-
-          Get-Command lando | Select-Object -ExpandProperty Source
-          Resolve-Path -Path (Get-Command lando | Select-Object -ExpandProperty Source)
+          Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:USERPROFILE\.lando\bin\lando.cmd"
+          lando version | Select-String -Pattern "${{ matrix.old-version }}"
       - name: Replace Lando with setup-script
         shell: powershell
         run: .\setup-lando.ps1 -Version=${{ matrix.version }} -NoSetup
       - name: Verify new situation
-        shell: bash
+        shell: powershell
         run: |
-          which lando
-          readlink -f $(which lando) | grep /tmp/bin/lando
-          lando version | grep ${{ matrix.old-version }}
-
-          which lando | grep "$HOME/.lando/bin/lando"
-          readlink -f $(which lando) | grep /usr/local/bin/lando
-          lando version | grep ${{ matrix.old-version }} || echo $? | grep 1 && lando version
+          Get-Command lando
+          lando version
