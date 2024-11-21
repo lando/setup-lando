@@ -15,7 +15,7 @@ jobs:
           - old-version: v3.23.1
             version: v3.23.11
           - old-version: v3.23.1
-            version: 3-edge
+            version: v3.23.10
 
     steps:
       - name: Checkout code
@@ -58,5 +58,8 @@ jobs:
       - name: Verify new situation
         shell: powershell
         run: |
-          Get-Command lando
+          Get-Command lando | Select-Object -ExpandProperty Source
           lando version
+
+          Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:USERPROFILE\.lando\bin\lando.exe" -SimpleMatch
+          lando version | Select-String -Pattern "${{ matrix.version }}"
