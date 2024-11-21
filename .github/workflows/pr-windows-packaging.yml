@@ -1,0 +1,39 @@
+name: Windows Installer Packaging
+  
+
+on:
+  push:
+    paths:
+      - 'setup-lando.ps1'
+  pull_request:
+    paths:
+      - 'setup-lando.ps1'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install PS2EXE
+        shell: powershell
+        run: Install-Module -Name ps2exe -Force -Scope CurrentUser
+
+      - name: Convert PowerShell script to EXE
+        shell: powershell
+        run: |
+          $scriptPath = "${{ github.workspace }}/setup-lando.ps1"
+          $outputPath = "${{ github.workspace }}/setup-lando.exe"
+          Invoke-ps2exe -inputFile $scriptPath -outputFile $outputPath -supportOS
+
+      - name: Upload EXE as artifact
+        uses: actions/upload-artifact@v4
+        id: artifact-upload-step
+        with:
+          name: setup-lando-exe
+          path: ${{ github.workspace }}/setup-lando.exe
+      
+      - name: Output artifact URL
+        run:  echo 'Artifact URL is ${{ steps.artifact-upload-step.outputs.artifact-url }}'
