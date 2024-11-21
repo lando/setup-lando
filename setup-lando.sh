@@ -507,11 +507,14 @@ elif [[ "${VERSION}" == "3-dev" ]] || [[ "${VERSION}" == "3-latest" ]]; then
   URL="https://files.lando.dev/core/lando-${OS}-${ARCH}-dev"
   VERSION_DEV=1
 
-# CUSTOM
-else
-  if [[ $VERSION != v* ]]; then
-    VERSION="v${VERSION}"
-  fi
+# CUSTOM VERSION
+elif [[ ! -f "$VERSION" ]] && [[ $VERSION != v* ]]; then
+  VERSION="v${VERSION}"
+
+# PATH VERSION
+elif [[ -f "${VERSION}" ]]; then
+  URL=file://$VERSION
+  VERSION="$($VERSION version)"
 fi
 
 # Set some helper things
@@ -525,19 +528,21 @@ else
   HRV="$VERSION"
 fi
 
-# set url depending on non-dev LMVs
-if [[ $LMV == '3' ]] && [[ -z "${VERSION_DEV-}" ]]; then
-  URL="https://github.com/lando/core/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
-elif [[ $LMV == '4' ]] && [[ -z "${VERSION_DEV-}" ]]; then
-  URL="https://github.com/lando/core-next/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
-fi
+# Do extra URL parsing on non-files if needed
+if [[ $URL != file://* ]]; then
+  if [[ $LMV == '3' ]] && [[ -z "${VERSION_DEV-}" ]]; then
+    URL="https://github.com/lando/core/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
+  elif [[ $LMV == '4' ]] && [[ -z "${VERSION_DEV-}" ]]; then
+    URL="https://github.com/lando/core-next/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
+  fi
 
-# autoslim all v3 urls by default
-# @TODO: --fat flag to stop this?
-if [[ $LMV == '3' ]] && [[ $FAT != '1' ]]; then
-  URL="${URL}-slim"
-  HRV="$VERSION-slim"
-  debug "autoslimin url for lando 3"
+  # autoslim all v3 urls by default
+  # @TODO: restrict this to 3 < 3.24.0 at some point?
+  if [[ $LMV == '3' ]] && [[ $FAT != '1' ]]; then
+    URL="${URL}-slim"
+    HRV="$VERSION-slim"
+    debug "autoslimin url for lando 3"
+  fi
 fi
 
 # debug version resolution
@@ -767,14 +772,21 @@ cd "/usr" || exit 1
 if [[ -z "${NONINTERACTIVE-}" ]]; then
   log "${tty_bold}this script is about to:${tty_reset}"
   log
+
   # sudo prompt
   if needs_sudo; then log "- ${tty_green}prompt${tty_reset} for ${tty_bold}sudo${tty_reset} password"; fi
+
   # download
-  log "- ${tty_magenta}download${tty_reset} lando ${tty_bold}${HRV}${tty_reset} to ${tty_bold}${DEST}${tty_reset}"
+  if [[ $URL != file://* ]]; then log "- ${tty_magenta}download${tty_reset} lando ${tty_bold}${HRV}${tty_reset} to ${tty_bold}${DEST}${tty_reset}"
+  # or move
+  else log "- ${tty_magenta}move${tty_reset} lando ${tty_bold}${ORIGINAL_VERSION}${tty_reset} to ${tty_bold}${DEST}${tty_reset}"; fi
+
   # setup
   if [[ "$SETUP" == "1" ]]; then log "- ${tty_blue}run${tty_reset} ${tty_bold}lando setup${tty_reset}"; fi
+
   # shellenv
   log "- ${tty_blue}run${tty_reset} ${tty_bold}lando shellenv --add${tty_reset}"
+
   # block for user
   wait_for_user
 fi
