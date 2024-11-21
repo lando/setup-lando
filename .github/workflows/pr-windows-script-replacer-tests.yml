@@ -1,0 +1,73 @@
+name: Windows Script Replacer Tests
+
+on:
+  pull_request:
+
+jobs:
+  setup-lando-windows-replacer-test:
+    runs-on: windows-2022
+    env:
+      LANDO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - old-version: v3.23.1
+            version: v3.23.11
+          - old-version: v3.23.1
+            version: 3-edge
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Add tempbin to PATH
+        shell: powershell
+        run: Write-Output "PATH=$HOME/.lando/bin;$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Get older Lando version ${{ matrix.old-version }}
+        shell: powershell
+        run: |
+          $LandoBin = Join-Path -Path $env:HOME -ChildPath '.lando/bin'
+          New-Item -ItemType Directory -Force -Path /tmp/bin | Out-Null
+          New-Item -ItemType Directory -Force -Path $LandoBin | Out-Null
+
+          $LandoUrl = "https://github.com/lando/core/releases/download/${{ matrix.old-version }}/lando-win-x64-${{ matrix.old-version }}-slim.exe"
+          Invoke-WebRequest -Uri $LandoUrl -OutFile "/tmp/bin/lando.exe" -UseBasicParsing
+
+          $wrapper = @"
+          @echo off
+          setlocal enableextensions
+          set LANDO_ENTRYPOINT_NAME=lando
+          set LANDO_WRAPPER_SCRIPT=1
+          "/tmp/bin/lando.exe" %*
+          "@
+
+          Set-Content -Path "$env:HOME/.lando/bin/lando.cmd" -Value $wrapper
+
+          lando plugin-add @lando/core@${{ matrix.old-version }}
+          lando shellenv --add
+      - name: Verify older situation
+        shell: bash
+        run: |
+          $LandoPath = Get-Command lando | Select-Object -ExpandProperty Source
+          $ResolvedPath = Resolve-Path -Path (Get-Command lando | Select-Object -ExpandProperty Source)
+          Write-Output "$LandoPath"
+          Write-Output "$ResolvedPath"
+          lando version
+
+          Get-Command lando | Select-Object -ExpandProperty Source
+          Resolve-Path -Path (Get-Command lando | Select-Object -ExpandProperty Source)
+      - name: Replace Lando with setup-script
+        shell: powershell
+        run: .\setup-lando.ps1 -Version=${{ matrix.version }} -NoSetup
+      - name: Verify new situation
+        shell: bash
+        run: |
+          which lando
+          readlink -f $(which lando) | grep /tmp/bin/lando
+          lando version | grep ${{ matrix.old-version }}
+
+          which lando | grep "$HOME/.lando/bin/lando"
+          readlink -f $(which lando) | grep /usr/local/bin/lando
+          lando version | grep ${{ matrix.old-version }} || echo $? | grep 1 && lando version
