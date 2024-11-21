@@ -50,16 +50,13 @@ jobs:
       - name: Verify older situation
         shell: powershell
         run: |
-          Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:USERPROFILE\.lando\bin\lando.cmd" -SimpleMatch
-          lando version | Select-String -Pattern "${{ matrix.old-version }}" -SimpleMatch
+          Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:USERPROFILE\.lando\bin\lando.cmd" -SimpleMatch -ErrorAction Stop
+          lando version | Select-String -Pattern "${{ matrix.old-version }}" -SimpleMatch -ErrorAction Stop
       - name: Replace Lando with setup-script
         shell: powershell
         run: .\setup-lando.ps1 -Version=${{ matrix.version }} -NoSetup
       - name: Verify new situation
         shell: powershell
         run: |
-          Get-Command lando | Select-Object -ExpandProperty Source
-          lando version
-
-          Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:USERPROFILE\.lando\bin\lando.exe" -SimpleMatch
-          lando version | Select-String -Pattern "${{ matrix.version }}"
+          Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:USERPROFILE\.lando\bin\lando.exe" -SimpleMatch -ErrorAction Stop
+          lando version | Select-String -Pattern "${{ matrix.version }}" -SimpleMatch -ErrorAction Stop
