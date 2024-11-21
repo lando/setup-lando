@@ -42,12 +42,10 @@ jobs:
             "https://github.com/lando/core/releases/download/${{ matrix.old-version }}/lando-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.old-version }}-slim"
 
           chmod +x /tmp/bin/lando
+          ln -sf "/tmp/bin/lando" "$HOME/.lando/bin/lando"
 
           lando plugin-add @lando/core@${{ matrix.old-version }}
           lando shellenv --add
-
-          ln -sf "/tmp/bin/lando" "$HOME/.lando/bin/lando"
-
       - name: Verify older situation
         shell: bash
         run: |
