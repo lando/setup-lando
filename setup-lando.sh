@@ -802,15 +802,11 @@ fi
 
 # LANDO
 LANDO="${DEST}/lando"
-LANDO_BINDIR="$HOME/.lando/bin"
-LANDO_PLUGINSDIR="$HOME/.lando/plugins"
 LANDO_TMPFILE="${LANDO_TMPDIR}/${RANDOM}"
 
 # Create directories if we need to
 if [[ ! -d "$DEST" ]]; then auto_exec mkdir -p "$DEST"; fi
 if [[ ! -d "$LANDO_TMPDIR" ]]; then auto_exec mkdir -p "$LANDO_TMPDIR"; fi
-if [[ ! -d "$LANDO_BINDIR" ]]; then execute mkdir -p "$LANDO_BINDIR"; fi
-if [[ ! -d "$LANDO_PLUGINSDIR" ]]; then execute mkdir -p "$LANDO_PLUGINSDIR"; fi
 
 # download lando
 log "${tty_magenta}downloading${tty_reset} ${tty_bold}${URL}${tty_reset} to ${tty_bold}${LANDO}${tty_reset}"
@@ -829,12 +825,17 @@ execute "${LANDO_TMPFILE}" version >/dev/null
 # NOTE: we use mv here instead of cp because of https://developer.apple.com/forums/thread/130313
 auto_exec mv -f "${LANDO_TMPFILE}" "${LANDO}"
 
-# force symlink landobin to ensure PATH primacy as best we can
-ln -sf "${LANDO}" "$LANDO_BINDIR/lando"
-
-# if lando 3 then --clear
+# if lando 3 then we need to do some other cleanup things
+# @TODO: is there an equivalent on lando 4?
 if [[ $LMV == '3' ]]; then
-  execute "${LANDO}" --clear >/dev/null
+  # ensure dirz
+  execute mkdir -p "$HOME/.lando/bin"
+  # force symlink landobin to ensure PATH primacy as best we can
+  execute ln -sf "${LANDO}" "$HOME/.lando/bin/lando"
+  # remove preexisting lando core so this one can also assert primacy
+  execute rm -rf "$HOME/.lando/plugins/@lando/core"
+  # clean
+  execute "${LANDO}" --clear >/dev/null;
 fi
 
 # test via log
