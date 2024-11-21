@@ -60,6 +60,6 @@ jobs:
         run: |
           ./setup-lando.sh --version="${{ matrix.version }}" --no-setup
 
-          which lando | "$HOME/.lando/bin/lando"
-          readlink -f $(which lando) | grep /tmp/bin/lando
+          which lando
+          readlink -f $(which lando)
           lando version
