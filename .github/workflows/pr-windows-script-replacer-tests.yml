@@ -48,7 +48,7 @@ jobs:
           lando plugin-add @lando/core@${{ matrix.old-version }}
           lando shellenv --add
       - name: Verify older situation
-        shell: bash
+        shell: powershell
         run: |
           $LandoPath = Get-Command lando | Select-Object -ExpandProperty Source
           $ResolvedPath = Resolve-Path -Path (Get-Command lando | Select-Object -ExpandProperty Source)
