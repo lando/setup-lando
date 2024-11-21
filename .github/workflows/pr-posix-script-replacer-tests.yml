@@ -5,40 +5,62 @@ on:
 
 jobs:
   setup-lando-posix-replacer-test:
-    runs-on: ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
     env:
       LANDO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: macos-13
-            old-version: https://github.com/lando/legacy-cli/releases/download/v3.21.0-beta.2/lando-macos-x64-v3.21.0-beta.2-slim
-          - os: macos-14
-            old-version: https://github.com/lando/legacy-cli/releases/download/v3.21.0-beta.2/lando-macos-arm64-v3.21.0-beta.2-slim
-          - os: ubuntu-24.04
-            old-version: https://github.com/lando/legacy-cli/releases/download/v3.21.0-beta.2/lando-linux-x64-v3.21.0-beta.2-slim
+          - old-version: v3.23.1
+            os: mac
+            arch: arm64
+            runner: macos-14
+            version: v3.23.11
+          - old-version: v3.23.1
+            os: linux
+            arch: x64
+            runner: ubuntu-24.04
+            version: v3.23.11
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Add tempbin to PATH
+        run: echo "PATH=/tmp/bin:$PATH" >> $GITHUB_ENV
       - name: Get older Lando version ${{ matrix.old-version }}
         shell: bash
         run: |
-          mkdir -p /usr/local/bin
+          env
+          mkdir -p /tmp/bin ~/.lando/bin
           curl \
             --fail \
             --location \
             --progress-bar \
-            --output "/usr/local/bin/lando" \
-            "${{ matrix.old-version }}"
-          chmod +x /usr/local/bin/lando
-          which lando | grep /usr/local/bin/lando
-          lando version --all
+            --output "/tmp/bin/lando" \
+            "https://github.com/lando/core/releases/download/${{ matrix.old-version }}/lando-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.old-version }}-slim"
+
+          chmod +x /tmp/bin/lando
+
+          lando plugin-add @lando/core@${{ matrix.old-version }}
+          lando shellenv --add
+
+          ln -sf "/tmp/bin/lando" "$HOME/.lando/bin/lando"
+
+      - name: Verify older situation
+        shell: bash
+        run: |
+          which lando | "$HOME/.lando/bin/lando"
+          readlink -f $(which lando) | grep /tmp/bin/lando
+
+          lando version | grep ${{ matrix.old-version }}
       - name: Replace Lando with setup-script
         shell: bash
         run: |
-          ./setup-lando.sh --debug --no-setup
-          lando version --all
+          ./setup-lando.sh --version="${{ matrix.version }}" --no-setup
 
+          which lando | "$HOME/.lando/bin/lando"
+          readlink -f $(which lando) | grep /tmp/bin/lando
+          lando version
