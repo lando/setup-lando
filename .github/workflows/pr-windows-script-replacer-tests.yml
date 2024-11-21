@@ -50,13 +50,12 @@ jobs:
       - name: Verify older situation
         shell: powershell
         run: |
-          $ErrorActionPreference = "Stop"
-          try {
-            Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:USERPROFILE\.lando\bin\lando.cmd" -SimpleMatch
-            lando version | Select-String -Pattern "${{ matrix.old-version }}" -SimpleMatch
-          } catch {
-            Write-Error "Error: Pattern not found."
-            exit 1
+          if (-not (Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:USERPROFILE\.lando\bin\lando.cmd" -SimpleMatch)) {
+            throw "Error: lando is not where we expect it!"
+          }
+
+          if (-not (lando version | Select-String -Pattern "${{ matrix.old-version }}" -SimpleMatch)) {
+            throw "Error: lando is not the version we expect!"
           }
 
       - name: Replace Lando with setup-script
@@ -65,11 +64,10 @@ jobs:
       - name: Verify new situation
         shell: powershell
         run: |
-          $ErrorActionPreference = "Stop"
-          try {
-            Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:USERPROFILE\.lando\bin\lando.exe" -SimpleMatch -ErrorAction Stop
-            lando version | Select-String -Pattern "${{ matrix.version }}" -SimpleMatch -ErrorAction Stop
-          } catch {
-            Write-Error "Error: Pattern not found."
-            exit 1
+          if (-not (Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:USERPROFILE\.lando\bin\lando.exe" -SimpleMatch)) {
+            throw "Error: lando is not where we expect it!"
+          }
+
+          if (-not (lando version | Select-String -Pattern "${{ matrix.version }}" -SimpleMatch)) {
+            throw "Error: lando is not the version we expect!"
           }
