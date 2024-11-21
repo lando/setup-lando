@@ -528,21 +528,21 @@ else
   HRV="$VERSION"
 fi
 
-# Do extra URL parsing on non-files if needed
-if [[ $URL != file://* ]]; then
+# if URL is still not set at this point we assume its a github version download
+if [[ -z "${URL-}" ]]; then
   if [[ $LMV == '3' ]] && [[ -z "${VERSION_DEV-}" ]]; then
     URL="https://github.com/lando/core/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
   elif [[ $LMV == '4' ]] && [[ -z "${VERSION_DEV-}" ]]; then
     URL="https://github.com/lando/core-next/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
   fi
+fi
 
-  # autoslim all v3 urls by default
-  # @TODO: restrict this to 3 < 3.24.0 at some point?
-  if [[ $LMV == '3' ]] && [[ $FAT != '1' ]]; then
-    URL="${URL}-slim"
-    HRV="$VERSION-slim"
-    debug "autoslimin url for lando 3"
-  fi
+# autoslim all v3 urls by default
+# @TODO: restrict this to 3 < 3.24.0 at some point?
+if [[ $URL != file://* ]] && [[ $LMV == '3' ]] && [[ $FAT != '1' ]]; then
+  URL="${URL}-slim"
+  HRV="$VERSION-slim"
+  debug "autoslimin url for lando 3"
 fi
 
 # debug version resolution

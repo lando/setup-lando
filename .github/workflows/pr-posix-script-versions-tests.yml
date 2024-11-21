@@ -47,6 +47,8 @@ jobs:
       - name: Setup Lando version ${{ matrix.success-version }}
         shell: bash
         run: |
+          stat /home/runner/work/setup-lando/setup-lando/bin/lando
+
           if [[ "${{ matrix.success-version }}" == "set-with-envvar" ]]; then
             LANDO_VERSION=v3.22.0 ./setup-lando.sh --no-setup ${{ matrix.fat }}
           else
