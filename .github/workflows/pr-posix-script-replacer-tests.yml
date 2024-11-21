@@ -22,6 +22,11 @@ jobs:
             arch: x64
             runner: ubuntu-24.04
             version: v3.23.11
+          - old-version: v3.23.1
+            os: linux
+            arch: x64
+            runner: ubuntu-24.04
+            version: 3-edge
 
     steps:
       - name: Checkout code
@@ -56,8 +61,6 @@ jobs:
         shell: bash
         run: |
           ./setup-lando.sh --version="${{ matrix.version }}" --no-setup
-
           which lando | grep "$HOME/.lando/bin/lando"
           readlink -f $(which lando) | grep /usr/local/bin/lando
-          lando version
           lando version | grep ${{ matrix.version }}
