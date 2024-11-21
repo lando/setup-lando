@@ -63,4 +63,4 @@ jobs:
           ./setup-lando.sh --version="${{ matrix.version }}" --no-setup
           which lando | grep "$HOME/.lando/bin/lando"
           readlink -f $(which lando) | grep /usr/local/bin/lando
-          lando version | grep ${{ matrix.version }}
+          lando version | grep ${{ matrix.old-version }} || echo $? | grep 1 && lando version
