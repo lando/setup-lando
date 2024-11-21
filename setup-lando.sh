@@ -513,7 +513,11 @@ elif [[ ! -f "$VERSION" ]] && [[ $VERSION != v* ]]; then
 
 # PATH VERSION
 elif [[ -f "${VERSION}" ]]; then
-  URL=file://$VERSION
+  if [[ "${VERSION}" == /* ]]; then
+    URL=file://$VERSION
+  else
+    URL=file://$(pwd)/$VERSION
+  fi
   VERSION="$($VERSION version)"
 fi
 
@@ -537,6 +541,13 @@ if [[ -z "${URL-}" ]]; then
   fi
 fi
 
+# abort if we have no URL at this point
+if [[ -z "${URL-}" ]]; then
+  abort "could not resolve '${ORIGINAL_VERSION}' to a file or URL!"
+else
+  debug "resolved v${LMV} version '${ORIGINAL_VERSION}' to ${VERSION} (${URL})"
+fi
+
 # autoslim all v3 urls by default
 # @TODO: restrict this to 3 < 3.24.0 at some point?
 if [[ $URL != file://* ]] && [[ $LMV == '3' ]] && [[ $FAT != '1' ]]; then
@@ -544,9 +555,6 @@ if [[ $URL != file://* ]] && [[ $LMV == '3' ]] && [[ $FAT != '1' ]]; then
   HRV="$VERSION-slim"
   debug "autoslimin url for lando 3"
 fi
-
-# debug version resolution
-debug "resolved v${LMV} version '${ORIGINAL_VERSION}' to ${VERSION} (${URL})"
 
 # force setup to 0 if lando 4
 if [[ $SETUP == '1' ]] && [[ $LMV == '4' ]]; then

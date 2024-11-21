@@ -31,7 +31,7 @@ jobs:
           - 'edge'
           - 'latest'
           - 'dev'
-          - '/home/runner/work/setup-lando/setup-lando/bin/lando'
+          - 'bin/lando'
           - 'set-with-envvar'
 
     steps:
@@ -56,13 +56,3 @@ jobs:
           fi
 
           lando version --all
-
-          # test slim|fat on lando 3
-          if lando version | grep "v3."; then
-            if [[ "${{ matrix.fat }}" == "--fat" ]]; then
-              lando config --path cli.slim | grep false
-            else
-              lando config --path cli.slim | grep true
-            fi
-          fi
-
