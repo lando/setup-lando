@@ -59,4 +59,5 @@ jobs:
 
           which lando | grep "$HOME/.lando/bin/lando"
           readlink -f $(which lando) | grep /usr/local/bin/lando
+          lando version
           lando version | grep ${{ matrix.version }}
