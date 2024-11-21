@@ -24,28 +24,26 @@ jobs:
           fetch-depth: 0
       - name: Add tempbin to PATH
         shell: powershell
-        run: Write-Output "PATH=$HOME/.lando/bin;$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+        run: Write-Output "PATH=$env:USERPROFILE\.lando\bin;$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Get older Lando version ${{ matrix.old-version }}
         shell: powershell
         run: |
-          Get-ChildItem Env: | ForEach-Object { "$($_.Name)=$($_.Value)" }
-
-          $LandoBin = Join-Path -Path $env:HOME -ChildPath '.lando/bin'
-          New-Item -ItemType Directory -Force -Path /tmp/bin | Out-Null
+          $LandoBin = Join-Path -Path "$env:USERPROFILE" -ChildPath '.lando\bin'
+          New-Item -ItemType Directory -Force -Path "$env:RUNNER_TEMP\bin" | Out-Null
           New-Item -ItemType Directory -Force -Path $LandoBin | Out-Null
 
           $LandoUrl = "https://github.com/lando/core/releases/download/${{ matrix.old-version }}/lando-win-x64-${{ matrix.old-version }}-slim.exe"
-          Invoke-WebRequest -Uri $LandoUrl -OutFile "/tmp/bin/lando.exe" -UseBasicParsing
+          Invoke-WebRequest -Uri $LandoUrl -OutFile "$env:RUNNER_TEMP\bin\lando.exe" -UseBasicParsing
 
           $wrapper = @"
           @echo off
           setlocal enableextensions
           set LANDO_ENTRYPOINT_NAME=lando
           set LANDO_WRAPPER_SCRIPT=1
-          "/tmp/bin/lando.exe" %*
+          "%RUNNER_TEMP%\bin\lando.exe" %*
           "@
 
-          Set-Content -Path "$env:HOME/.lando/bin/lando.cmd" -Value $wrapper
+          Set-Content -Path "$env:USERPROFILE\.lando\bin\lando.cmd" -Value $wrapper
 
           lando plugin-add @lando/core@${{ matrix.old-version }}
           lando shellenv --add

@@ -38,16 +38,16 @@ jobs:
       - name: Get older Lando version ${{ matrix.old-version }}
         shell: bash
         run: |
-          mkdir -p /tmp/bin ~/.lando/bin
+          mkdir -p "$RUNNER_TEMP/bin" ~/.lando/bin
           curl \
             --fail \
             --location \
             --progress-bar \
-            --output "/tmp/bin/lando" \
+            --output "$RUNNER_TEMP/bin/lando" \
             "https://github.com/lando/core/releases/download/${{ matrix.old-version }}/lando-${{ matrix.os }}-${{ matrix.arch }}-${{ matrix.old-version }}-slim"
 
-          chmod +x /tmp/bin/lando
-          ln -sf "/tmp/bin/lando" "$HOME/.lando/bin/lando"
+          chmod +x "$RUNNER_TEMP/bin/lando"
+          ln -sf "$RUNNER_TEMP/bin/lando" "$HOME/.lando/bin/lando"
 
           lando plugin-add @lando/core@${{ matrix.old-version }}
           lando shellenv --add
@@ -55,7 +55,7 @@ jobs:
         shell: bash
         run: |
           which lando | grep "$HOME/.lando/bin/lando"
-          readlink -f $(which lando) | grep /tmp/bin/lando
+          readlink -f $(which lando) | grep "$RUNNER_TEMP/bin/lando"
           lando version | grep ${{ matrix.old-version }}
       - name: Replace Lando with setup-script
         shell: bash
