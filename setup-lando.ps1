@@ -66,6 +66,9 @@ Set-StrictMode -Version 1
 # We'll still need to check exit codes on any exe we run.
 $ErrorActionPreference = "Stop"
 
+# Allow github actions to set $Debug
+if ($env:RUNNER_DEBUG -ne $null -and $env:RUNNER_DEBUG -ne "") {$Debug = $true}
+
 # Normalize debug preference
 $DebugPreference = If ($Debug) { "Continue" } Else { $DebugPreference }
 if ($DebugPreference -eq "Inquire" -or $DebugPreference -eq "Continue") {
@@ -73,9 +76,6 @@ if ($DebugPreference -eq "Inquire" -or $DebugPreference -eq "Continue") {
 }
 $Host.PrivateData.DebugForegroundColor = "Gray"
 $Host.PrivateData.DebugBackgroundColor = $Host.UI.RawUI.BackgroundColor
-
-# Allow github actions to set $Debug
-if ($env:RUNNER_DEBUG) {$Debug = $true}
 
 # Encoding must be Unicode to support parsing wsl.exe output
 [Console]::OutputEncoding = [System.Text.Encoding]::Unicode
