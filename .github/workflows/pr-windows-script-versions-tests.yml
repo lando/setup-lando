@@ -44,8 +44,7 @@ jobs:
       - name: Setup Lando version ${{ matrix.version }}
         shell: powershell
         run: |
-          # set correct encoding so Select-String works reliably
-          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+          [Console]::OutputEncoding
 
           # skip command
           if ("${{ matrix.version }}" -eq "set-with-envvar") {
@@ -55,7 +54,15 @@ jobs:
             .\setup-lando.ps1 -Version ${{ matrix.version }} -NoSetup
           }
 
+          [Console]::OutputEncoding
+
+          # set correct encoding so Select-String works reliably
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
+
           lando version
+          $output = lando version
+          echo "$output"
           lando version | Select-String -Pattern "${{ matrix.check }}"
           lando version | Select-String -Pattern '${{ matrix.check }}'
           lando version | Select-String -Pattern "v3.*.*"
