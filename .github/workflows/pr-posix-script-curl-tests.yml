@@ -36,5 +36,5 @@ jobs:
         run: /bin/bash -c "$(curl -fsSL file://${{ github.workspace }}/dist/setup-lando.sh)"
       - name: Test
         shell: bash
-        run: eval "$($HOME/.lando/bin/lando shellenv)" && lando version --all
+        run: lando version --all
 

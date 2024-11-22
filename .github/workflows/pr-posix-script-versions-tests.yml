@@ -109,4 +109,4 @@ jobs:
         run: LANDO_VERSION=${{ matrix.version }} ./setup-lando.sh --no-setup
       - name: Test
         shell: bash
-        run: eval "$($HOME/.lando/bin/lando shellenv)" && lando version | grep -E '${{ matrix.check }}'
+        run: lando version | grep -E '${{ matrix.check }}'
