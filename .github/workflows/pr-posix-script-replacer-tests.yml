@@ -64,5 +64,5 @@ jobs:
         shell: bash
         run: |
           which lando | grep "$HOME/.lando/bin/lando"
-          readlink -f $(which lando) | grep -E "$HOME/.data/lando/*/lando"
+          readlink -f $(which lando) | grep -E "^$HOME/\.data/lando/[^/]+/lando$"
           lando version | grep ${{ matrix.old-version }} || echo $? | grep 1 && lando version
