@@ -865,9 +865,9 @@ execute "${LANDO}" shellenv --add "${LANDO_DEBUG-}" > /dev/null
 # sucess message here
 log "${tty_green}success!${tty_reset} ${tty_magenta}lando${tty_reset} is now installed!"
 
-# if we cannot invoke lando then print shellenv message
+# if we cannot invoke the correct lando then print shellenv message
 if \
-  ! execute lando version >/dev/null \
+  ! find_tool lando \
   || [[ "$(readlink -f "$(which lando)")" != "$LANDO" && "$(readlink -f "$(which lando)")" != "$HIDDEN_LANDO" ]]; then
   log
   log "${tty_magenta}Start a new terminal session${tty_reset} or run ${tty_magenta}eval \"\$(${LANDO} shellenv)\"${tty_reset} to use lando"
