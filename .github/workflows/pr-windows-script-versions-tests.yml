@@ -47,12 +47,16 @@ jobs:
           # skip command
           if ("${{ matrix.version }}" -eq "set-with-envvar") {
             $env:LANDO_VERSION = "v3.22.0"
-            .\setup-lando.ps1 -NoSetup -Debug
+            .\setup-lando.ps1 -NoSetup
           } else {
-            .\setup-lando.ps1 -Version ${{ matrix.version }} -NoSetup -Debug
+            .\setup-lando.ps1 -Version ${{ matrix.version }} -NoSetup
           }
 
           lando version
+          lando version | Select-String -Pattern "${{ matrix.check }}"
+          lando version | Select-String -Pattern '${{ matrix.check }}'
+          lando version | Select-String -Pattern "${{ matrix.check }}" -SimpleMatch
+          lando version | Select-String -Pattern '${{ matrix.check }}' -SimpleMatch
 
           if (-not (lando version | Select-String -Pattern "${{ matrix.check }}")) {
             $reported = lando version

@@ -230,11 +230,11 @@ function Resolve-VersionAlias {
             $downloadUrl = "${baseUrl3}${VersionLabel}/lando-win-${arch}-${VersionLabel}${variant}.exe"
         }
         "^4-dev$" {
-            $downloadUrl = "https://files.lando.dev/core-next/lando-win-${arch}-${Version}.exe"
+            $downloadUrl = "https://files.lando.dev/core-next/lando-win-${arch}-dev.exe"
         }
         "^3-dev$" {
             $variant = if ($Version -match "^3-" -and !$Fat) { "-slim" } else { "" }
-            $downloadUrl = "https://files.lando.dev/core/lando-win-${arch}-${Version}${variant}.exe"
+            $downloadUrl = "https://files.lando.dev/core/lando-win-${arch}-dev${variant}.exe"
         }
         Default {
             Write-Debug "Version '$Version' is a semantic version"
