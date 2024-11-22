@@ -228,10 +228,10 @@ function Resolve-VersionAlias {
             $variant = if ($Version -match "^3-" -and !$Fat) { "-slim" } else { "" }
             $downloadUrl = "${baseUrl3}${VersionLabel}/lando-win-${arch}-${VersionLabel}${variant}.exe"
         }
-        "^4-dev$" {
+        "^4-(dev|latest)$" {
             $downloadUrl = "https://files.lando.dev/core-next/lando-win-${arch}-dev.exe"
         }
-        "^3-dev$" {
+        "^3-(dev|latest)$" {
             $variant = if ($Version -match "^3-" -and !$Fat) { "-slim" } else { "" }
             $downloadUrl = "https://files.lando.dev/core/lando-win-${arch}-dev${variant}.exe"
         }
