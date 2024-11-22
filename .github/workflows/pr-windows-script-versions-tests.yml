@@ -55,8 +55,9 @@ jobs:
           lando version
           lando version | Select-String -Pattern "${{ matrix.check }}"
           lando version | Select-String -Pattern '${{ matrix.check }}'
-          lando version | Select-String -Pattern "${{ matrix.check }}" -SimpleMatch
-          lando version | Select-String -Pattern '${{ matrix.check }}' -SimpleMatch
+          lando version | Select-String -Pattern "v3.*.*"
+          echo "v3.0.0" | Select-String -Pattern "v3.*.*"
+          lando version | Select-String -Pattern "v3" -SimpleMatch
 
           if (-not (lando version | Select-String -Pattern "${{ matrix.check }}")) {
             $reported = lando version

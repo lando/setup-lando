@@ -3,6 +3,7 @@
 * Added `path` based installation to POSIX `setup-lando.sh` script
 * Added GitHub Actions `RUNNER_DEBUG` support to PowerShell script
 * Fixed bug preventing POSIX/Windows script from replacing existing `lando` installations
+* Fixed bug preventing Windows script from downloading the correct `dev` alias
 
 ## v3.4.5 - [November 10, 2024](https://github.com/lando/setup-lando/releases/tag/v3.4.5)
 
