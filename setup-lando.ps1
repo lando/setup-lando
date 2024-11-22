@@ -74,6 +74,9 @@ if ($DebugPreference -eq "Inquire" -or $DebugPreference -eq "Continue") {
 $Host.PrivateData.DebugForegroundColor = "Gray"
 $Host.PrivateData.DebugBackgroundColor = $Host.UI.RawUI.BackgroundColor
 
+# Allow github actions to set $Debug
+if ($env:RUNNER_DEBUG) {$Debug = $true}
+
 # Encoding must be Unicode to support parsing wsl.exe output
 [Console]::OutputEncoding = [System.Text.Encoding]::Unicode
 
