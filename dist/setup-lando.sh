@@ -1,4 +1,4 @@
-SCRIPT_VERSION="v3.4.5"
+SCRIPT_VERSION="v3.5.0"
 #!/bin/bash
 set -u
 # Lando POSIX setup script.
@@ -162,7 +162,7 @@ get_installer_os
 # see https://github.blog/changelog/2022-05-24-github-actions-re-run-jobs-with-debug-logging/
 
 # @TODO: no-sudo option
-# @TODO: dest
+# @TODO: dest based on lmv
 ARCH="${LANDO_INSTALLER_ARCH:-"$INSTALLER_ARCH"}"
 DEBUG="${LANDO_INSTALLER_DEBUG:-${RUNNER_DEBUG:-}}"
 DEST="${LANDO_INSTALLER_DEST:-/usr/local/bin}"
@@ -508,11 +508,18 @@ elif [[ "${VERSION}" == "3-dev" ]] || [[ "${VERSION}" == "3-latest" ]]; then
   URL="https://files.lando.dev/core/lando-${OS}-${ARCH}-dev"
   VERSION_DEV=1
 
-# CUSTOM
-else
-  if [[ $VERSION != v* ]]; then
-    VERSION="v${VERSION}"
+# CUSTOM VERSION
+elif [[ ! -f "$VERSION" ]] && [[ $VERSION != v* ]]; then
+  VERSION="v${VERSION}"
+
+# PATH VERSION
+elif [[ -f "${VERSION}" ]]; then
+  if [[ "${VERSION}" == /* ]]; then
+    URL=file://$VERSION
+  else
+    URL=file://$(pwd)/$VERSION
   fi
+  VERSION="$($VERSION version)"
 fi
 
 # Set some helper things
@@ -526,23 +533,29 @@ else
   HRV="$VERSION"
 fi
 
-# set url depending on non-dev LMVs
-if [[ $LMV == '3' ]] && [[ -z "${VERSION_DEV-}" ]]; then
-  URL="https://github.com/lando/core/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
-elif [[ $LMV == '4' ]] && [[ -z "${VERSION_DEV-}" ]]; then
-  URL="https://github.com/lando/core-next/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
+# if URL is still not set at this point we assume its a github version download
+if [[ -z "${URL-}" ]]; then
+  if [[ $LMV == '3' ]] && [[ -z "${VERSION_DEV-}" ]]; then
+    URL="https://github.com/lando/core/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
+  elif [[ $LMV == '4' ]] && [[ -z "${VERSION_DEV-}" ]]; then
+    URL="https://github.com/lando/core-next/releases/download/${VERSION}/lando-${OS}-${ARCH}-${VERSION}"
+  fi
+fi
+
+# abort if we have no URL at this point
+if [[ -z "${URL-}" ]]; then
+  abort "could not resolve '${ORIGINAL_VERSION}' to a file or URL!"
+else
+  debug "resolved v${LMV} version '${ORIGINAL_VERSION}' to ${VERSION} (${URL})"
 fi
 
 # autoslim all v3 urls by default
-# @TODO: --fat flag to stop this?
-if [[ $LMV == '3' ]] && [[ $FAT != '1' ]]; then
+# @TODO: restrict this to 3 < 3.24.0 at some point?
+if [[ $URL != file://* ]] && [[ $LMV == '3' ]] && [[ $FAT != '1' ]]; then
   URL="${URL}-slim"
   HRV="$VERSION-slim"
   debug "autoslimin url for lando 3"
 fi
-
-# debug version resolution
-debug "resolved v${LMV} version '${ORIGINAL_VERSION}' to ${VERSION} (${URL})"
 
 # force setup to 0 if lando 4
 if [[ $SETUP == '1' ]] && [[ $LMV == '4' ]]; then
@@ -771,7 +784,9 @@ if [[ -z "${NONINTERACTIVE-}" ]]; then
   # sudo prompt
   if needs_sudo; then log "- ${tty_green}prompt${tty_reset} for ${tty_bold}sudo${tty_reset} password"; fi
   # download
-  log "- ${tty_magenta}download${tty_reset} lando ${tty_bold}${HRV}${tty_reset} to ${tty_bold}${DEST}${tty_reset}"
+  if [[ $URL != file://* ]]; then log "- ${tty_magenta}download${tty_reset} lando ${tty_bold}${HRV}${tty_reset} to ${tty_bold}${DEST}${tty_reset}"
+  # or move
+  else log "- ${tty_magenta}move${tty_reset} lando ${tty_bold}${ORIGINAL_VERSION}${tty_reset} to ${tty_bold}${DEST}${tty_reset}"; fi
   # setup
   if [[ "$SETUP" == "1" ]]; then log "- ${tty_blue}run${tty_reset} ${tty_bold}lando setup${tty_reset}"; fi
   # shellenv
@@ -786,13 +801,13 @@ if needs_sudo; then
   execute_sudo true
 fi
 
-# Create directories if we need to
-if [[ ! -d "$DEST" ]]; then auto_exec mkdir -p "$DEST"; fi
-if [[ ! -d "$LANDO_TMPDIR" ]]; then auto_exec mkdir -p "$LANDO_TMPDIR"; fi
-
 # LANDO
 LANDO="${DEST}/lando"
 LANDO_TMPFILE="${LANDO_TMPDIR}/${RANDOM}"
+
+# Create directories if we need to
+if [[ ! -d "$DEST" ]]; then auto_exec mkdir -p "$DEST"; fi
+if [[ ! -d "$LANDO_TMPDIR" ]]; then auto_exec mkdir -p "$LANDO_TMPDIR"; fi
 
 # download lando
 log "${tty_magenta}downloading${tty_reset} ${tty_bold}${URL}${tty_reset} to ${tty_bold}${LANDO}${tty_reset}"
@@ -811,13 +826,21 @@ execute "${LANDO_TMPFILE}" version >/dev/null
 # NOTE: we use mv here instead of cp because of https://developer.apple.com/forums/thread/130313
 auto_exec mv -f "${LANDO_TMPFILE}" "${LANDO}"
 
-# if lando 3 then --clear
+# if lando 3 then we need to do some other cleanup things
+# @TODO: is there an equivalent on lando 4?
 if [[ $LMV == '3' ]]; then
-  execute "${LANDO}" --clear >/dev/null
+  # ensure dirz
+  execute mkdir -p "$HOME/.lando/bin"
+  # force symlink landobin to ensure PATH primacy as best we can
+  execute ln -sf "${LANDO}" "$HOME/.lando/bin/lando"
+  # remove preexisting lando core so this one can also assert primacy
+  execute rm -rf "$HOME/.lando/plugins/@lando/core"
+  # clean
+  execute "${LANDO}" --clear >/dev/null;
 fi
 
 # test via log
-log "${tty_green}downloaded${tty_reset} @lando/cli ${tty_bold}$("${LANDO}" version --component @lando/cli)${tty_reset} to ${tty_bold}${LANDO}${tty_reset}"
+log "${tty_green}downloaded${tty_reset} lando ${tty_bold}$("${LANDO}" version --component @lando/cli)${tty_reset} to ${tty_bold}${LANDO}${tty_reset}"
 
 # run correct setup flavor if needed
 if [[ "$SETUP" == "1" ]]; then

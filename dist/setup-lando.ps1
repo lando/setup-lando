@@ -51,7 +51,7 @@ if ($env:LANDO_VERSION -ne $null -and $env:LANDO_VERSION -ne "" -and $Version -e
     $Version = $env:LANDO_VERSION
 }
 
-$SCRIPT_VERSION = "v3.4.5"
+$SCRIPT_VERSION = "v3.5.0"
 $LANDO_DEFAULT_MV = "3"
 $LANDO_SETUP_PS1_URL = "https://get.lando.dev/setup-lando.ps1"
 $LANDO_SETUP_SH_URL = "https://get.lando.dev/setup-lando.sh"
@@ -66,6 +66,9 @@ Set-StrictMode -Version 1
 # We'll still need to check exit codes on any exe we run.
 $ErrorActionPreference = "Stop"
 
+# Allow github actions to set $Debug
+if ($env:RUNNER_DEBUG -ne $null -and $env:RUNNER_DEBUG -ne "") {$Debug = $true}
+
 # Normalize debug preference
 $DebugPreference = If ($Debug) { "Continue" } Else { $DebugPreference }
 if ($DebugPreference -eq "Inquire" -or $DebugPreference -eq "Continue") {
@@ -73,9 +76,6 @@ if ($DebugPreference -eq "Inquire" -or $DebugPreference -eq "Continue") {
 }
 $Host.PrivateData.DebugForegroundColor = "Gray"
 $Host.PrivateData.DebugBackgroundColor = $Host.UI.RawUI.BackgroundColor
-
-# Encoding must be Unicode to support parsing wsl.exe output
-[Console]::OutputEncoding = [System.Text.Encoding]::Unicode
 
 Write-Host "Lando Windows Installer" -ForegroundColor Cyan
 
@@ -101,6 +101,7 @@ function Confirm-Environment {
     # Check for WSL
     $wslVersion = $null
     if (Test-Path "$env:WINDIR\system32\wsl.exe") {
+        $env:WSL_UTF8 = "1"
         $wslVersion = & wsl.exe --version | Out-String
         # Check for "WSL version" string on the first line
         if ($wslVersion -notmatch "WSL version") {
@@ -111,6 +112,7 @@ function Confirm-Environment {
             $wslList = & wsl.exe --list --verbose | Out-String
             Write-Debug "WSL Instances:`n$wslList"
         }
+        Remove-Item Env:WSL_UTF8
     }
     if (-not $wslVersion) {
         Write-Debug "WSL is not installed."
@@ -226,12 +228,12 @@ function Resolve-VersionAlias {
             $variant = if ($Version -match "^3-" -and !$Fat) { "-slim" } else { "" }
             $downloadUrl = "${baseUrl3}${VersionLabel}/lando-win-${arch}-${VersionLabel}${variant}.exe"
         }
-        "^4-dev$" {
-            $downloadUrl = "https://files.lando.dev/core-next/lando-win-${arch}-${Version}.exe"
+        "^4-(dev|latest)$" {
+            $downloadUrl = "https://files.lando.dev/core-next/lando-win-${arch}-dev.exe"
         }
-        "^3-dev$" {
+        "^3-(dev|latest)$" {
             $variant = if ($Version -match "^3-" -and !$Fat) { "-slim" } else { "" }
-            $downloadUrl = "https://files.lando.dev/core/lando-win-${arch}-${Version}${variant}.exe"
+            $downloadUrl = "https://files.lando.dev/core/lando-win-${arch}-dev${variant}.exe"
         }
         Default {
             Write-Debug "Version '$Version' is a semantic version"
@@ -347,7 +349,7 @@ function Install-Lando {
 
     $filename = $downloadUrl.Split('/')[-1]
 
-    Write-Host "Downloading Lando CLI..."
+    Write-Host "Downloading Lando..."
     $downloadDest = "$LANDO_APPDATA\$filename"
     Write-Debug "From $downloadUrl to $downloadDest..."
     Write-Progress -Activity "Downloading Lando $script:resolvedVersion" -Status "Preparing..." -PercentComplete 0
@@ -596,6 +598,12 @@ Confirm-Environment
 
 # Select the appropriate architecture
 $Arch = Select-Architecture
+
+# Remove @lando core if applicable
+if (Test-Path "$env:USERPROFILE\.lando\plugins\@lando\core" -ErrorAction SilentlyContinue) {
+    Write-Debug "Removing detectecd core plugin from $env:USERPROFILE\.lando\plugins\@lando..."
+    Remove-Item -Path "$env:USERPROFILE\.lando\plugins\@lando\core" -Recurse -Force
+}
 
 # Set up our working directory
 if (-not (Test-Path "$LANDO_APPDATA" -ErrorAction SilentlyContinue)) {
