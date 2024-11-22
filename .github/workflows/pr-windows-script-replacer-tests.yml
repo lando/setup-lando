@@ -60,7 +60,7 @@ jobs:
 
       - name: Replace Lando with setup-script
         shell: powershell
-        run: .\setup-lando.ps1 -Version=${{ matrix.version }} -NoSetup
+        run: .\setup-lando.ps1 -Version ${{ matrix.version }} -NoSetup
       - name: Verify new situation
         shell: powershell
         run: |

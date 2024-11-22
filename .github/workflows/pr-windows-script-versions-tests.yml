@@ -49,7 +49,7 @@ jobs:
             $env:LANDO_VERSION = "v3.22.0"
             .\setup-lando.ps1 -NoSetup -Debug
           } else {
-            .\setup-lando.ps1 -Version=${{ matrix.version }} -NoSetup -Debug
+            .\setup-lando.ps1 -Version ${{ matrix.version }} -NoSetup -Debug
           }
 
           lando version
