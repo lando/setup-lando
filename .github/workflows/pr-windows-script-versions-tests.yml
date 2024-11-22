@@ -56,10 +56,6 @@ jobs:
 
           [Console]::OutputEncoding
 
-          # set correct encoding so Select-String works reliably
-          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-
-
           lando version
           $output = lando version
           echo "$output"

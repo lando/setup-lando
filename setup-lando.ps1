@@ -77,9 +77,6 @@ if ($DebugPreference -eq "Inquire" -or $DebugPreference -eq "Continue") {
 $Host.PrivateData.DebugForegroundColor = "Gray"
 $Host.PrivateData.DebugBackgroundColor = $Host.UI.RawUI.BackgroundColor
 
-# Encoding must be Unicode to support parsing wsl.exe output
-[Console]::OutputEncoding = [System.Text.Encoding]::Unicode
-
 Write-Host "Lando Windows Installer" -ForegroundColor Cyan
 
 # Validates whether the system environment is supported
@@ -104,6 +101,7 @@ function Confirm-Environment {
     # Check for WSL
     $wslVersion = $null
     if (Test-Path "$env:WINDIR\system32\wsl.exe") {
+        $env:WSL_UTF8 = "1"
         $wslVersion = & wsl.exe --version | Out-String
         # Check for "WSL version" string on the first line
         if ($wslVersion -notmatch "WSL version") {
@@ -114,6 +112,7 @@ function Confirm-Environment {
             $wslList = & wsl.exe --list --verbose | Out-String
             Write-Debug "WSL Instances:`n$wslList"
         }
+        Remove-Item Env:WSL_UTF8
     }
     if (-not $wslVersion) {
         Write-Debug "WSL is not installed."

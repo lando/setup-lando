@@ -50,9 +50,6 @@ jobs:
       - name: Verify older situation
         shell: powershell
         run: |
-          # set correct encoding so Select-String works reliably
-          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-
           if (-not (Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:USERPROFILE\.lando\bin\lando.cmd" -SimpleMatch)) {
             throw "Error: lando is not where we expect it!"
           }
@@ -67,9 +64,6 @@ jobs:
       - name: Verify new situation
         shell: powershell
         run: |
-          # set correct encoding so Select-String works reliably
-          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-
           if (-not (Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:USERPROFILE\.lando\bin\lando.exe" -SimpleMatch)) {
             throw "Error: lando is not where we expect it!"
           }
