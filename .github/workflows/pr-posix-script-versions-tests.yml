@@ -11,59 +11,56 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-24.04
-          - macos-14
-        node-version:
-          - '20'
-        fat:
-          - --fat
-          - ''
         include:
           - version: '3'
             check: 'v3.'
+            os: ubuntu-24.04
           - version: 'v3.21.0-beta.10'
             check: 'v3.21.0-beta.10'
+            os: macos-14
           - version: '3-stable'
             check: 'v3.'
+            os: ubuntu-24.04
           - version: '3-edge'
             check: 'v3.'
-          - version: '3-edge'
-            check: 'v3.'
+            os: ubuntu-24.04
           - version: '3-latest'
             check: 'v3.'
+            os: ubuntu-24.04
           - version: '3-dev'
             check: 'v3\..*\..*-.*-.*'
+            os: ubuntu-24.04
           - version: 'stable'
             check: 'v3.'
+            os: macos-14
           - version: 'edge'
             check: 'v3.'
+            os: macos-14
           - version: 'latest'
             check: 'v3.'
+            os: macos-14
           - version: 'dev'
             check: 'v3.'
+            os: ubuntu-24.04
           - version: 'bin/lando'
             check: 'v3.100.999-babylon.5'
+            os: macos-14
           - version: 'set-with-envvar'
             check: 'v3.22.0'
+            os: ubuntu-24.04
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Install node ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: npm
       - name: Setup Lando version ${{ matrix.version }}
         shell: bash
         run: |
           if [[ "${{ matrix.version }}" == "set-with-envvar" ]]; then
-            LANDO_VERSION=v3.22.0 ./setup-lando.sh --no-setup ${{ matrix.fat }}
+            LANDO_VERSION=v3.22.0 ./setup-lando.sh --no-setup
           else
-            ./setup-lando.sh --version=${{ matrix.version }} --no-setup ${{ matrix.fat }}
+            ./setup-lando.sh --version=${{ matrix.version }} --no-setup
           fi
 
           lando version | grep -E '${{ matrix.check }}'

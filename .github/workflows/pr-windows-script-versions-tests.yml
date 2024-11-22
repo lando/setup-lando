@@ -12,9 +12,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        fat:
-          - -Fat
-          - ''
         include:
           - version: '3'
             check: 'v3.*.*'
@@ -44,15 +41,15 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Setup Lando version ${{ matrix.version }} ${{ matrix.fat }}
+      - name: Setup Lando version ${{ matrix.version }}
         shell: powershell # 5.1
         run: |
           # skip command
           if ("${{ matrix.version }}" -eq "set-with-envvar") {
             $env:LANDO_VERSION = "v3.22.0"
-            .\setup-lando.ps1 -NoSetup ${{ matrix.fat }} -Debug
+            .\setup-lando.ps1 -NoSetup -Debug
           } else {
-            .\setup-lando.ps1 -Version=${{ matrix.version }} -NoSetup ${{ matrix.fat }} -Debug
+            .\setup-lando.ps1 -Version=${{ matrix.version }} -NoSetup -Debug
           }
 
           if (-not (lando version | Select-String -Pattern "${{ matrix.check }}")) {
