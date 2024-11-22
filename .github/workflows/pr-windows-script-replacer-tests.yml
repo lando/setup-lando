@@ -68,6 +68,10 @@ jobs:
             throw "Error: lando is not where we expect it!"
           }
 
+          lando version
+          Get-ChildItem -Path "$env:USERPROFILE\.lando\plugins\@lando"
+
+
           if (-not (lando version | Select-String -Pattern "${{ matrix.version }}" -SimpleMatch)) {
             throw "Error: lando is not the version we expect!"
           }
