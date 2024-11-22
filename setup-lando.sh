@@ -787,9 +787,7 @@ if [[ -z "${NONINTERACTIVE-}" ]]; then
   # sudo prompt
   if needs_sudo; then log "- ${tty_green}prompt${tty_reset} for ${tty_bold}sudo${tty_reset} password"; fi
   # download
-  if [[ $URL != file://* ]]; then log "- ${tty_magenta}download${tty_reset} lando ${tty_bold}${HRV}${tty_reset} to ${tty_bold}${DEST}${tty_reset}"
-  # or move
-  else log "- ${tty_magenta}move${tty_reset} lando ${tty_bold}${ORIGINAL_VERSION}${tty_reset} to ${tty_bold}${DEST}${tty_reset}"; fi
+  log "- ${tty_magenta}download${tty_reset} lando ${tty_bold}${HRV}${tty_reset} to ${tty_bold}${DEST}${tty_reset}"
   # setup
   if [[ "$SETUP" == "1" ]]; then log "- ${tty_blue}run${tty_reset} ${tty_bold}lando setup${tty_reset}"; fi
   # shellenv
