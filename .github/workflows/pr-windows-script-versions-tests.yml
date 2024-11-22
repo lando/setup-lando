@@ -42,8 +42,11 @@ jobs:
         with:
           fetch-depth: 0
       - name: Setup Lando version ${{ matrix.version }}
-        shell: pwsh
+        shell: powershell
         run: |
+          # set correct encoding so Select-String works reliably
+          [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+
           # skip command
           if ("${{ matrix.version }}" -eq "set-with-envvar") {
             $env:LANDO_VERSION = "v3.22.0"
