@@ -42,7 +42,7 @@ jobs:
         with:
           fetch-depth: 0
       - name: Setup Lando version ${{ matrix.version }}
-        shell: powershell # 5.1
+        shell: pwsh
         run: |
           # skip command
           if ("${{ matrix.version }}" -eq "set-with-envvar") {

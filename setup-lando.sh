@@ -86,12 +86,6 @@ abort() {
   exit 1
 }
 
-debug() {
-  if [[ -n "${DEBUG-}" ]]; then
-    printf "${tty_dim}debug${tty_reset} %s\n" "$(shell_join "$@")" >&2
-  fi
-}
-
 # Fail fast with a concise message when not using bash
 # Single brackets are needed here for POSIX compatibility
 # shellcheck disable=SC2292
@@ -161,47 +155,13 @@ get_installer_os() {
 get_installer_arch
 get_installer_os
 
-# sudo access check
-have_sudo_access() {
-  if [[ ! -x "/usr/bin/sudo" ]]; then
-    return 1
-  fi
-
-  local -a SUDO=("/usr/bin/sudo")
-  if [[ -n "${SUDO_ASKPASS-}" ]]; then
-    SUDO+=("-A")
-  fi
-
-  if [[ -z "${HAVE_SUDO_ACCESS-}" ]]; then
-    "${SUDO[@]}" -l -U "${USER}" &>/dev/null
-    HAVE_SUDO_ACCESS="$?"
-    if [[ "${HAVE_SUDO_ACCESS}" == 1 ]]; then
-      debug "${USER} does not appear to have sudo access!"
-    else
-      debug "${USER} has sudo access"
-    fi
-  fi
-
-  return "${HAVE_SUDO_ACCESS}"
-}
-
-shell_join() {
-  local arg
-  printf "%s" "${1:-}"
-  shift
-  for arg in "$@"; do
-    printf " "
-    printf "%s" "${arg// /\ }"
-  done
-}
-
 # set defaults but allow envvars to be used
 #
 # RUNNER_DEBUG is used here so we can get good debug output when toggled in GitHub Actions
 # see https://github.blog/changelog/2022-05-24-github-actions-re-run-jobs-with-debug-logging/
 
 # @TODO: no-sudo option
-# @TODO: dest based on mv?
+# @TODO: dest based on lmv
 ARCH="${LANDO_INSTALLER_ARCH:-"$INSTALLER_ARCH"}"
 DEBUG="${LANDO_INSTALLER_DEBUG:-${RUNNER_DEBUG:-}}"
 DEST="${LANDO_INSTALLER_DEST:-/usr/local/bin}"
@@ -326,6 +286,12 @@ chomp() {
   printf "%s" "${1/"$'\n'"/}"
 }
 
+debug() {
+  if [[ -n "${DEBUG-}" ]]; then
+    printf "${tty_dim}debug${tty_reset} %s\n" "$(shell_join "$@")" >&2
+  fi
+}
+
 debug_multi() {
   if [[ -n "${DEBUG-}" ]]; then
     while read -r line; do
@@ -336,6 +302,16 @@ debug_multi() {
 
 log() {
   printf "%s\n" "$(shell_join "$@")"
+}
+
+shell_join() {
+  local arg
+  printf "%s" "${1:-}"
+  shift
+  for arg in "$@"; do
+    printf " "
+    printf "%s" "${arg// /\ }"
+  done
 }
 
 warn() {
@@ -405,6 +381,29 @@ find_first_existing_parent() {
   done
 
   echo "$dir"
+}
+
+have_sudo_access() {
+  if [[ ! -x "/usr/bin/sudo" ]]; then
+    return 1
+  fi
+
+  local -a SUDO=("/usr/bin/sudo")
+  if [[ -n "${SUDO_ASKPASS-}" ]]; then
+    SUDO+=("-A")
+  fi
+
+  if [[ -z "${HAVE_SUDO_ACCESS-}" ]]; then
+    "${SUDO[@]}" -l -U "${USER}" &>/dev/null
+    HAVE_SUDO_ACCESS="$?"
+    if [[ "${HAVE_SUDO_ACCESS}" == 1 ]]; then
+      debug "${USER} does not appear to have sudo access!"
+    else
+      debug "${USER} has sudo access"
+    fi
+  fi
+
+  return "${HAVE_SUDO_ACCESS}"
 }
 
 major() {

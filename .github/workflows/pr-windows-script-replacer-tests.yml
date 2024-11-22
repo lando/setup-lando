@@ -23,10 +23,10 @@ jobs:
         with:
           fetch-depth: 0
       - name: Add tempbin to PATH
-        shell: powershell
+        shell: pwsh
         run: Write-Output "PATH=$env:USERPROFILE\.lando\bin;$env:PATH" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
       - name: Get older Lando version ${{ matrix.old-version }}
-        shell: powershell
+        shell: pwsh
         run: |
           $LandoBin = Join-Path -Path "$env:USERPROFILE" -ChildPath '.lando\bin'
           New-Item -ItemType Directory -Force -Path "$env:RUNNER_TEMP\bin" | Out-Null
@@ -48,7 +48,7 @@ jobs:
           lando plugin-add @lando/core@${{ matrix.old-version }}
           lando shellenv --add
       - name: Verify older situation
-        shell: powershell
+        shell: pwsh
         run: |
           if (-not (Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:USERPROFILE\.lando\bin\lando.cmd" -SimpleMatch)) {
             throw "Error: lando is not where we expect it!"
@@ -59,10 +59,10 @@ jobs:
           }
 
       - name: Replace Lando with setup-script
-        shell: powershell
+        shell: pwsh
         run: .\setup-lando.ps1 -Version ${{ matrix.version }} -NoSetup
       - name: Verify new situation
-        shell: powershell
+        shell: pwsh
         run: |
           if (-not (Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:USERPROFILE\.lando\bin\lando.exe" -SimpleMatch)) {
             throw "Error: lando is not where we expect it!"
