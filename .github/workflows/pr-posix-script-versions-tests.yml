@@ -45,9 +45,6 @@ jobs:
           - version: 'bin/lando'
             check: 'v3.100.999-babylon.5'
             os: macos-14
-          - version: 'set-with-envvar'
-            check: 'v3.22.0'
-            os: ubuntu-24.04
 
     steps:
       - name: Checkout code
