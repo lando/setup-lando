@@ -69,6 +69,6 @@ jobs:
           }
 
           if (-not (lando version | Select-String -Pattern "${{ matrix.version }}")) {
-            $reported = & "lando version"
+            $reported = lando version
             throw "Error: lando is not the version we expect! expected ${{ matrix.version}} but found $reported"
           }

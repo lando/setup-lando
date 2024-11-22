@@ -52,7 +52,9 @@ jobs:
             .\setup-lando.ps1 -Version=${{ matrix.version }} -NoSetup -Debug
           }
 
+          lando version
+
           if (-not (lando version | Select-String -Pattern "${{ matrix.check }}")) {
-            $reported = & "lando version"
+            $reported = lando version
             throw "Error: lando is not the version we expect! expected ${{ matrix.version}} but found $reported"
           }
