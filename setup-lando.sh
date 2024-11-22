@@ -76,6 +76,8 @@ set -u
 
 # configuration things at the top for QOL
 LANDO_DEFAULT_MV="3"
+LANDO_BINDIR="$HOME/.lando/bin"
+LANDO_DATADIR="${XDG_DATA_HOME:-$HOME/.data}/lando"
 LANDO_TMPDIR=${TMPDIR:-/tmp}
 MACOS_OLDEST_SUPPORTED="12.0"
 REQUIRED_CURL_VERSION="7.41.0"
@@ -164,12 +166,15 @@ get_installer_os
 # @TODO: dest based on lmv
 ARCH="${LANDO_INSTALLER_ARCH:-"$INSTALLER_ARCH"}"
 DEBUG="${LANDO_INSTALLER_DEBUG:-${RUNNER_DEBUG:-}}"
-DEST="${LANDO_INSTALLER_DEST:-/usr/local/bin}"
+DEST="${LANDO_INSTALLER_DEST:-$HOME/.lando/bin}"
 FAT="${LANDO_INSTALLER_FAT:-0}"
 OS="${LANDO_INSTALLER_OS:-"$INSTALLER_OS"}"
 SUDO="${LANDO_INSTALLER_SUDO:-1}"
 SETUP="${LANDO_INSTALLER_SETUP:-1}"
+SYMLINKER="${LANDO_BINDIR}/lando"
 VERSION="${LANDO_VERSION:-${LANDO_INSTALLER_VERSION:-stable}}"
+
+# preserve originals OPTZ
 ORIGOPTS="$*"
 
 usage() {
@@ -267,7 +272,6 @@ fi
 if [[ "$DEBUG" == "1" ]]; then
   LANDO_DEBUG="--debug"
 fi;
-
 
 # redefine this one
 abort() {
@@ -803,10 +807,12 @@ fi
 # LANDO
 LANDO="${DEST}/lando"
 LANDO_TMPFILE="${LANDO_TMPDIR}/${RANDOM}"
+HIDDEN_LANDO="${LANDO_DATADIR}/${VERSION}/lando"
 
 # Create directories if we need to
 if [[ ! -d "$DEST" ]]; then auto_exec mkdir -p "$DEST"; fi
 if [[ ! -d "$LANDO_TMPDIR" ]]; then auto_exec mkdir -p "$LANDO_TMPDIR"; fi
+if [[ ! -d "$LANDO_BINDIR" ]]; then execute mkdir -p "$LANDO_BINDIR"; fi
 
 # download lando
 log "${tty_magenta}downloading${tty_reset} ${tty_bold}${URL}${tty_reset} to ${tty_bold}${LANDO}${tty_reset}"
@@ -821,17 +827,20 @@ auto_exec curl \
 auto_exec chmod +x "${LANDO_TMPFILE}"
 execute "${LANDO_TMPFILE}" version >/dev/null
 
-# if we get here we should be good to move it to its final destination
+# if dest = symlinker then we need to actually mv 2 LANDO_DATADIR
 # NOTE: we use mv here instead of cp because of https://developer.apple.com/forums/thread/130313
-auto_exec mv -f "${LANDO_TMPFILE}" "${LANDO}"
+if [[ "$LANDO" == "$SYMLINKER" ]]; then
+  execute mkdir -p "${LANDO_DATADIR}/${VERSION}"
+  execute mv -f "$LANDO_TMPFILE" "$HIDDEN_LANDO"
+  execute ln -sf "$HIDDEN_LANDO" "$SYMLINKER"
+else
+  auto_exec mv -f "$LANDO_TMPFILE" "$LANDO"
+  auto_exec ln -sf "$LANDO" "$SYMLINKER"
+fi
 
 # if lando 3 then we need to do some other cleanup things
 # @TODO: is there an equivalent on lando 4?
 if [[ $LMV == '3' ]]; then
-  # ensure dirz
-  execute mkdir -p "$HOME/.lando/bin"
-  # force symlink landobin to ensure PATH primacy as best we can
-  execute ln -sf "${LANDO}" "$HOME/.lando/bin/lando"
   # remove preexisting lando core so this one can also assert primacy
   execute rm -rf "$HOME/.lando/plugins/@lando/core"
   # clean
@@ -851,11 +860,18 @@ if [[ "$SETUP" == "1" ]]; then
 fi
 
 # shell env
-log "${tty_blue}adding${tty_reset} ${tty_bold}${DEST}${tty_reset} to ${tty_bold}PATH${tty_reset}"
-execute "${LANDO}" shellenv --add "${LANDO_DEBUG-}"
+execute "${LANDO}" shellenv --add "${LANDO_DEBUG-}" > /dev/null
 
-# TODO: print better messages for different situations eg ensure setup
-log "${tty_green}success!${tty_reset} ${tty_bold}lando${tty_reset} is now installed!"
+# sucess message here
+log "${tty_green}success!${tty_reset} ${tty_magenta}lando${tty_reset} is now installed!"
+
+# if we cannot invoke lando then print shellenv message
+if \
+  ! execute lando version >/dev/null \
+  || [[ "$(readlink -f $(which lando))" != "$LANDO" && "$(readlink -f $(which lando))" != "$HIDDEN_LANDO" ]]; then
+  log
+  log "${tty_magenta}Start a new terminal session${tty_reset} or run ${tty_magenta}eval \"\$(${LANDO} shellenv)\"${tty_reset} to use lando"
+fi
 
 # FIN!
 exit 0
