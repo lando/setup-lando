@@ -161,7 +161,7 @@ get_installer_os
 # see https://github.blog/changelog/2022-05-24-github-actions-re-run-jobs-with-debug-logging/
 
 # @TODO: no-sudo option
-# @TODO: dest
+# @TODO: dest based on lmv
 ARCH="${LANDO_INSTALLER_ARCH:-"$INSTALLER_ARCH"}"
 DEBUG="${LANDO_INSTALLER_DEBUG:-${RUNNER_DEBUG:-}}"
 DEST="${LANDO_INSTALLER_DEST:-/usr/local/bin}"
@@ -780,21 +780,16 @@ cd "/usr" || exit 1
 if [[ -z "${NONINTERACTIVE-}" ]]; then
   log "${tty_bold}this script is about to:${tty_reset}"
   log
-
   # sudo prompt
   if needs_sudo; then log "- ${tty_green}prompt${tty_reset} for ${tty_bold}sudo${tty_reset} password"; fi
-
   # download
   if [[ $URL != file://* ]]; then log "- ${tty_magenta}download${tty_reset} lando ${tty_bold}${HRV}${tty_reset} to ${tty_bold}${DEST}${tty_reset}"
   # or move
   else log "- ${tty_magenta}move${tty_reset} lando ${tty_bold}${ORIGINAL_VERSION}${tty_reset} to ${tty_bold}${DEST}${tty_reset}"; fi
-
   # setup
   if [[ "$SETUP" == "1" ]]; then log "- ${tty_blue}run${tty_reset} ${tty_bold}lando setup${tty_reset}"; fi
-
   # shellenv
   log "- ${tty_blue}run${tty_reset} ${tty_bold}lando shellenv --add${tty_reset}"
-
   # block for user
   wait_for_user
 fi
@@ -805,13 +800,13 @@ if needs_sudo; then
   execute_sudo true
 fi
 
-# Create directories if we need to
-if [[ ! -d "$DEST" ]]; then auto_exec mkdir -p "$DEST"; fi
-if [[ ! -d "$LANDO_TMPDIR" ]]; then auto_exec mkdir -p "$LANDO_TMPDIR"; fi
-
 # LANDO
 LANDO="${DEST}/lando"
 LANDO_TMPFILE="${LANDO_TMPDIR}/${RANDOM}"
+
+# Create directories if we need to
+if [[ ! -d "$DEST" ]]; then auto_exec mkdir -p "$DEST"; fi
+if [[ ! -d "$LANDO_TMPDIR" ]]; then auto_exec mkdir -p "$LANDO_TMPDIR"; fi
 
 # download lando
 log "${tty_magenta}downloading${tty_reset} ${tty_bold}${URL}${tty_reset} to ${tty_bold}${LANDO}${tty_reset}"
@@ -830,9 +825,17 @@ execute "${LANDO_TMPFILE}" version >/dev/null
 # NOTE: we use mv here instead of cp because of https://developer.apple.com/forums/thread/130313
 auto_exec mv -f "${LANDO_TMPFILE}" "${LANDO}"
 
-# if lando 3 then --clear
+# if lando 3 then we need to do some other cleanup things
+# @TODO: is there an equivalent on lando 4?
 if [[ $LMV == '3' ]]; then
-  execute "${LANDO}" --clear >/dev/null
+  # ensure dirz
+  execute mkdir -p "$HOME/.lando/bin"
+  # force symlink landobin to ensure PATH primacy as best we can
+  execute ln -sf "${LANDO}" "$HOME/.lando/bin/lando"
+  # remove preexisting lando core so this one can also assert primacy
+  execute rm -rf "$HOME/.lando/plugins/@lando/core"
+  # clean
+  execute "${LANDO}" --clear >/dev/null;
 fi
 
 # test via log
