@@ -597,6 +597,12 @@ Confirm-Environment
 # Select the appropriate architecture
 $Arch = Select-Architecture
 
+# Remove @lando core if applicable
+if (-not (Test-Path "$env:USERPROFILE\.lando\plugins\@lando\core" -ErrorAction SilentlyContinue)) {
+    Write-Debug "Removing detectecd core plugin from  $env:USERPROFILE\.lando\plugins\@lando..."
+    Remove-Item -Path "$env:USERPROFILE\.lando\plugins\@lando\core" -Recurse -Force
+}
+
 # Set up our working directory
 if (-not (Test-Path "$LANDO_APPDATA" -ErrorAction SilentlyContinue)) {
     Write-Debug "Creating destination directory $LANDO_APPDATA..."

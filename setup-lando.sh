@@ -161,7 +161,7 @@ get_installer_os
 # see https://github.blog/changelog/2022-05-24-github-actions-re-run-jobs-with-debug-logging/
 
 # @TODO: no-sudo option
-# @TODO: dest
+# @TODO: dest based on mv?
 ARCH="${LANDO_INSTALLER_ARCH:-"$INSTALLER_ARCH"}"
 DEBUG="${LANDO_INSTALLER_DEBUG:-${RUNNER_DEBUG:-}}"
 DEST="${LANDO_INSTALLER_DEST:-/usr/local/bin}"
