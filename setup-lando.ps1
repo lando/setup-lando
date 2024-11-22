@@ -598,7 +598,7 @@ Confirm-Environment
 $Arch = Select-Architecture
 
 # Remove @lando core if applicable
-if (-not (Test-Path "$env:USERPROFILE\.lando\plugins\@lando\core" -ErrorAction SilentlyContinue)) {
+if (Test-Path "$env:USERPROFILE\.lando\plugins\@lando\core" -ErrorAction SilentlyContinue) {
     Write-Debug "Removing detectecd core plugin from  $env:USERPROFILE\.lando\plugins\@lando..."
     Remove-Item -Path "$env:USERPROFILE\.lando\plugins\@lando\core" -Recurse -Force
 }
