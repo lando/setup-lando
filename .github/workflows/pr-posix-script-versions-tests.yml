@@ -56,7 +56,7 @@ jobs:
         run: ./setup-lando.sh --version=${{ matrix.version }} --no-setup
       - name: Test
         shell: bash
-        run: eval "$($HOME/.lando/bin/lando shellenv)" && lando version | grep -E '${{ matrix.check }}'
+        run: lando version | grep -E '${{ matrix.check }}'
 
   setup-lando-posix-version-env-test:
     runs-on: ${{ matrix.os }}
