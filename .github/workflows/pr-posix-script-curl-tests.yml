@@ -33,7 +33,8 @@ jobs:
           npm run prepare
       - name: Run setup-lando.sh on ${{ matrix.os }}
         shell: bash
-        run: |
-          /bin/bash -c "$(curl -fsSL file://${{ github.workspace }}/dist/setup-lando.sh)"
-          lando version --all
+        run: /bin/bash -c "$(curl -fsSL file://${{ github.workspace }}/dist/setup-lando.sh)"
+      - name: Test
+        shell: bash
+        run: lando version --all
 

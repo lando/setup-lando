@@ -55,7 +55,8 @@ jobs:
           }
 
           if (-not (lando version | Select-String -Pattern "${{ matrix.old-version }}")) {
-            throw "Error: lando is not the version we expect!"
+            $reported = lando version
+            throw "Error: lando is not the version we expect! expected ${{ matrix.version}} but found $reported"
           }
 
       - name: Replace Lando with setup-script

@@ -2,4 +2,10 @@
 
 'use strict';
 
-console.log('v3.100.999-babylon.5');
+// get args
+const args = process.argv.slice(2);
+
+// if we have "shellenv" then spoof
+if (args.includes('shellenv')) console.log('export PATH="$HOME/.lando/bin${PATH+:$PATH}";');
+// otherwise just go for version
+else console.log('v3.100.999-babylon.5');

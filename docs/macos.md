@@ -7,11 +7,11 @@ description: Install Lando on macOS
 
 The macOS quickstart is to paste the below into a terminal and execute it.
 
-```bash
+```zsh
 /bin/bash -c "$(curl -fsSL https://get.lando.dev/setup-lando.sh)"
 ```
 
-If you are looking to customize your install then [advanced usage](#advanced) if for you.
+If you are looking to customize your install then [advanced usage](#advanced) is for you.
 
 ## Advanced
 
@@ -26,47 +26,64 @@ chmod +x ./setup-lando.sh
 
 # get usage info
 bash setup-lando.sh --help
-
-# example advanced invocation
-# note you will need to change these values to ones that make sense for you
-# consult the usage and notes below for more into
-bash setup-lando.sh \
-  --arch=arm64 \
-  --dest=/Users/pirog/bin \
-  --fat \
-  --no-setup \
-  --os=macos \
-  --version=3.21.2 \
-  --debug \
-  --yes
 ```
 
 ### Usage
 
 ```zsh
-[NONINTERACTIVE=1] [CI=1] setup-lando.sh \
-  [--arch <x64|arm64>] \
-  [--debug] \
-  [--dest <path>] \
-  [--fat ] \
-  [--no-setup] \
-  [--os <os>] \
-  [--version <version>] \
-  [--yes]
-```
+Usage: [NONINTERACTIVE=1] [CI=1] setup-lando.sh [options]
 
-* `--arch <x64|arm64>`: Specifies the architecture to install (x64 or arm64). Defaults to the system architecture.
-* `--debug`: Enables debug output.
-* `--dest <path>`: Specifies the destination path for installation. Defaults to `/usr/local/bin`.
-* `--fat`: Download the fat v3 Lando binary that comes with official plugins built-in.
-* `--no-setup`: Skips running Lando's built-in setup script.
-* `--version <version>`: Specifies the version of Lando to install. Defaults to `stable`.
-* `--help`: Displays the help message.
-* `--yes`: Skips all interactive prompts and installs with defaults
+Options:
+  --arch           installs for this arch [default: arm64]
+  --dest           installs in this directory [default: ~/.lando/bin]
+  --fat            installs fat cli 3.21+ <4 only, not recommended
+  --no-setup       installs without running lando setup 3.21+ <4 only
+  --os             installs for this os [default: macos]
+  --syslink        installs symlink in /usr/local/bin [default: auto]
+  --version        installs this version [default: stable]
+  --debug          shows debug messages
+  -h, --help       displays this message
+  -y, --yes        runs with all defaults and no prompts, sets NONINTERACTIVE=1
+
+Environment Variables:
+  NONINTERACTIVE   installs without prompting for user input
+  CI               installs in CI mode (e.g. does not prompt for user input)
+```
 
 Some notes on advanced usage:
 
-* If you want to install without the `sudo` password requirement then set `--dest` to a location to which your user has `write` permission. Note that you may still need `sudo` for downstream setup tasks eg if you need to install Docker Desktop.
+* If you are running in `CI` then `--syslink` will be assumed
+* If you have an existing installation of `lando` in `/usr/local/bin` and can write to that location then `--syslink` will be assumed
 * If you want to customize the behavior of `lando setup` use `--no-setup` and then manually invoke [`lando setup`](https://docs.lando.dev/cli/setup.html) after install is complete.
 * If you run in a non-tty environment eg GitHub Actions then `--yes` will be assumed
 * If you use `--yes` it is equivalent to setting `NONINTERACTIVE=1`
+
+#### Environment Variables
+
+If you do not wish to download the script you can set options with environment variables and `curl` the script.
+
+```zsh
+LANDO_VERSION=stable
+LANDO_INSTALLER_ARCH=auto
+LANDO_INSTALLER_DEBUG=0
+LANDO_INSTALLER_DEST="~/.lando/bin"
+LANDO_INSTALLER_FAT=0
+LANDO_INSTALLER_OS=macos
+LANDO_INSTALLER_SETUP=auto
+LANDO_INSTALLER_SYSLINK=auto
+```
+
+#### Examples
+
+These are equivalent commands and meant to demostrate environment variable usage vs direct invocation.
+
+```zsh
+# use envvars
+LANDO_VERSION=3.23.11 \
+LANDO_INSTALLER_DEBUG=1 \
+LANDO_INSTALLER_SYSLINK=1 \
+  /bin/bash -c "$(curl -fsSL https://get.lando.dev/setup-lando.sh)"
+
+# invoke directly
+bash setup-lando.sh --version "3.23.11" --debug --syslink
+```

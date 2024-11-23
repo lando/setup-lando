@@ -1,5 +1,17 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+### Changes
+
+* Added `--syslink` to add symlinks to `/usr/local/bin` on POSIX install, see notes below
+* Improved post-install `PATH` consideration
+* Updated default `--dest` to `~/.lando/bin` on POSIX install
+* Updated POSIX script to run `sudoless` if possible, see notes below
+
+### Notes
+
+* `--syslink` will be automatically set on `CI`
+* `--syslink` will be automatically set if a `lando` already exists at `/usr/local/bin` and the invoking user has permission to edit it
+
 ## v3.5.0 - [November 22, 2024](https://github.com/lando/setup-lando/releases/tag/v3.5.0)
 
 * Added `path` based installation to POSIX `setup-lando.sh` script
