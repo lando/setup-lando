@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+## v3.6.0 - [November 23, 2024](https://github.com/lando/setup-lando/releases/tag/v3.6.0)
+
 ### Changes
 
 * Added `--syslink` to add symlinks to `/usr/local/bin` on POSIX install, see notes below
