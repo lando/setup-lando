@@ -1,15 +1,5 @@
 version: 2.1
 
-prs-only: &prs-only
-  filters:
-    branches:
-      ignore: /.*/
-    pull_requests:
-      types:
-        - opened
-        - synchronize
-        - reopened
-
 jobs:
   setup-on-linux:
     machine:
@@ -54,7 +44,4 @@ jobs:
 workflows:
   setup-lando:
     jobs:
-      - setup-on-linux:
-          <<: *prs-only
-      # - setup-on-macos
-      # - setup-on-windows
+      - setup-on-linux
