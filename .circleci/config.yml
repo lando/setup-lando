@@ -16,7 +16,9 @@ jobs:
       - checkout
       - run:
           name: Setup Lando on Linux
-          command: ./setup-lando.sh --no-setup && lando setup -y --debug && lando version --all
+          command: |
+            export TERM=xterm-256color
+            ./setup-lando.sh --no-setup && lando setup -y && lando version --all
 
   install-on-macos:
     macos:
@@ -32,7 +34,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Setup Lando on Linux
+          name: Setup Lando on macOS
           command: ./setup-lando.sh --no-setup && lando setup -y --debug --skip-networking && lando version --all
 
   # setup-on-windows:
