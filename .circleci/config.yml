@@ -12,7 +12,7 @@ jobs:
             pwd
             env
             whoami
-            lsa -lsa ~
+            ls -lsa ~
             chmod +x ./setup-lando.sh
             ./setup-lando.sh --debug --version "3-dev" --no-setup
             lando version
