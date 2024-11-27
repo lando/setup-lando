@@ -1,0 +1,49 @@
+version: 2.1
+
+jobs:
+  setup-on-linux:
+    machine:
+      image: ubuntu-2204:current
+    steps:
+      - checkout
+      - run:
+          name: Setup Lando on Linux
+          command: |
+            pwd
+            env
+            whoami
+            lsa -lsa ~
+            chmod +x ./setup-lando.sh
+            ./setup-lando.sh --debug --version "3-dev" --no-setup
+            lando version
+
+  # setup-on-macos:
+  #   macos:
+  #     xcode: "14.2.0"
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: Run Bash Script on macOS
+  #         command: |
+  #           chmod +x ./setup-lando.sh
+  #           ./setup-lando.sh --debug --version "3-dev" --no-setup
+  #           lando version
+
+  # setup-on-windows:
+  #   machine:
+  #     image: windows-server-2022  # Windows machine image
+  #   steps:
+  #     - checkout
+  #     - run:
+  #         name: Run Bash Script on Windows
+  #         shell: bash
+  #         command: |
+  #           chmod +x ./script.sh
+  #           ./script.sh
+
+workflows:
+  setup-lando:
+    jobs:
+      - setup-on-linux
+      # - setup-on-macos
+      # - setup-on-windows
