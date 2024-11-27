@@ -16,7 +16,7 @@ jobs:
       - checkout
       - run:
           name: Setup Lando on Linux
-          command: ./setup-lando.sh && lando version --all
+          command: ./setup-lando.sh --no-setup && lando setup -y --debug && lando version --all
 
   install-on-macos:
     macos:
@@ -32,8 +32,8 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Run Bash Script on macOS
-          command: ./setup-lando.sh --no-setup && lando setup -y --skip-networking && lando version --all
+          name: Setup Lando on Linux
+          command: ./setup-lando.sh --no-setup && lando setup -y --debug --skip-networking && lando version --all
 
   # setup-on-windows:
   #   machine:
