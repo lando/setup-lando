@@ -17,41 +17,41 @@ jobs:
             ./setup-lando.sh --debug --version "3-dev" --no-setup
             lando version
 
-  # setup-on-macos:
-  #   macos:
-  #     xcode: "14.2.0"
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Run Bash Script on macOS
-  #         command: |
-  #           chmod +x ./setup-lando.sh
-  #           ./setup-lando.sh --debug --version "3-dev" --no-setup
-  #           lando version
+  setup-on-macos:
+    macos:
+      xcode: "14.2.0"
+    steps:
+      - checkout
+      - run:
+          name: Run Bash Script on macOS
+          command: |
+            chmod +x ./setup-lando.sh
+            ./setup-lando.sh --debug --version "3-dev" --no-setup
+            lando version
 
-  # setup-on-windows:
-  #   machine:
-  #     image: windows-server-2022  # Windows machine image
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Run Bash Script on Windows
-  #         shell: bash
-  #         command: |
-  #           chmod +x ./script.sh
-  #           ./script.sh
+  setup-on-windows:
+    machine:
+      image: windows-server-2022  # Windows machine image
+    steps:
+      - checkout
+      - run:
+          name: Run Bash Script on Windows
+          shell: bash
+          command: |
+            chmod +x ./script.sh
+            ./script.sh
 
 workflows:
   setup-lando:
+    filters:
+      branches:
+        ignore: /.*/
+      pull_requests:
+        types:
+          - opened
+          - synchronize
+          - reopened
     jobs:
-      - setup-on-linux:
-          filters:
-            branches:
-              ignore: /.*/
-            pull_requests:
-              types:
-                - opened
-                - synchronize
-                - reopened
+      - setup-on-linux
       # - setup-on-macos
       # - setup-on-windows
