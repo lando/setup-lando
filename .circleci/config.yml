@@ -44,6 +44,14 @@ jobs:
 workflows:
   setup-lando:
     jobs:
-      - setup-on-linux
+      - setup-on-linux:
+          filters:
+            branches:
+              ignore: /.*/
+            pull_requests:
+              types:
+                - opened
+                - synchronize
+                - reopened
       # - setup-on-macos
       # - setup-on-windows
