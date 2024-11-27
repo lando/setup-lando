@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+## v3.6.1 - [November 27, 2024](https://github.com/lando/setup-lando/releases/tag/v3.6.1)
+
 * Added some `circleci` tests
 * Fixed various permissions related bugs for `POSIX` installs
 

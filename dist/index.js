@@ -46569,7 +46569,7 @@ var __webpack_exports__ = {};
 "use strict";
 
 
-const SCRIPT_VERSION = 'v3.6.0';
+const SCRIPT_VERSION = 'v3.6.1';
 
 const core = __nccwpck_require__(7484);
 const exec = __nccwpck_require__(5236);
