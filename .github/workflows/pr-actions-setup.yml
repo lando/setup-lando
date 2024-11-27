@@ -60,7 +60,6 @@ jobs:
         with:
           lando-version: ${{ matrix.lando-version }}
           auto-setup: ${{ matrix.setup-string }}
-          debug: true
           telemetry: false
           config: |
             setup.skipCommonPlugins=true
