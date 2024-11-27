@@ -1,6 +1,14 @@
 version: 2.1
 
 jobs:
+  install-on-linux:
+    machine:
+      image: ubuntu-2204:current
+    steps:
+      - checkout
+      - run:
+          name: Install Lando on Linux
+          command: ./setup-lando.sh --no-setup && lando version --all
   setup-on-linux:
     machine:
       image: ubuntu-2204:current
@@ -8,26 +16,24 @@ jobs:
       - checkout
       - run:
           name: Setup Lando on Linux
-          command: |
-            pwd
-            env
-            whoami
-            lsa -lsa ~
-            chmod +x ./setup-lando.sh
-            ./setup-lando.sh --debug --version "3-dev" --no-setup
-            lando version
+          command: ./setup-lando.sh && lando version --all
 
-  # setup-on-macos:
-  #   macos:
-  #     xcode: "14.2.0"
-  #   steps:
-  #     - checkout
-  #     - run:
-  #         name: Run Bash Script on macOS
-  #         command: |
-  #           chmod +x ./setup-lando.sh
-  #           ./setup-lando.sh --debug --version "3-dev" --no-setup
-  #           lando version
+  install-on-macos:
+    macos:
+      xcode: "14.2.0"
+    steps:
+      - checkout
+      - run:
+          name: Install Lando on macOS
+          command: ./setup-lando.sh --no-setup && lando version --all
+  setup-on-macos:
+    macos:
+      xcode: "14.2.0"
+    steps:
+      - checkout
+      - run:
+          name: Setup Lando on macOS
+          command: ./setup-lando.sh --no-setup && lando setup -y --skip-networking && lando version --all
 
   # setup-on-windows:
   #   machine:
@@ -44,14 +50,7 @@ jobs:
 workflows:
   setup-lando:
     jobs:
-      - setup-on-linux:
-          filters:
-            branches:
-              ignore: /.*/
-            pull_requests:
-              types:
-                - opened
-                - synchronize
-                - reopened
-      # - setup-on-macos
-      # - setup-on-windows
+      - install-on-linux
+      - install-on-macos
+      - setup-on-linux
+      - setup-on-macos
