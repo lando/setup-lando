@@ -7,7 +7,7 @@ jobs:
     steps:
       - checkout
       - run:
-          name: Setup Lando on Linux
+          name: Ins Lando on Linux
           command: |
             pwd
             env

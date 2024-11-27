@@ -802,8 +802,10 @@ wait_for_user() {
 auto_link() {
   local source="$1"
   local dest="$2"
-  local perm_source="$(find_first_existing_parent "$source")"
-  local perm_dest="$(find_first_existing_parent "$dest")"
+  local perm_source
+  local perm_dest
+  perm_source="$(find_first_existing_parent "$source")"
+  perm_dest="$(find_first_existing_parent "$dest")"
 
   if have_sudo_access && [[ ! -w "$perm_source" ||  ! -w "$perm_dest" ]]; then
     execute_sudo ln -sf "$source" "$dest"
@@ -814,7 +816,8 @@ auto_link() {
 
 auto_mkdirp() {
   local dir="$1"
-  local perm_dir="$(find_first_existing_parent "$dir")"
+  local perm_dir
+  perm_dir="$(find_first_existing_parent "$dir")"
 
   if have_sudo_access && [[ ! -w "$perm_dir" ]]; then
     execute_sudo mkdir -p "$dir"
@@ -826,8 +829,10 @@ auto_mkdirp() {
 auto_mv() {
   local source="$1"
   local dest="$2"
-  local perm_source="$(find_first_existing_parent "$source")"
-  local perm_dest="$(find_first_existing_parent "$dest")"
+  local perm_source
+  local perm_dest
+  perm_source="$(find_first_existing_parent "$source")"
+  perm_dest="$(find_first_existing_parent "$dest")"
 
   if have_sudo_access && [[ ! -w "$perm_source" ||  ! -w "$perm_dest" ]]; then
     execute_sudo mv -f "$source" "$dest"
@@ -839,7 +844,8 @@ auto_mv() {
 auto_curl_n_x() {
   local dest="$1"
   local url="$2"
-  local perm_dir="$(find_first_existing_parent "$dest")"
+  local perm_dir
+  perm_dir="$(find_first_existing_parent "$dest")"
 
   if have_sudo_access && [[ ! -w "$perm_dir" ]]; then
     execute_sudo curl \
