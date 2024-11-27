@@ -16,13 +16,7 @@ jobs:
       - checkout
       - run:
           name: Setup Lando on Linux
-          command: |
-            # export TERM=xterm-256color
-            # export COLUMNS=150
-            # export LANDO_RENDERER_FORCE=1
-            ./setup-lando.sh --no-setup --version 3-dev
-            lando plugin-add @lando/php
-            lando setup -y && lando version --all
+          command: ./setup-lando.sh && lando version --all
 
   install-on-macos:
     macos:
@@ -39,7 +33,7 @@ jobs:
       - checkout
       - run:
           name: Setup Lando on macOS
-          command: ./setup-lando.sh --no-setup && lando setup -y --debug --skip-networking && lando version --all
+          command: ./setup-lando.sh --no-setup && lando setup -y --skip-networking && lando version --all
 
   # setup-on-windows:
   #   machine:
