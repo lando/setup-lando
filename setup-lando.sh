@@ -798,18 +798,67 @@ wait_for_user() {
   fi
 }
 
-# determine the exec we need for sudo protected things
-# we add /tmp in here because their are high security environments where /tmp is not universally writable
-if needs_sudo; then
-  debug "auto_exec elevating to sudo"
-  auto_exec() {
-    execute_sudo "$@"
-  }
-else
-  auto_exec() {
-    execute "$@"
-  }
-fi
+# helpers for more itemized sudoing
+auto_link() {
+  local source="$1"
+  local dest="$2"
+  local perm_source="$(find_first_existing_parent "$source")"
+  local perm_dest="$(find_first_existing_parent "$dest")"
+
+  if have_sudo_access && [[ ! -w "$perm_source" ||  ! -w "$perm_dest" ]]; then
+    execute_sudo ln -sf "$source" "$dest"
+  else
+    execute ln -sf "$source" "$dest"
+  fi
+}
+
+auto_mkdirp() {
+  local dir="$1"
+  local perm_dir="$(find_first_existing_parent "$dir")"
+
+  if have_sudo_access && [[ ! -w "$perm_dir" ]]; then
+    execute_sudo mkdir -p "$dir"
+  else
+    execute mkdir -p "$dir"
+  fi
+}
+
+auto_mv() {
+  local source="$1"
+  local dest="$2"
+  local perm_source="$(find_first_existing_parent "$source")"
+  local perm_dest="$(find_first_existing_parent "$dest")"
+
+  if have_sudo_access && [[ ! -w "$perm_source" ||  ! -w "$perm_dest" ]]; then
+    execute_sudo mv -f "$source" "$dest"
+  else
+    execute mv -f "$source" "$dest"
+  fi
+}
+
+auto_curl_n_x() {
+  local dest="$1"
+  local url="$2"
+  local perm_dir="$(find_first_existing_parent "$dest")"
+
+  if have_sudo_access && [[ ! -w "$perm_dir" ]]; then
+    execute_sudo curl \
+      --fail \
+      --location \
+      --progress-bar \
+      --output "$dest" \
+      "$url"
+    execute_sudo chmod +x "$dest"
+  else
+    execute curl \
+      --fail \
+      --location \
+      --progress-bar \
+      --output "$dest" \
+      "$url"
+    execute chmod +x "$dest"
+  fi
+}
 
 # Invalidate sudo timestamp before exiting (if it wasn't active before).
 if [[ -x /usr/bin/sudo ]] && ! /usr/bin/sudo -n -v 2>/dev/null; then
@@ -846,37 +895,31 @@ if needs_sudo; then
 fi
 
 # Create directories if we need to
-if [[ ! -d "$DEST" ]]; then auto_exec mkdir -p "$DEST"; fi
-if [[ ! -d "$LANDO_TMPDIR" ]]; then auto_exec mkdir -p "$LANDO_TMPDIR"; fi
-if [[ ! -d "$LANDO_BINDIR" ]]; then execute mkdir -p "$LANDO_BINDIR"; fi
+if [[ ! -d "$DEST" ]]; then auto_mkdirp "$DEST"; fi
+if [[ ! -d "$LANDO_TMPDIR" ]]; then auto_mkdirp "$LANDO_TMPDIR"; fi
+if [[ ! -d "$LANDO_BINDIR" ]]; then auto_mkdirp "$LANDO_BINDIR"; fi
 
 # download lando
 log "${tty_magenta}downloading${tty_reset} ${tty_bold}${URL}${tty_reset} to ${tty_bold}${LANDO}${tty_reset}"
-auto_exec curl \
-  --fail \
-  --location \
-  --progress-bar \
-  --output "$LANDO_TMPFILE" \
-  "$URL"
+auto_curl_n_x "$LANDO_TMPFILE" "$URL"
 
-# make executable and weak "it works" test
-auto_exec chmod +x "${LANDO_TMPFILE}"
+# weak "it works" test
 execute "${LANDO_TMPFILE}" version >/dev/null
 
 # if dest = symlinker then we need to actually mv 2 LANDO_DATADIR
 # NOTE: we use mv here instead of cp because of https://developer.apple.com/forums/thread/130313
 if [[ "$LANDO" == "$SYMLINKER" ]]; then
-  execute mkdir -p "${LANDO_DATADIR}/${VERSION}"
-  execute mv -f "$LANDO_TMPFILE" "$HIDDEN_LANDO"
-  execute ln -sf "$HIDDEN_LANDO" "$SYMLINKER"
+  auto_mkdirp "${LANDO_DATADIR}/${VERSION}"
+  auto_mv "$LANDO_TMPFILE" "$HIDDEN_LANDO"
+  auto_link "$HIDDEN_LANDO" "$SYMLINKER"
 else
-  auto_exec mv -f "$LANDO_TMPFILE" "$LANDO"
-  auto_exec ln -sf "$LANDO" "$SYMLINKER"
+  auto_mv "$LANDO_TMPFILE" "$LANDO"
+  auto_link "$LANDO" "$SYMLINKER"
 fi
 
 # hook up the syslink here
 if [[ "$SYSLINK" == "1" ]]; then
-  auto_exec ln -sf "$SYMLINKER" "$SYSLINKER"
+  auto_link "$SYMLINKER" "$SYSLINKER"
 fi
 
 # if lando 3 then we need to do some other cleanup things
