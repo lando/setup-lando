@@ -65,7 +65,7 @@ jobs:
       - name: Verify new situation
         shell: powershell
         run: |
-          if (-not (Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:USERPROFILE\.lando\bin\lando.exe" -SimpleMatch)) {
+          if (-not (Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:USERPROFILE\.lando\bin\lando.cmd" -SimpleMatch)) {
             throw "Error: lando is not where we expect it!"
           }
 
