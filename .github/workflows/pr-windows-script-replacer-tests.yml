@@ -65,6 +65,7 @@ jobs:
       - name: Verify new situation
         shell: powershell
         run: |
+          Get-Command lando
           if (-not (Get-Command lando | Select-Object -ExpandProperty Source | Select-String -Pattern "$env:LOCALAPPDATA\Lando\${{ matrix.version}}\lando.exe" -SimpleMatch)) {
             throw "Error: lando is not where we expect it!"
           }
