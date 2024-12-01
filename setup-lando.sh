@@ -427,11 +427,12 @@ have_sudo_access() {
   if [[ -z "${HAVE_SUDO_ACCESS-}" ]]; then
     "${SUDO[@]}" -l -U "${USER}" &>/dev/null
     HAVE_SUDO_ACCESS="$?"
-    if [[ "${HAVE_SUDO_ACCESS}" == 1 ]]; then
-      debug "${USER} does not appear to have sudo access!"
-    else
-      debug "${USER} has sudo access"
-    fi
+  fi
+
+  if [[ "${HAVE_SUDO_ACCESS}" == 1 ]]; then
+    debug "${USER} does not appear to have sudo access!"
+  else
+    debug "${USER} has sudo access"
   fi
 
   return "${HAVE_SUDO_ACCESS}"
