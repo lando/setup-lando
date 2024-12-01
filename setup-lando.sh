@@ -398,8 +398,10 @@ find_first_existing_parent() {
 }
 
 have_sudo_access() {
-  local GROUPS_CMD="$(which groups)"
+  local GROUPS_CMD
   local -a SUDO=("/usr/bin/sudo")
+
+  GROUPS_CMD="$(which groups)"
 
   if [[ ! -x "/usr/bin/sudo" ]]; then
     return 1
