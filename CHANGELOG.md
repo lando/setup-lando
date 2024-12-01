@@ -1,5 +1,10 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+* Fixed bug causing terminal weirdness on `POSIX` after `CTRL-C`ing out of user acceptance prompts
+* Improved `sudo` detection to limit the necessity of `sudo` prompting
+* Synced `Windows` installer script so it works more or less like the `POSIX` one
+* Removed `WSL` installation from `Windows` script, `WSL` install is now possible with `POSIX` script
+
 ## v3.6.1 - [November 27, 2024](https://github.com/lando/setup-lando/releases/tag/v3.6.1)
 
 * Added some `circleci` tests
