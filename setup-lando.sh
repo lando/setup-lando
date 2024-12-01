@@ -398,11 +398,28 @@ find_first_existing_parent() {
 }
 
 have_sudo_access() {
+  local GROUPS_CMD="$(which groups)"
+  local -a SUDO=("/usr/bin/sudo")
+
   if [[ ! -x "/usr/bin/sudo" ]]; then
     return 1
   fi
 
-  local -a SUDO=("/usr/bin/sudo")
+  if [[ -x "$GROUPS_CMD" ]]; then
+    if "$GROUPS_CMD" | grep -q sudo; then
+      HAVE_SUDO_ACCESS="0"
+    fi
+    if "$GROUPS_CMD" | grep -q admin; then
+      HAVE_SUDO_ACCESS="0"
+    fi
+    if "$GROUPS_CMD" | grep -q adm; then
+      HAVE_SUDO_ACCESS="0"
+    fi
+    if "$GROUPS_CMD" | grep -q wheel; then
+      HAVE_SUDO_ACCESS="0"
+    fi
+  fi
+
   if [[ -n "${SUDO_ASKPASS-}" ]]; then
     SUDO+=("-A")
   fi
@@ -789,6 +806,10 @@ execute_sudo() {
 
 wait_for_user() {
   local c
+
+# Trap to clean up on Ctrl-C or exit
+  trap 'stty sane; tput sgr0; echo; exit 1' SIGINT EXIT
+
   echo
   echo "Press ${tty_bold}RETURN${tty_reset}/${tty_bold}ENTER${tty_reset} to continue or any other key to abort:"
   getc c
