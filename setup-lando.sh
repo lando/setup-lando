@@ -189,13 +189,13 @@ Usage: ${tty_dim}[NONINTERACTIVE=1] [CI=1]${tty_reset} ${tty_bold}setup-lando.sh
 ${tty_green}Options:${tty_reset}
   --arch           installs for this arch ${tty_dim}[default: ${ARCH}]${tty_reset}
   --dest           installs in this directory ${tty_dim}[default: ${DEST}]${tty_reset}
-  --fat            installs fat cli ${tty_dim}3.21+ <4 only, not recommended${tty_reset}
+  --fat            installs fat binary ${tty_dim}3.21+ <4 only, not recommended${tty_reset}
   --no-setup       installs without running lando setup ${tty_dim}3.21+ <4 only${tty_reset}
   --os             installs for this os ${tty_dim}[default: ${OS}]${tty_reset}
   --syslink        installs symlink in /usr/local/bin ${tty_dim}[default: ${SYSLINK}]${tty_reset}
   --version        installs this version ${tty_dim}[default: ${VERSION}]${tty_reset}
   --debug          shows debug messages
-  -h, --help       displays this message
+  -h, --help       displays this help message
   -y, --yes        runs with all defaults and no prompts, sets NONINTERACTIVE=1
 
 ${tty_green}Environment Variables:${tty_reset}

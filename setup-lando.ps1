@@ -3,62 +3,39 @@
 Lando Windows Installer Script.
 
 .DESCRIPTION
-This script is used to download and install Lando on Windows. It also installs Lando in all WSL2 instances.
+This script is used to download and install Lando on Windows. It will also run lando setup on >3.21 <4 but this can
+be disabled with -NoSetup.
+
+Environment Variables:
+NONINTERACTIVE   Installs without prompting for user input
+CI               Installs in CI mode (e.g. does not prompt for user input)
 
 .EXAMPLE
 .\setup-lando.ps1 -Arch x64 -Version edge
-Installs Lando with the x64 architecture and the edge version.
-
-.EXAMPLE
-.\setup-lando.ps1 -WSLOnly -Version 3.21.0-beta.1
-Installs Lando version 3.21.0-beta.1 in WSL only.
-
-.EXAMPLE
-.\setup-lando.ps1 -NoWSL
-Installs Lando on Windows only, skipping the WSL setup.
+Installs the Lando edge version binary with x64 architecture.
 
 #>
 
 # Script parameters must be declared before any other statements
 param(
-  # Specifies the architecture to install (x64 or arm64). Defaults to the system architecture.
-  [ValidateSet("x64", "arm64")]
-  [string]$Arch = "x64",
-  # Enables debug output.
-  [switch]$Debug,
-  # Specifies the destination path for installation. Defaults to "$env:USERPROFILE\.lando\bin".
+  # Installs for this architecture (x64 or arm64). Defaults to the system architecture.
+  [ValidateSet("x64", "arm64", "auto")]
+  [string]$Arch = "auto",
+  # Shows debug messages.
+  [switch]$Debug = $env:LANDO_INSTALLER_DEBUG -or $env:RUNNER_DEBUG -or $false,
+  # Installs in this directory. Defaults to "$env:USERPROFILE\.lando\bin".
   [ValidateNotNullOrEmpty()]
   [string]$Dest = "$env:USERPROFILE\.lando\bin",
-  # Download the fat v3 lando binary that comes with official plugins built-in.
-  [switch]$Fat,
-  # Skips running Lando's built-in setup script.
-  [switch]$NoSetup,
-  # Skips the WSL setup.
-  [switch]$NoWSL,
-  # Resumes a previous installation after a reboot.
-  [switch]$Resume,
-  # Specifies the version of Lando to install. Defaults to "stable".
+  # Installs the fat binary. 3.21+ <4 only, NOT RECOMMENDED!
+  [switch]$Fat = $env:LANDO_INSTALLER_FAT -or $false,
+  # Installs without running lando setup. 3.21+ <4 only.
+  [switch]$NoSetup = $env:LANDO_INSTALLER_SETUP -eq 0 -or $false,
+  # Installs this version. Defaults to "stable".
   [ValidateNotNullOrEmpty()]
   [string]$Version = "stable",
-  # Only installs Lando in WSL.
-  [switch]$WSLOnly,
-  # Displays the help message.
+  # Displays this help message.
   [switch]$Help
 )
-
-# If version is "stable" AND LANDO_VERSION is set (and not empty), then prefer the version from LANDO_VERSION
-if ($env:LANDO_VERSION -ne $null -and $env:LANDO_VERSION -ne "" -and $Version -eq "stable") {
-  $Version = $env:LANDO_VERSION
-}
-
-$SCRIPT_VERSION = $null
-$LANDO_DEFAULT_MV = "3"
-$LANDO_SETUP_PS1_URL = "https://get.lando.dev/setup-lando.ps1"
-$LANDO_SETUP_SH_URL = "https://get.lando.dev/setup-lando.sh"
-$LANDO_APPDATA = "$env:LOCALAPPDATA\Lando"
-
-$issueEncountered = $false
-$resolvedVersion = $null
 
 Set-StrictMode -Version 1
 
@@ -66,18 +43,110 @@ Set-StrictMode -Version 1
 # We'll still need to check exit codes on any exe we run.
 $ErrorActionPreference = "Stop"
 
-# Allow github actions to set $Debug
-if ($env:RUNNER_DEBUG -ne $null -and $env:RUNNER_DEBUG -ne "") {$Debug = $true}
-
 # Normalize debug preference
 $DebugPreference = If ($Debug) { "Continue" } Else { $DebugPreference }
 if ($DebugPreference -eq "Inquire" -or $DebugPreference -eq "Continue") {
   $Debug = $true
 }
-$Host.PrivateData.DebugForegroundColor = "Gray"
+
+# Normalize UX
+$Host.PrivateData.DebugForegroundColor = "DarkGray"
 $Host.PrivateData.DebugBackgroundColor = $Host.UI.RawUI.BackgroundColor
 
-Write-Host "Lando Windows Installer" -ForegroundColor Cyan
+function Confirm-EnvIsSet {
+  param(
+		[Parameter(Mandatory)]
+		[string]$Var
+  )
+	$value = [System.Environment]::GetEnvironmentVariable($Var);
+	return $value -and $value.Trim() -ne ""
+}
+
+function Get-SystemArchitecture {
+	# Get from env
+	$arch = if ($env:PROCESSOR_ARCHITEW6432) {$env:PROCESSOR_ARCHITEW6432} else {$env:PROCESSOR_ARCHITECTURE}
+
+	# Normalize for our purposes
+	if ($arch -eq "AMD64") {
+		return "x64"
+	} elseif ($arch === "ARM64") {
+		return "arm64"
+	} else {
+		return $arch
+	}
+}
+
+# Config of sorts
+$SCRIPT_VERSION = $null
+
+$LANDO_DEFAULT_MV = "3"
+$LANDO_BINDIR = "$env:USERPROFILE\.lando\bin"
+$LANDO_DATADIR = "$env:LOCALAPPDATA\Lando"
+$LANDO_TMPDIR = "$env:TEMP"
+$SYMLINKER = "$env:USERPROFILE\.lando\bin\lando.cmd"
+
+$CI = Confirm-EnvIsSet -Var "CI"
+$NONINTERACTIVE = $CI -or ![Environment]::UserInteractive
+$SYSTEM_ARCHITECTURE = Get-SystemArchitecture
+$USER = [System.Environment]::UserName
+
+$issueEncountered = $false
+$resolvedVersion = $null
+
+# Adds a path to the system PATH if not already present.
+#  -NewPath <path> : Path to add
+function Add-ToPath {
+  param(
+		[Parameter(Mandatory, Position = 0)]
+		[string]$NewPath
+  )
+  Write-Debug "Adding $NewPath to system PATH..."
+  $regPath = "registry::HKEY_CURRENT_USER\Environment"
+  $currDirs = (Get-Item -LiteralPath $regPath).GetValue("Path", "", "DoNotExpandEnvironmentNames") -split ";" -ne ""
+
+  if ($NewPath -in $currDirs) {
+    Write-Debug "'$NewPath' is already present in the user-level Path environment variable."
+    return
+  }
+
+  $newValue = ($currDirs + $NewPath) -join ";"
+
+  # Update the registry to make the change permanent.
+  Set-ItemProperty -Type ExpandString -LiteralPath $regPath Path $newValue
+
+  # Broadcast WM_SETTINGCHANGE to get the Windows shell to reload the
+  # updated environment, via a dummy [Environment]::SetEnvironmentVariable() operation.
+  $dummyName = [guid]::NewGuid().ToString()
+  [Environment]::SetEnvironmentVariable($dummyName, "foo", "User")
+  [Environment]::SetEnvironmentVariable($dummyName, [NullString]::value, "User")
+
+  # Also update the current session's `$env:Path` definition.
+  $env:Path = ($env:Path -replace ";$") + ";" + $NewPath
+  $env:Path = $NewPath + ";" + $env:Path
+  Write-Debug "'$NewPath' added to the user-level Path."
+}
+
+function Add-WrapperScript {
+  param(
+		[Parameter(Mandatory)]
+		[string]$Location,
+    [string]$Symlink = $script:SYMLINKER
+  )
+
+  $wrapper = @"
+@echo off
+setlocal enableextensions
+set LANDO_ENTRYPOINT_NAME=lando
+set LANDO_WRAPPER_SCRIPT=1
+"$Location" %*
+"@
+
+  # Use .NET to write UTF-8 without BOM
+  $Utf8NoBomEncoding = New-Object System.Text.UTF8Encoding $False
+  [System.IO.File]::WriteAllLines($Symlink, $wrapper, $Utf8NoBomEncoding)
+  Write-Debug "Wrote wrapper script to ${Symlink}:"
+  $wrapper -split "`n" | ForEach-Object { Write-Debug $_ }
+}
 
 # Validates whether the system environment is supported
 function Confirm-Environment {
@@ -98,65 +167,347 @@ function Confirm-Environment {
     throw "Unsupported Windows version. Minimum required version is $minVersion but you have $osVersion."
   }
 
-  # Check for WSL
-  $wslVersion = $null
-  if (Test-Path "$env:WINDIR\system32\wsl.exe") {
-    $env:WSL_UTF8 = "1"
-    $wslVersion = & wsl.exe --version | Out-String
-    # Check for "WSL version" string on the first line
-    if ($wslVersion -notmatch "WSL version") {
-      $wslVersion = $null
-    }
-    else {
-      Write-Debug "WSL version details: `n$wslVersion"
-      $wslList = & wsl.exe --list --verbose | Out-String
-      Write-Debug "WSL Instances:`n$wslList"
-    }
-    Remove-Item Env:WSL_UTF8
-  }
-  if (-not $wslVersion) {
-    Write-Debug "WSL is not installed."
-    if (-not $NoWSL) {
-      $Script:NoWSL = $true
-    }
-    if ($WSLOnly) {
-      throw "WSL is not installed. Cannot install Lando in WSL."
-    }
-  }
-}
-
-# Selects the appropriate architecture for the current system and warns about issues.
-function Select-Architecture {
-  $procArch = $(if ($Env:PROCESSOR_ARCHITEW6432) { $Env:PROCESSOR_ARCHITEW6432 } Else { $Env:PROCESSOR_ARCHITECTURE })
-  Write-Debug "Processor architecture: $procArch"
-
-  if (-not $Arch) {
-    $Arch = "x64"  # Default architecture is x64
-    if ($procArch -eq "ARM64") {
-      $Arch = "arm64"
-    }
-  }
+  Write-Debug "Processor architecture: $SYSTEM_ARCHITECTURE"
   Write-Debug "Selected architecture: $Arch"
 
   if ($Arch -notmatch "x64|arm64") {
     throw "Unsupported architecture provided. Only x64 and arm64 are supported."
   }
 
-  if ($Arch -eq "x64" -and $procArch -eq "ARM64") {
+  if ($Arch -eq "x64" -and $SYSTEM_ARCHITECTURE -eq "arm64") {
     $script:issueEncountered = $true
     Write-Warning "You are attempting to install the x64 version of Lando on an arm64 system. This may not work."
   }
-  if ($Arch -eq "arm64" -and $procArch -eq "AMD64") {
+  if ($Arch -eq "arm64" -and $SYSTEM_ARCHITECTURE -eq "x64") {
     $script:issueEncountered = $true
     Write-Warning "You are attempting to install the arm64 version of Lando on an x64 system. This may not work."
   }
 
-  return $Arch
+  # Set up our working directories
+  if (-not (Test-Path "$LANDO_DATADIR" -ErrorAction SilentlyContinue)) {
+    Write-Debug "Creating destination directory $LANDO_DATADIR..."
+    New-Item -ItemType Directory -Path $LANDO_DATADIR -Force | Out-Null
+  }
+  if (-not (Test-Path "$LANDO_BINDIR" -ErrorAction SilentlyContinue)) {
+    Write-Debug "Creating destination directory $LANDO_BINDIR..."
+    New-Item -ItemType Directory -Path $LANDO_BINDIR -Force | Out-Null
+  }
+}
+
+function Confirm-FattyOrSetupy {
+  param([string]$Version = "$script:Version")
+  $Info = Get-SemanticVersionInfo -Version "$Version"
+  return [Version]$Info.Version -lt [Version]"3.24.0" -and [Version]$Info.Version -ge [Version]"3.21.0";
+}
+
+# Converts a byte size to a human-readable string
+#  -Bytes <bytes> : Bytes to convert
+function Get-FriendlySize {
+  param($Bytes)
+  $sizes = "Bytes,KB,MB,GB,TB,PB,EB,ZB" -split ","
+  for ($i = 0; ($Bytes -ge 1kb) -and
+  ($i -lt $sizes.Count); $i++) { $Bytes /= 1kb }
+  $N = 2; if ($i -eq 0) { $N = 0 }
+  "{0:N$($N)}{1}" -f $Bytes, $sizes[$i]
+}
+
+# Downloads and installs Lando
+function Get-Lando {
+  param(
+    [Parameter(Mandatory)]
+		[string]$Url,
+		[string]$Dest = "$script:LANDO_TMPDIR"
+  )
+
+  # Ensure dest exist
+  if (-not (Test-Path "$Dest" -ErrorAction SilentlyContinue)) {
+    Write-Debug "Creating destination directory $Dest..."
+    New-Item -ItemType Directory -Path $Dest -Force | Out-Null
+  }
+
+  # Add the file part
+  $Dest = "$Dest\$(Get-Random).exe"
+  Write-Host "Fetching Lando $script:Version from $Url to $Dest..."
+
+  # Save current colors
+  $Host.PrivateData.ProgressForegroundColor = "White";
+  $Host.PrivateData.ProgressBackgroundColor = "DarkMagenta";
+
+  # If file url then just move it and return
+  if ($Url.StartsWith("file://")) {
+    $Source = $Url.TrimStart("file://");
+    Copy-Item -Path "$Source" -Destination "$Dest"> -Force
+    Write-Debug("Moved local lando from $Source to $Dest");
+    return $Dest;
+  }
+
+  Write-Progress -Activity "Downloading Lando $script:Version" -Status "Preparing..." -PercentComplete 0
+
+  $outputFileStream = [System.IO.FileStream]::new($Dest, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
+  try {
+    Add-Type -AssemblyName System.Net.Http
+    $httpClient = New-Object System.Net.Http.HttpClient
+    $httpCompletionOption = [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead
+    $response = $httpClient.GetAsync($Url, $httpCompletionOption)
+
+    Write-Progress -Activity "Downloading Lando $script:Version" -Status "Starting download..." -PercentComplete 0
+    $response.Wait()
+
+    $fileSize = $response.Result.Content.Headers.ContentLength
+    $fileSizeString = Get-FriendlySize $fileSize
+
+    # Stream the download to the destination file stream
+    $downloadTask = $response.Result.Content.CopyToAsync($outputFileStream)
+    $previousSize = 0
+    $byteChange = @()
+    while (-not $downloadTask.IsCompleted) {
+      $sleepTime = 500
+      Start-Sleep -Milliseconds $sleepTime
+
+      # Calculate the download speed
+      $downloaded = $outputFileStream.Position
+      $byteChange += ($downloaded - $previousSize)
+      $previousSize = $downloaded
+      if ($byteChange.Count -gt (1000 / $sleepTime)) {
+        $byteChange = $byteChange | Select-Object -Last (1000 / $sleepTime)
+      }
+      $averageSpeed = $byteChange | Measure-Object -Average | Select-Object -ExpandProperty Average
+      $speedString = Get-FriendlySize ($averageSpeed * (1000 / $sleepTime))
+
+      Write-Progress -Activity "Downloading Lando $script:Version" -Status "$(Get-FriendlySize $downloaded)/$fileSizeString (${speedString}/s)" -PercentComplete ($outputFileStream.Position / $fileSize * 100)
+    }
+    Write-Progress -Activity "Downloading Lando $script:Version" -Status "Download complete" -PercentComplete 100
+    Start-Sleep -Milliseconds 200
+    $downloadTask.Dispose()
+
+  }
+  catch [System.Net.WebException] {
+    $message = $_.Exception.Message
+    throw "Failed to download Lando from $downloadUrl. Error: $message"
+  }
+  catch {
+    $message = $_.Exception.Message
+    throw "Failed to download Lando from $downloadUrl. Error: $_"
+  }
+  finally {
+    $outputFileStream.Close()
+  }
+  Write-Progress -Activity "Downloading Lando $script:resolvedVersion" -Completed
+
+  return $Dest;
+}
+
+# Runs the "lando setup" command if Lando is at least version 3.21.0
+function Invoke-LandoSetup {
+  param(
+		[string]$LandoBin = 'lando.cmd'
+  )
+
+  # Start
+  $landoSetupCommand = "$LandoBin setup"
+  # Add -y if needed
+  if ($NONINTERACTIVE) {$landoSetupCommand += " -y"}
+  # Add debug if needed
+  if ($Debug) {$landoSetupCommand += " --debug"}
+
+  try {
+    Invoke-Expression $landoSetupCommand
+    if ($LASTEXITCODE -ne 0) {
+      throw "'lando setup' failed with exit code $LASTEXITCODE."
+    }
+  }
+  catch {
+    $script:issueEncountered = $true
+    Write-Host "Failed to run 'lando setup'. You may need to manually run this command to complete the setup. `nError: $_" -ForegroundColor Red
+  }
+}
+
+function Get-SemanticVersionInfo {
+  param([string]$Version = "$script:Version")
+
+  if ($Version.StartsWith("v")) {
+    $Version = $Version.TrimStart("v");
+  }
+
+  # Regex to parse semantic version
+  $regex = "(\d+)\.(\d+)\.(\d+)(?:-([\w\d\-\.]+))?(?:\+([\w\d\-\.]+))?$"
+
+  if ($Version -match $regex) {
+    $major = [int]$Matches[1]
+    $minor = [int]$Matches[2]
+    $patch = [int]$Matches[3]
+
+    return @{
+      Major = $major
+      Minor = $minor
+      Patch = $patch
+      PreRelease = $Matches[4]
+      Build = $Matches[5]
+      Version = "${major}.${minor}.${patch}"
+      Raw = "$Version"
+    }
+  } else {
+    throw "Invalid semantic version: $Version"
+  }
+}
+
+function Resolve-Input {
+	param (
+		[Parameter(Mandatory)]
+		[string]$InputVar,
+		[Parameter(Mandatory)]
+		[string]$DefaultValue,
+		[string[]]$EnvVars=@()
+	)
+
+	# if the user has modified the input value from the default then just return inputvar
+	if ($InputVar -ne $DefaultValue) {
+		return $InputVar;
+	}
+
+	# otherwise lets try to set it with an envvar if possible
+	foreach ($var in $EnvVars) {
+		Write-Debug "$var $(Confirm-EnvIsSet -Var "$var")"
+		if (Confirm-EnvIsSet -Var "$var") {
+			return [System.Environment]::GetEnvironmentVariable($var);
+		}
+	}
+
+	return $DefaultValue
+}
+
+function Resolve-Version {
+  param([string]$Version = "$script:Version")
+
+  # If version is a path that exists then return `lando version` output
+  if (Test-Path ($Version = Resolve-VersionPath -Version "$Version")) {
+    try {
+      $result = Invoke-Expression "$Version version"
+      return $result.Trim();
+    }
+    catch {
+      throw "$Version does not appear to be a valid Lando or there was an error getting version information from it!"
+    }
+  }
+
+  # resolve any version aliases as best as possible
+  return Resolve-VersionAlias -Version "$Version"
+}
+
+function Resolve-VersionAlias {
+  param([string]$Version = "$script:Version")
+
+  $aliasMap = @{
+    "3"      = "3-stable";
+    "4"      = "4-stable";
+    "stable" = "$LANDO_DEFAULT_MV-stable";
+    "edge"   = "$LANDO_DEFAULT_MV-edge";
+    "dev"    = "$LANDO_DEFAULT_MV-dev";
+    "latest" = "$LANDO_DEFAULT_MV-dev";
+  }
+
+  if ($aliasMap.ContainsKey($Version)) {
+    $Version = $($aliasMap[$Version])
+  }
+
+  switch -Regex ($Version) {
+    "^4-(stable|edge)$" {
+      Write-Debug "Fetching release alias '$($Version.ToUpper())' from GitHub..."
+      $Version = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lando/core-next/main/release-aliases/$($Version.ToUpper())" -UseBasicParsing).Content -replace '\s'
+    }
+    "^3-(stable|edge)$" {
+      Write-Debug "Fetching release alias '$($Version.ToUpper())' from GitHub..."
+      $Version = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lando/core/main/release-aliases/$($Version.ToUpper())" -UseBasicParsing).Content -replace '\s'
+    }
+    "^4-(dev|latest)$" {
+      $Version = "4-dev"
+    }
+    "^3-(dev|latest)$" {
+      $Version = "3-dev"
+    }
+    Default {
+      if (-not $Version.StartsWith("v")) {
+        $Version = "v$Version"
+      }
+    }
+  }
+
+  return $Version
+}
+
+function Resolve-VersionPath {
+  param([string]$Version = "$script:Version")
+
+  if ([System.IO.Path]::IsPathRooted($Version)) {
+    return $Version
+  } else {
+    try {
+      return Resolve-Path $Version | ForEach-Object { $_.Path }
+    } catch {
+      return $Version
+    }
+  }
+}
+
+# Resolves a version alias to a download URL
+function Resolve-VersionUrl {
+  param(
+    [string]$Arch = $script:Arch,
+    [string]$Version = "$script:Version",
+    [switch]$Fat = $false
+  )
+
+  # If version is a path that exists then return `lando version` output
+  if (Test-Path ($Version = Resolve-VersionPath -Version "$Version")) {
+    try {
+      return "file://$Version"
+    }
+    catch {
+      throw "$Version does not appear to be a valid Lando or there was an error getting version information from it!"
+    }
+  }
+
+  # Resolve alias first
+  $Version = Resolve-VersionAlias -Version "$Version"
+
+  # Resolve versions to download URLs.
+  # Default to slim variant for 3.x unless -Fat is specified.
+  switch -Regex ($Version) {
+    "^4-dev$" {
+      return "https://files.lando.dev/core-next/lando-win-${Arch}-dev.exe"
+    }
+    "^3-dev$" {
+      return "https://files.lando.dev/core/lando-win-${Arch}-dev.exe"
+    }
+    "^v4\." {
+      return  "https://github.com/lando/core-next/releases/download/${Version}/lando-win-${Arch}-${Version}.exe"
+    }
+    "^v3\." {
+      if ((Confirm-FattyOrSetupy -Version "$Version") -and -not $Fat) {
+        return "https://github.com/lando/core/releases/download/${Version}/lando-win-${Arch}-${Version}-slim.exe"
+      }
+      return "https://github.com/lando/core/releases/download/${Version}/lando-win-${Arch}-${Version}.exe"
+    }
+    Default {
+      throw "Could not resolve $Version to a downloadable URL!"
+    }
+  }
 }
 
 # Checks for existing Lando installation and uninstalls it
 function Uninstall-LegacyLando {
   Write-Debug "Checking for previous Lando installation..."
+
+  # Remove core plugin to assert dominance
+  if (Test-Path "$env:USERPROFILE\.lando\plugins\@lando\core" -ErrorAction SilentlyContinue) {
+    Write-Debug "Removing detectecd core plugin from $env:USERPROFILE\.lando\plugins\@lando..."
+    Remove-Item -Path "$env:USERPROFILE\.lando\plugins\@lando\core" -Recurse -Force
+  }
+
+  if (Test-Path "$LANDO_BINDIR\lando.exe" -ErrorAction SilentlyContinue) {
+    Write-Debug "Removing detectecd lando.exe from $LANDO_BINDIR..."
+    Remove-Item -Path "$LANDO_BINDIR\lando.exe" -Recurse -Force
+  }
 
   # Catch the object not found error
   try {
@@ -189,380 +540,14 @@ function Uninstall-LegacyLando {
   }
 }
 
-# Resolves a version alias to a download URL
-#  -Version <version> : Version to resolve
-function Resolve-VersionAlias {
-  param([string]$Version)
+function Wait-ForUser {
+  $key = [Console]::ReadKey($true)
 
-  Write-Debug "Resolving version alias '$Version'..."
-  $originalVersion = $Version
-  $baseUrl3 = "https://github.com/lando/core/releases/download/"
-  $baseUrl4 = "https://github.com/lando/core-next/releases/download/"
-
-  $aliasMap = @{
-    "3"      = "3-stable";
-    "4"      = "4-stable";
-    "stable" = "$LANDO_DEFAULT_MV-stable";
-    "edge"   = "$LANDO_DEFAULT_MV-edge";
-    "dev"    = "$LANDO_DEFAULT_MV-dev";
-    "latest" = "$LANDO_DEFAULT_MV-dev";
-  }
-
-  if ($aliasMap.ContainsKey($Version)) {
-    Write-Debug "Version alias '$Version' mapped to '$($aliasMap[$Version])'"
-    $Version = $($aliasMap[$Version])
-  }
-
-  # Resolve release aliases to download URLs.
-  # Default to slim variant for 3.x unless -Fat is specified.
-  switch -Regex ($Version) {
-    "^4-(stable|edge)$" {
-      Write-Debug "Fetching release alias '$($Version.ToUpper())' from GitHub..."
-      $VersionLabel = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lando/core-next/main/release-aliases/$($Version.ToUpper())" -UseBasicParsing).Content -replace '\s'
-      $variant = if ($Version -match "^3-" -and !$Fat) { "-slim" } else { "" }
-      $downloadUrl = "${baseUrl4}${VersionLabel}/lando-win-${arch}-${VersionLabel}${variant}.exe"
-    }
-    "^3-(stable|edge)$" {
-      Write-Debug "Fetching release alias '$($Version.ToUpper())' from GitHub..."
-      $VersionLabel = (Invoke-WebRequest -Uri "https://raw.githubusercontent.com/lando/core/main/release-aliases/$($Version.ToUpper())" -UseBasicParsing).Content -replace '\s'
-      $variant = if ($Version -match "^3-" -and !$Fat) { "-slim" } else { "" }
-      $downloadUrl = "${baseUrl3}${VersionLabel}/lando-win-${arch}-${VersionLabel}${variant}.exe"
-    }
-    "^4-(dev|latest)$" {
-      $downloadUrl = "https://files.lando.dev/core-next/lando-win-${arch}-dev.exe"
-    }
-    "^3-(dev|latest)$" {
-      $variant = if ($Version -match "^3-" -and !$Fat) { "-slim" } else { "" }
-      $downloadUrl = "https://files.lando.dev/core/lando-win-${arch}-dev${variant}.exe"
-    }
-    Default {
-      Write-Debug "Version '$Version' is a semantic version"
-      if (-not $Version.StartsWith("v")) {
-        $Version = "v$Version"
-      }
-      if ($Version.StartsWith("v4")) {
-        $downloadUrl = "${baseUrl4}${Version}/lando-win-${arch}-${Version}.exe"
-      }
-      else {
-        $downloadUrl = "${baseUrl3}${Version}/lando-win-${arch}-${Version}.exe"
-      }
-    }
-  }
-
-  Write-Debug "Resolved version '${originalVersion}' to ${Version} (${downloadUrl})"
-
-  return $Version, $downloadUrl
-}
-
-# Adds a path to the system PATH if not already present.
-#  -NewPath <path> : Path to add
-function Add-ToPath {
-  param(
-  [Parameter(Mandatory, Position = 0)]
-  [string]$NewPath
-  )
-  Write-Debug "Adding $NewPath to system PATH..."
-  $regPath = 'registry::HKEY_CURRENT_USER\Environment'
-  $currDirs = (Get-Item -LiteralPath $regPath).GetValue('Path', '', 'DoNotExpandEnvironmentNames') -split ';' -ne ''
-
-  if ($NewPath -in $currDirs) {
-    Write-Debug "'$NewPath' is already present in the user-level Path environment variable."
-    return
-  }
-
-  $newValue = ($currDirs + $NewPath) -join ';'
-
-  # Update the registry to make the change permanent.
-  Set-ItemProperty -Type ExpandString -LiteralPath $regPath Path $newValue
-
-  # Broadcast WM_SETTINGCHANGE to get the Windows shell to reload the
-  # updated environment, via a dummy [Environment]::SetEnvironmentVariable() operation.
-  $dummyName = [guid]::NewGuid().ToString()
-  [Environment]::SetEnvironmentVariable($dummyName, 'foo', 'User')
-  [Environment]::SetEnvironmentVariable($dummyName, [NullString]::value, 'User')
-
-  # Also update the current session's `$env:Path` definition.
-  $env:Path = ($env:Path -replace ';$') + ';' + $NewPath
-  $env:Path = $NewPath + ';' + $env:Path
-  Write-Debug "'$NewPath' added to the user-level Path."
-}
-
-# Converts a byte size to a human-readable string
-#  -Bytes <bytes> : Bytes to convert
-function Get-FriendlySize {
-  param($Bytes)
-  $sizes = 'Bytes,KB,MB,GB,TB,PB,EB,ZB' -split ','
-  for ($i = 0; ($Bytes -ge 1kb) -and
-  ($i -lt $sizes.Count); $i++) { $Bytes /= 1kb }
-  $N = 2; if ($i -eq 0) { $N = 0 }
-  "{0:N$($N)}{1}" -f $Bytes, $sizes[$i]
-}
-
-# Builds the command to execute after a reboot
-#  -ScriptPath <path> : Path to the script
-#  -BoundParameters <$MyInvocation.BoundParameters> : Pass in the $MyInvocation.BoundParameters for the script
-function Get-ResumeCommand {
-  param(
-  [Parameter(Mandatory, Position = 0)]
-  [string]$ScriptPath,
-  [Parameter(Mandatory, Position = 1)]
-  $BoundParameters
-
-  )
-  Write-Debug "Building resume command string..."
-
-  # Strongly-typed array to avoid issues with the -join operator in some cases
-  [string[]]$arguments = $BoundParameters.GetEnumerator() | ForEach-Object {
-    if ($_.Value -is [switch]) {
-      if ($_.Value) {
-        "-$($_.Key)"
-      }
-    }
-    else {
-      "-$($_.Key) `"$($_.Value)`""
-    }
-  }
-  $argString = ($arguments += "-Resume") -join " "
-  if ($script:resolvedVersion) {
-    $argString += " -Version `"$script:resolvedVersion`""
-  }
-  $command = ("PowerShell -NoLogo -NoExit -ExecutionPolicy Bypass -Command `"$ScriptPath`" $argString").Trim()
-
-  Write-Debug "Resume command: $command"
-  return $command
-}
-
-# Downloads and installs Lando
-function Install-Lando {
-  Write-Debug "Installing Lando in Windows..."
-  # Resolve the version alias to a download URL
-  try {
-    $script:resolvedVersion, $downloadUrl = Resolve-VersionAlias -Version $Version
-  }
-  catch {
-    throw "Could not resolve the provided version alias '$Version'. Error: $_"
-  }
-
-  if (-not $downloadUrl) {
-    throw "Could not resolve the download URL for version '$Version'."
-  }
-
-  $filename = $downloadUrl.Split('/')[-1]
-
-  Write-Host "Downloading Lando..."
-  $downloadDest = "$LANDO_APPDATA\$filename"
-  Write-Debug "From $downloadUrl to $downloadDest..."
-  Write-Progress -Activity "Downloading Lando $script:resolvedVersion" -Status "Preparing..." -PercentComplete 0
-
-  $outputFileStream = [System.IO.FileStream]::new($downloadDest, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
-  try {
-    Add-Type -AssemblyName System.Net.Http
-    $httpClient = New-Object System.Net.Http.HttpClient
-    $httpCompletionOption = [System.Net.Http.HttpCompletionOption]::ResponseHeadersRead
-    $response = $httpClient.GetAsync($downloadUrl, $httpCompletionOption)
-
-    Write-Progress -Activity "Downloading Lando $script:resolvedVersion" -Status "Starting download..." -PercentComplete 0
-    $response.Wait()
-
-    $fileSize = $response.Result.Content.Headers.ContentLength
-    $fileSizeString = Get-FriendlySize $fileSize
-
-    # Stream the download to the destination file stream
-    $downloadTask = $response.Result.Content.CopyToAsync($outputFileStream)
-    $previousSize = 0
-    $byteChange = @()
-    while (-not $downloadTask.IsCompleted) {
-      $sleepTime = 500
-      Start-Sleep -Milliseconds $sleepTime
-
-      # Calculate the download speed
-      $downloaded = $outputFileStream.Position
-      $byteChange += ($downloaded - $previousSize)
-      $previousSize = $downloaded
-      if ($byteChange.Count -gt (1000 / $sleepTime)) {
-        $byteChange = $byteChange | Select-Object -Last (1000 / $sleepTime)
-      }
-      $averageSpeed = $byteChange | Measure-Object -Average | Select-Object -ExpandProperty Average
-      $speedString = Get-FriendlySize ($averageSpeed * (1000 / $sleepTime))
-
-      Write-Progress -Activity "Downloading Lando $script:resolvedVersion" -Status "$(Get-FriendlySize $downloaded)/$fileSizeString (${speedString}/s)" -PercentComplete ($outputFileStream.Position / $fileSize * 100)
-    }
-    Write-Progress -Activity "Downloading Lando $script:resolvedVersion" -Status "Download complete" -PercentComplete 100
-    Start-Sleep -Milliseconds 200
-    $downloadTask.Dispose()
-
-  }
-  catch [System.Net.WebException] {
-    $message = $_.Exception.Message
-    throw "Failed to download Lando from $downloadUrl. Error: $message"
-  }
-  catch {
-    $message = $_.Exception.Message
-    throw "Failed to download Lando from $downloadUrl. Error: $_"
-  }
-  finally {
-    $outputFileStream.Close()
-  }
-  Write-Progress -Activity "Downloading Lando $script:resolvedVersion" -Completed
-  Write-Host "Installing Lando..."
-
-  if (-not (Test-Path $Dest)) {
-    Write-Debug "Creating destination directory $Dest..."
-    New-Item -ItemType Directory -Path $Dest | Out-Null
-  }
-
-  $symlinkPath = "$Dest\lando.exe"
-  if (Test-Path $symlinkPath) {
-    Write-Debug "Removing existing file or link at $symlinkPath..."
-    Remove-Item -Path $symlinkPath -Force
-  }
-
-  try {
-    # Set up mklink command
-    $QuotedPath = '"{0}"' -f $symlinkPath
-    $QuotedTarget = '"{0}"' -f $downloadDest
-    $mklink = @('mklink', $QuotedPath, $QuotedTarget)
-    (-not $Debug -and ($mklink += @('>nul', '2>&1'))) | Out-Null
-
-    # Try to create the link
-    Write-Debug "> $($mklink -join ' ')"
-    $process = Start-Process -FilePath 'cmd.exe' -ArgumentList "/D /C $($mklink -join ' ')" -NoNewWindow -Wait -PassThru
-
-    # Symlink creation will fail if the user doesn't have developer mode enabled in Windows, but hard links work.
-    if ($process.ExitCode) {
-      Write-Debug "Symlink creation failed with exit code $($process.ExitCode). Trying hard link..."
-      $mklink = @('mklink', '/H', $QuotedPath, $QuotedTarget)
-      (-not $Debug -and ($mklink += @('>nul', '2>&1'))) | Out-Null
-
-      Write-Debug "> $($mklink -join ' ')"
-      $process = Start-Process -FilePath 'cmd.exe' -ArgumentList "/D /C $($mklink -join ' ')" -NoNewWindow -Wait -PassThru
-
-      if ($process.ExitCode) {
-        Write-Debug "Hard link creation failed with exit code $($process.ExitCode). Trying copy..."
-        Copy-Item -Path $downloadDest -Destination $symlinkPath -Force
-      }
-    }
-  }
-  catch {
-    throw "Failed to create symlink from $symlinkPath to $downloadDest.`nError: $_"
-  }
-
-  # Add $Dest to system PATH if not already present
-  Add-ToPath -NewPath $Dest
-
-  # Clear the cache so that new Lando commands are available
-  $landoClearCommand = "$symlinkPath --clear"
-  ($Debug -and ($landoClearCommand += " --debug")) | Out-Null
-  Write-Debug "Running '$landoClearCommand'"
-  try {
-    Invoke-Expression $landoClearCommand
-  }
-  catch {
-    $script:issueEncountered = $true
-    Write-Host $_.Exception.Message
-    Write-Host "Failed to run 'lando --clear'. You may need to manually run this command to complete the setup." -ForegroundColor Red
-    Write-Debug $_.Exception
-  }
-}
-
-# Install Lando in WSL2
-function Install-LandoInWSL {
-  Write-Debug "Installing Lando in WSL..."
-
-  $wslInstances = wsl.exe --list --quiet
-  if (-not $wslInstances) {
-    Write-Debug "No WSL instances found."
-    return
-  }
-  Write-Debug "Found WSL instances: $wslInstances"
-
-  # Download the Lando installer script that we'll run in WSL
-  $wslSetupScript = "$env:TEMP\setup-lando.sh"
-  try {
-    $originalProgressPreference = $ProgressPreference
-    $ProgressPreference = "SilentlyContinue"
-    Write-Debug "Downloading Lando Linux installer script from $LANDO_SETUP_SH_URL..."
-    Invoke-WebRequest -Uri $LANDO_SETUP_SH_URL -OutFile $wslSetupScript
-    $ProgressPreference = $originalProgressPreference
-  }
-  catch {
-    throw "Failed to download Lando Linux installer script from $LANDO_SETUP_SH_URL.`nError: $_"
-  }
-
-  # We will pass some of our parameters to the setup script in WSL
-  $setupParams = @()
-  if ($Debug) {
-    $setupParams += "--debug"
-  }
-  if ($Arch) {
-    $setupParams += "--arch=$Arch"
-  }
-  if ($Fat) {
-    $setupParams += "--fat"
-  }
-  if ($NoSetup) {
-    $setupParams += "--no-setup"
-  }
-  if ($Version) {
-    $setupParams += "--version=$(if ($script:resolvedVersion) { $script:resolvedVersion } Else { $Version })"
-  }
-
-  Write-Host ""
-  foreach ($wslInstance in $wslInstances) {
-    # Skip Docker Desktop WSL instance
-    if ($wslInstance -match "docker-desktop|docker-desktop-data") {
-      Write-Debug "Skipping Docker Desktop WSL instance '$wslInstance'."
-      continue
-    }
-    $currentLoc = Get-Location
-    Set-Location $env:TEMP
-
-    Write-Host "Installing Lando in WSL distribution '$wslInstance'..."
-    $command = "wsl.exe -d $wslInstance --shell-type login ./setup-lando.sh $setupParams"
-    Write-Debug "$command"
-
-    try {
-      Invoke-Expression $command
-    }
-    catch {
-      $script:issueEncountered = $true
-      Write-Host $_.Exception.Message
-      Write-Host "Failed to automatically install Lando into WSL distribution '$wslInstance'. You may need to manually install Lando in this distribution." -ForegroundColor Red
-      Write-Debug $_.Exception
-    }
-
-    # Check the return code from the setup script
-    if ($LASTEXITCODE -ne 0) {
-      $script:issueEncountered = $true
-      Write-Host "Failed to automatically install Lando into WSL distribution '$wslInstance'. You may need to manually install Lando in this distribution." -ForegroundColor Red
-    }
-
-    Set-Location $currentLoc
-    Write-Host ""
-  }
-}
-
-# Runs the "lando setup" command if Lando is at least version 3.21.0
-function Invoke-LandoSetup {
-  Write-Debug "Running 'lando setup'..."
-  if ($script:resolvedVersion -lt "v3.21.0") {
-    Write-Debug "Skipping 'lando setup' because version $script:resolvedVersion is less than 3.21.0."
-    return
-  }
-
-  $landoSetupCommand = "$Dest\lando.exe setup -y"
-  ($Debug -and ($landoSetupCommand += " --debug")) | Out-Null
-
-  Write-Debug "Running '$landoSetupCommand'"
-  try {
-    Invoke-Expression $landoSetupCommand
-    if ($LASTEXITCODE -ne 0) {
-      throw "'lando setup' failed with exit code $LASTEXITCODE."
-    }
-  }
-  catch {
-    $script:issueEncountered = $true
-    Write-Host "Failed to run 'lando setup'. You may need to manually run this command to complete the setup. `nError: $_" -ForegroundColor Red
+  if ($key.Key -eq "Enter") {
+    Write-Debug "User confirmed. Continuing..."
+  } else {
+    Write-Debug "User cancelled with '$($key.Key)'. Exiting..."
+    exit 0
   }
 }
 
@@ -571,17 +556,7 @@ if ([string]::IsNullOrEmpty($SCRIPT_VERSION)) {
   $SCRIPT_VERSION = Invoke-Expression "git describe --tags --always --abbrev=1"
 }
 
-Write-Debug "Running script $SCRIPT_VERSION with:"
-Write-Debug "  -Arch: $Arch"
-Write-Debug "  -Debug: $Debug"
-Write-Debug "  -Dest: $Dest"
-Write-Debug "  -Fat: $Fat"
-Write-Debug "  -NoSetup: $NoSetup"
-Write-Debug "  -NoWSL: $NoWSL"
-Write-Debug "  -Resume: $Resume"
-Write-Debug "  -Version: $Version"
-Write-Debug "  -WSLOnly: $WSLOnly"
-Write-Debug "  -Help: $Help"
+Write-Host "Lando Windows Installer" -ForegroundColor DarkMagenta
 
 # It's okay to ask for help
 if ($Help) {
@@ -589,81 +564,127 @@ if ($Help) {
   return
 }
 
-if ($Resume) {
-  Write-Host "Lando installation was previously interrupted by a Windows restart. Resuming..."
+# Resolve stringy inputs
+$Arch = Resolve-Input -InputVar $Arch -DefaultValue "auto" -EnvVars @("LANDO_INSTALLER_ARCH")
+$Dest = Resolve-Input -InputVar $Dest -DefaultValue "$LANDO_BINDIR" -EnvVars @("LANDO_INSTALLER_DEST")
+$Version = Resolve-Input -InputVar $Version -DefaultValue "stable" -EnvVars @("LANDO_VERSION", "LANDO_INSTALLER_VERSION")
+
+# Resolve arch if auto
+if ($Arch -eq "auto") {
+	$Arch = $SYSTEM_ARCHITECTURE;
 }
+
+Write-Debug "Running script with resolved inputs:"
+Write-Debug "  -Arch: $Arch"
+Write-Debug "  -Debug: $Debug"
+Write-Debug "  -Dest: $Dest"
+Write-Debug "  -Fat: $Fat"
+Write-Debug "  -NoSetup: $NoSetup"
+Write-Debug "  -Version: $Version"
+Write-Debug "  -Help: $Help"
+Write-Debug "and config:"
+Write-Debug "  CI: $CI"
+Write-Debug "  NONINTERACTIVE: $NONINTERACTIVE"
+Write-Debug "  SCRIPT_VERSION: $SCRIPT_VERSION"
+Write-Debug "  SYSTEM_ARCHITECTURE: $SYSTEM_ARCHITECTURE"
+Write-Debug "  USER: $USER"
 
 # Validate the system environment
 Confirm-Environment
 
-# Select the appropriate architecture
-$Arch = Select-Architecture
+# Save original version
+$originalVersion = $Version;
 
-# Remove @lando core if applicable
-if (Test-Path "$env:USERPROFILE\.lando\plugins\@lando\core" -ErrorAction SilentlyContinue) {
-  Write-Debug "Removing detectecd core plugin from $env:USERPROFILE\.lando\plugins\@lando..."
-  Remove-Item -Path "$env:USERPROFILE\.lando\plugins\@lando\core" -Recurse -Force
+# Resolve version
+$Version = Resolve-Version -Version "$originalVersion"
+# Dev version boolean
+$isDevVersion = $Version.EndsWith("-dev");
+# Resolve URL
+$urlFat = @{
+  Fat = $Fat
 }
+$url = Resolve-VersionUrl -Version "$originalVersion" @urlFat
 
-# Set up our working directory
-if (-not (Test-Path "$LANDO_APPDATA" -ErrorAction SilentlyContinue)) {
-  Write-Debug "Creating destination directory $LANDO_APPDATA..."
-  New-Item -ItemType Directory -Path $LANDO_APPDATA -Force | Out-Null
-}
+# Debug version resolution
+Write-Debug "Version resolution results:"
+Write-Debug "  Version: $Version"
+Write-Debug "  Url: $url"
+Write-Debug "  isDevVersion: $isDevVersion"
 
-# Add a RunOnce registry key so Windows will automatically resume the script when interrupted by a reboot
-$runOnceKey = "HKCU:\Software\Microsoft\Windows\CurrentVersion\RunOnce"
-$runOnceName = "LandoSetup"
-if (-not $WSLOnly -and -not $Resume) {
-  # When the script is invoked from a piped web request, the script path is not available.
-  # Detect this and save the script to a known location so it can be resumed after a reboot.
-  $localScriptPath = $MyInvocation.MyCommand.Path
-  if ($null -eq $localScriptPath) {
-    $localScriptPath = "$LANDO_APPDATA\setup-lando.ps1"
-    Write-Debug "Saving script to $localScriptPath..."
-    $scriptContent = (Invoke-WebRequest -Uri "$LANDO_SETUP_PS1_URL" -UseBasicParsing).Content
-    Set-Content -Path $localScriptPath -Value $scriptContent
+# Summarize what the script is about to do
+if (-not $NONINTERACTIVE) {
+  Write-Host "This script is about to:"
+  Write-Host ""
+  Write-Host "- " -NoNewline
+  Write-Host "Download " -NoNewline -ForegroundColor DarkMagenta
+  Write-Host "lando $Version to $Dest"
+
+  if ((Confirm-FattyOrSetupy -Version "$Version") -and -not $NoSetup) {
+    Write-Host "- " -NoNewline
+    Write-Host "Run " -NoNewline -ForegroundColor DarkBlue
+    Write-Host "lando setup"
   }
 
-  # Install Lando in Windows
-  if (-not $WSLOnly) {
-    Uninstall-LegacyLando
+  Write-Host "- " -NoNewline
+  Write-Host "Run " -NoNewline -ForegroundColor DarkBlue
+  Write-Host "lando shellenv --add"
 
-    Install-Lando
+  Write-Host "- " -NoNewline
+  Write-Host "Add " -NoNewline -ForegroundColor DarkGreen
+  Write-Host "$Dest to PATH"
+  Write-Host ""
 
-    if (-not $NoSetup) {
-      # Dependency installation may trigger a reboot so make sure we can resume after
-      $resumeCommand = Get-ResumeCommand $localScriptPath $MyInvocation.BoundParameters
-
-      Write-Debug "Adding RunOnce registry key to re-run the script after a reboot..."
-      if (-not (Test-Path $runOnceKey)) {
-        New-Item -Path $runOnceKey -Force | Out-Null
-      }
-      New-ItemProperty -Path $runOnceKey -Name $runOnceName -Value $resumeCommand -PropertyType String -Force | Out-Null
-
-      # Let Lando take over for dependecy installation. A system reboot may happen here.
-      Invoke-LandoSetup
-
-      # If we get here, a reboot didn't happen, so we won't need to resume later.
-      Write-Debug "Removing RunOnce registry key..."
-      Remove-ItemProperty -Path $runOnceKey -Name $runOnceName -ErrorAction SilentlyContinue
-    }
-  }
+  Write-Host "Press RETURN/ENTER to continue or any other key to abort:"
+  Wait-ForUser
 }
+
+# Download lando to tmpdir
+$LANDO_TMPFILE = Get-Lando "$Url"
+# Barebones it works test
+$Version = Invoke-Expression "$LANDO_TMPFILE version"
+# Remove older landos
+Uninstall-LegacyLando
+# Define lando
+$LANDO = "$Dest\lando.exe"
+
+# if Dest is default then put in data dir and link to that
+If ($Dest -eq $LANDO_BINDIR) {
+  $HIDDEN_LANDO = "$LANDO_DATADIR\$Version\lando.exe"
+  New-Item -ItemType Directory -Path "$LANDO_DATADIR\$Version" -Force | Out-Null
+  Move-Item -Path "$LANDO_TMPFILE" -Destination "$HIDDEN_LANDO" -Force
+  Add-WrapperScript -Location "$HIDDEN_LANDO"
+
+# Otherwise just move directly to dest and link
+} else {
+  Move-Item -Path "$LANDO_TMPFILE" -Destination "$LANDO" -Force
+  Add-WrapperScript -Location "$LANDO"
+}
+
+Write-Host "Moved Lando $Version to $LANDO"
+
+# Do some special stuff on v3
+if ($Version.StartsWith("v3.")) {
+  $null = Invoke-Expression "$SYMLINKER --clear" | ForEach-Object { Write-Debug $_ }
+}
+
+# Add $Dest and $LANDO_BIN to system PATH if not already present
+Add-ToPath -NewPath $Dest
+Add-ToPath -NewPath "$LANDO_BINDIR"
 
 # Lando setup may have been interrupted by the reboot. Run it again.
-if ($Resume -and -not $NoSetup -and -not $WSLOnly) {
-  Invoke-LandoSetup
+# @TODO: pass in lando?
+if ((Confirm-FattyOrSetupy -Version "$Version") -and -not $NoSetup) {
+  Invoke-LandoSetup -Lando "$Symlinker"
 }
 
-# Install in WSL after lando setup runs because Docker Desktop WSL
-# instances may not be available until after reboot.
-if (-not $NoWSL) {
-  Install-LandoInWSL
-}
+# Run lando shell env
+Invoke-Expression "$SYMLINKER shellenv --add"
 
 if ($issueEncountered) {
   Write-Warning "Lando was installed but issues were encountered during installation. Please check the output above for details."
 }
 
-Write-Host "`nLando setup complete!`n" -ForegroundColor Green
+Write-Host ""
+Write-Host "Success! " -NoNewline -ForegroundColor DarkGreen
+Write-Host "lando " -NoNewline -ForegroundColor DarkMagenta
+Write-Host "is installed!"
