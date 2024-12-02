@@ -20,7 +20,7 @@ jobs:
       - run:
           name: Setup Lando on Linux
           command: |
-            ./setup-lando.sh
+            ./setup-lando.sh --version 3-dev
             lando version --all
             lando config
 
