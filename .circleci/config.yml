@@ -43,7 +43,8 @@ jobs:
       - checkout
       - run:
           name: Install Lando on Windows
-          command: ./setup-lando.ps1 -NoSetup && lando version --all
+          command: .\setup-lando.ps1 -NoSetup && lando version --all
+          shell: powershell.exe
   setup-on-windows:
     machine:
       image: 'windows-server-2022-gui:current'
@@ -52,7 +53,8 @@ jobs:
       - checkout
       - run:
           name: Install Lando on Windows
-          command: ./setup-lando.ps1 -NoSetup && lando setup -y --skip-networking && lando version --all
+          command: .\setup-lando.ps1 -NoSetup && lando setup -y --skip-networking && lando version --all
+          shell: powershell.exe
 
 workflows:
   setup-lando:
