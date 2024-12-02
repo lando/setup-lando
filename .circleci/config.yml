@@ -47,7 +47,6 @@ jobs:
     machine:
       image: windows-server-2022
     steps:
-    steps:
       - checkout
       - run:
           name: Install Lando on Windows
@@ -58,7 +57,7 @@ workflows:
     jobs:
       - install-on-linux
       - install-on-macos
+      - install-on-windows
       - setup-on-linux
       - setup-on-macos
-      - install-on-windows
       - setup-on-windows
