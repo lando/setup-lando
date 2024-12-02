@@ -37,7 +37,7 @@ jobs:
 
   install-on-windows:
     machine:
-      image: windows-server-2022
+      image: windows-default
     steps:
       - checkout
       - run:
@@ -45,7 +45,7 @@ jobs:
           command: ./setup-lando.ps1 -NoSetup && lando version --all
   setup-on-windows:
     machine:
-      image: windows-server-2022
+      image: windows-default
     steps:
       - checkout
       - run:
