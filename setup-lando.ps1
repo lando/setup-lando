@@ -33,6 +33,8 @@ param(
   # Installs this version. Defaults to "stable".
   [ValidateNotNullOrEmpty()]
   [string]$Version = "stable",
+  # Skips all interactive prompts.
+  [switch]$Yes = $env:NONINTERACTIVE -or $env:CI,
   # Displays this help message.
   [switch]$Help
 )
@@ -86,7 +88,7 @@ $LANDO_TMPDIR = "$env:TEMP"
 $SYMLINKER = "$env:USERPROFILE\.lando\bin\lando.cmd"
 
 $CI = Confirm-EnvIsSet -Var "CI"
-$NONINTERACTIVE = $CI -or ![Environment]::UserInteractive
+$NONINTERACTIVE = $CI -or ![Environment]::UserInteractive -or $Yes
 $SYSTEM_ARCHITECTURE = Get-SystemArchitecture
 $USER = [System.Environment]::UserName
 

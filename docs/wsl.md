@@ -1,15 +1,21 @@
 ---
-title: Linux
-description: Install Lando on Linux
+title: WSL
+description: Install Lando on Windows Subsystem for Linux
 ---
 
-# Linux
+# WSL
 
-The Linux quickstart is to paste the below into a terminal and execute it.
+The WSL quickstart is to launch a WSL instance, copy the below into a terminal and execute it.
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://get.lando.dev/setup-lando.sh)"
 ```
+
+::: tip WSL vs Linux
+Note that `lando setup` behaves differently on `wsl` vs `linux`. On `wsl` Lando will install Docker Desktop on the Windows host. On `linux` Lando will install Docker Engine on Linux.
+
+Also note that if your `wsl` environment has WSL Interopability disabled then Lando will treat it as a normal `linux` environment.
+:::
 
 If you are looking to customize your install then [advanced usage](#advanced) is for you.
 
