@@ -25,7 +25,7 @@ jobs:
       - checkout
       - run:
           name: Install Lando on macOS
-          command: ./setup-lando.sh --no-setup && lando version --all
+          command: ./setup-lando.sh --no-setup lando version --all
   setup-on-macos:
     macos:
       xcode: "14.2.0"
@@ -43,7 +43,9 @@ jobs:
       - checkout
       - run:
           name: Install Lando on Windows
-          command: .\setup-lando.ps1 -NoSetup && lando version --all
+          command: |
+            .\setup-lando.ps1 -NoSetup
+            lando version --all
           shell: powershell.exe
   setup-on-windows:
     machine:
@@ -53,7 +55,10 @@ jobs:
       - checkout
       - run:
           name: Install Lando on Windows
-          command: .\setup-lando.ps1 -NoSetup && lando setup -y --skip-networking && lando version --all
+          command: |
+            .\setup-lando.ps1 -NoSetup
+            lando setup -y --skip-networking
+            lando version --all
           shell: powershell.exe
 
 workflows:
