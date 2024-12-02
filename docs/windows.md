@@ -12,7 +12,7 @@ iex (irm 'https://get.lando.dev/setup-lando.ps1' -UseB)
 ```
 
 ::: tip Installs in Windows only and not in WSL
-To install in WSL checl out the install docs [over here](./wsl.md).
+To install in WSL check out the install docs [over here](https://docs.lando.dev/install/wsl.html).
 :::
 
 If you are looking to customize your install then [advanced usage](#advanced) if for you.
