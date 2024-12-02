@@ -5,15 +5,15 @@ description: Install Lando on Windows using PowerShell script
 
 # Windows
 
-Installing Lando using the PowerShell script method will set up Lando along with Docker Desktop in a configuration optimized for Windows and WSL2.
-
-This ensures the `lando` command is available on your PowerShell, Command Prompt, or other Windows shell, and also on the default user's shells within your WSL2 Linux instances.
-
-The Windows/WSL2 quickstart is to paste the below into a PowerShell terminal and execute it.
+The Windows quickstart is to paste the below into a PowerShell terminal and execute it.
 
 ```powershell
 iex (irm 'https://get.lando.dev/setup-lando.ps1' -UseB)
 ```
+
+::: tip Installs in Windows only and not in WSL
+To install in WSL checl out the install docs [over here](./wsl.md).
+:::
 
 If you are looking to customize your install then [advanced usage](#advanced) if for you.
 
@@ -30,38 +30,74 @@ Set-ExecutionPolicy -ExecutionPolicy Unrestricted -Scope CurrentUser
 
 # show usage info
 .\setup-lando.ps1 -Help
-
-# an example advanced invocation
-# note you will need to change these values to ones that make sense for you
-# consult the usage and notes below for more into
-.\setup-lando.ps1 -Dest 'C:\Users\aaron\bin' -Fat -Version 3.21.2 -Debug
 ```
 
 ### Usage
 
 ```powershell
-.\setup-lando.ps1 [-Arch <x64|arm64>] [-Debug] [-Dest <path>] [-Fat] [-NoSetup] [-NoWSL] [-Resume] [-Version <version>] [-WSLOnly] [-Help]
-```
+NAME
+    setup-lando.ps1
 
-* `-Arch <x64|arm64>`: Specifies the architecture to install (x64 or arm64). Defaults to the system architecture.
-* `-Debug`: Enables debug output.
-* `-Dest <path>`: Specifies the destination path for installation. Defaults to "$env:USERPROFILE\.lando\bin".
-* `-Fat`: Download the fat v3 Lando binary that comes with official plugins built-in.
-* `-NoSetup`: Skips running Lando's built-in setup script.
-* `-NoWSL`: Skips the Windows Subsystem for Linux (WSL) setup.
-* `-Resume`: Resumes a previous installation after a reboot.
-* `-Version <version>`: Specifies the version of Lando to install. Defaults to "stable".
-* `-WSLOnly`: Only installs Lando in WSL.
-* `-Help`: Displays the help message.
+SYNOPSIS
+    Lando Windows Installer Script.
+
+SYNTAX
+    setup-lando.ps1 [[-Arch] <String>] [-Debug] [[-Dest] <String>] [-Fat] [-NoSetup] [[-Version] <String>] [-Yes] [-Help] [<CommonParameters>]
+
+DESCRIPTION
+    This script is used to download and install Lando on Windows. It will also run lando setup on >3.21 <4 but this can
+    be disabled with -NoSetup.
+
+    Environment Variables:
+    NONINTERACTIVE   Installs without prompting for user input
+    CI               Installs in CI mode (e.g. does not prompt for user input)
+
+PARAMETERS
+    -Arch <String>
+        Installs for this architecture (x64 or arm64). Defaults to the system architecture.
+    -Debug [<SwitchParameter>]
+        Shows debug messages.
+    -Dest <String>
+        Installs in this directory. Defaults to "$env:USERPROFILE\.lando\bin".
+    -Fat [<SwitchParameter>]
+        Installs the fat binary. 3.21+ <4 only, NOT RECOMMENDED!
+    -NoSetup [<SwitchParameter>]
+        Installs without running lando setup. 3.21+ <4 only.
+    -Version <String>
+        Installs this version. Defaults to "stable".
+    -Yes [<SwitchParameter>]
+        Skips all interactive prompts.
+    -Help [<SwitchParameter>]
+        Displays this help message.
+```
 
 Some notes on advanced usage:
 
 * If you want to customize the behavior of `lando setup` use `-NoSetup` and then manually invoke [`lando setup`](https://docs.lando.dev/cli/setup.html) after install is complete.
+* If you run in a non-tty environment eg in `CI` then `--yes` will be assumed
+* If you use `--yes` it is equivalent to setting `NONINTERACTIVE=1`
 
-## Performance Note
+#### Environment Variables
 
-While using Docker containers through Lando on Windows, you may experience slower performance due to the process of accessing and translating files between the native Windows file system and the Linux file system used by Docker. This is not a limitation of Lando or Docker itself, but rather of the file system transition. For most projects, this setup still performs adequately and integrates seamlessly with Windows applications and IDEs. More advanced users, comfortable with Linux, may prefer to store their project files within the Linux environment in WSL2 to optimize performance.
+If you do not wish to download the script you can set options with environment variables and `Invoke-WebRequest` the script.
 
-## Installation in a WSL2 Linux Environment
+```powershell
+LANDO_VERSION=stable
+LANDO_INSTALLER_ARCH=auto
+LANDO_INSTALLER_DEBUG=0
+LANDO_INSTALLER_DEST="$env:USERPROFILE\.lando\bin"
+LANDO_INSTALLER_FAT=0
+LANDO_INSTALLER_SETUP=auto
+```
 
-If you have already set up a Linux environment within WSL2, the PowerShell script will automatically install Lando within this environment. For those who prefer working exclusively within WSL2, no additional Windows-based installation is necessary. You can install Lando directly within the Linux environment by following the [Linux installation instructions](https://docs.lando.dev/install/linux.html). Note that having Docker Desktop for Windows makes Docker available across all your WSL2 environments, eliminating the need to install Docker Engine separately.
+#### Examples
+
+These are equivalent commands and meant to demostrate environment variable usage vs direct invocation.
+
+```powershell
+# use envvars
+$env:LANDO_VERSION="3.23.11"; $env:LANDO_INSTALLER_DEBUG=1; iex (irm 'https://get.lando.dev/setup-lando.ps1' -UseB)
+
+# invoke directly
+setup-lando.ps1 -Version "3.23.11" -Debug
+```
