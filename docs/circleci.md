@@ -5,7 +5,7 @@ description: Install Lando on CircleCI
 
 # CircleCI
 
-The CircleCI Actions quickstart is:
+The CircleCI quickstart is:
 
 ```yaml
 jobs:

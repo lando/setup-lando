@@ -5,26 +5,21 @@ This repo is the single source of truth for all things relating to the installat
 This currently includes:
 
 * GitHub Actions action
-* Windows/WSL2 setup scripts
+* Windows setup scripts
 * POSIX setup scripts
 * Install docs
-
-But could also include other things in the future like:
-
-* Homebrew formula
-* Chocolatey packages
-* Installer packages
-* CI Apps
 
 ## Docs
 
 Check out the below for docs related to your install method.
 
-* [GitHub Actions](https://docs.lando.dev/install/gha.html)
 * [macOS](https://docs.lando.dev/install/macos.html)
 * [Linux](https://docs.lando.dev/install/linux.html)
-* [Source](https://docs.lando.dev/install/source.html)
 * [Windows](https://docs.lando.dev/install/windows.html)
+* [WSL](https://docs.lando.dev/install/wsl.html)
+* [GitHub Actions](https://docs.lando.dev/install/gha.html)
+* [CircleCI](https://docs.lando.dev/install/circleci.html)
+* [Source](https://docs.lando.dev/install/source.html)
 
 ## Issues, Questions and Support
 
