@@ -1,4 +1,4 @@
-SCRIPT_VERSION="v3.6.1"
+SCRIPT_VERSION="v3.7.0"
 #!/bin/bash
 set -u
 # Lando POSIX setup script.
@@ -190,13 +190,13 @@ Usage: ${tty_dim}[NONINTERACTIVE=1] [CI=1]${tty_reset} ${tty_bold}setup-lando.sh
 ${tty_green}Options:${tty_reset}
   --arch           installs for this arch ${tty_dim}[default: ${ARCH}]${tty_reset}
   --dest           installs in this directory ${tty_dim}[default: ${DEST}]${tty_reset}
-  --fat            installs fat cli ${tty_dim}3.21+ <4 only, not recommended${tty_reset}
+  --fat            installs fat binary ${tty_dim}3.21+ <4 only, not recommended${tty_reset}
   --no-setup       installs without running lando setup ${tty_dim}3.21+ <4 only${tty_reset}
   --os             installs for this os ${tty_dim}[default: ${OS}]${tty_reset}
   --syslink        installs symlink in /usr/local/bin ${tty_dim}[default: ${SYSLINK}]${tty_reset}
   --version        installs this version ${tty_dim}[default: ${VERSION}]${tty_reset}
   --debug          shows debug messages
-  -h, --help       displays this message
+  -h, --help       displays this help message
   -y, --yes        runs with all defaults and no prompts, sets NONINTERACTIVE=1
 
 ${tty_green}Environment Variables:${tty_reset}
@@ -399,11 +399,30 @@ find_first_existing_parent() {
 }
 
 have_sudo_access() {
+  local GROUPS_CMD
+  local -a SUDO=("/usr/bin/sudo")
+
+  GROUPS_CMD="$(which groups)"
+
   if [[ ! -x "/usr/bin/sudo" ]]; then
     return 1
   fi
 
-  local -a SUDO=("/usr/bin/sudo")
+  if [[ -x "$GROUPS_CMD" ]]; then
+    if "$GROUPS_CMD" | grep -q sudo; then
+      HAVE_SUDO_ACCESS="0"
+    fi
+    if "$GROUPS_CMD" | grep -q admin; then
+      HAVE_SUDO_ACCESS="0"
+    fi
+    if "$GROUPS_CMD" | grep -q adm; then
+      HAVE_SUDO_ACCESS="0"
+    fi
+    if "$GROUPS_CMD" | grep -q wheel; then
+      HAVE_SUDO_ACCESS="0"
+    fi
+  fi
+
   if [[ -n "${SUDO_ASKPASS-}" ]]; then
     SUDO+=("-A")
   fi
@@ -411,11 +430,12 @@ have_sudo_access() {
   if [[ -z "${HAVE_SUDO_ACCESS-}" ]]; then
     "${SUDO[@]}" -l -U "${USER}" &>/dev/null
     HAVE_SUDO_ACCESS="$?"
-    if [[ "${HAVE_SUDO_ACCESS}" == 1 ]]; then
-      debug "${USER} does not appear to have sudo access!"
-    else
-      debug "${USER} has sudo access"
-    fi
+  fi
+
+  if [[ "${HAVE_SUDO_ACCESS}" == 1 ]]; then
+    debug "${USER} does not appear to have sudo access!"
+  else
+    debug "${USER} has sudo access"
   fi
 
   return "${HAVE_SUDO_ACCESS}"
@@ -790,6 +810,10 @@ execute_sudo() {
 
 wait_for_user() {
   local c
+
+# Trap to clean up on Ctrl-C or exit
+  trap 'stty sane; tput sgr0; echo; exit 1' SIGINT EXIT
+
   echo
   echo "Press ${tty_bold}RETURN${tty_reset}/${tty_bold}ENTER${tty_reset} to continue or any other key to abort:"
   getc c

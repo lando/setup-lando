@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+## v3.7.0 - [December 2, 2024](https://github.com/lando/setup-lando/releases/tag/v3.7.0)
+
 * Fixed bug causing terminal weirdness on `POSIX` after `CTRL-C`ing out of user acceptance prompts
 * Improved `sudo` detection to limit the necessity of `sudo` prompting
 * Synced `Windows` installer script so it works more or less like the `POSIX` one
