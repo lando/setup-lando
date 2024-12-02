@@ -34,7 +34,7 @@ param(
   [ValidateNotNullOrEmpty()]
   [string]$Version = "stable",
   # Skips all interactive prompts.
-  [switch]$Yes = $env:NONINTERACTIVE -or $env:CI
+  [switch]$Yes = $env:NONINTERACTIVE -or $env:CI,
   # Displays this help message.
   [switch]$Help
 )
