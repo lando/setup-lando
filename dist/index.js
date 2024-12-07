@@ -44112,25 +44112,6 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
-/***/ 112:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const satisfies = __nccwpck_require__(8011);
-const {s3Releases} = __nccwpck_require__(809);
-
-module.exports = version => {
-  // slim can be any v3 s3 alias
-  if (s3Releases.includes(version)) return version.split('-')[0] === '3';
-  // or anything in the range
-  return satisfies(version, '>3.20 <4', {includePrerelease: true, loose: true});
-};
-
-
-/***/ }),
-
 /***/ 8172:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -44486,6 +44467,25 @@ module.exports = data => {
 
   // otherwise its not disabled;
   return false;
+};
+
+
+/***/ }),
+
+/***/ 6073:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const satisfies = __nccwpck_require__(8011);
+const {s3Releases} = __nccwpck_require__(809);
+
+module.exports = version => {
+  // slim can be any v3 s3 alias
+  if (s3Releases.includes(version)) return false;
+  // or anything in the range
+  return satisfies(version, '>3.20 <=3.23.9999', {includePrerelease: true, loose: true});
 };
 
 
@@ -46569,7 +46569,7 @@ var __webpack_exports__ = {};
 "use strict";
 
 
-const SCRIPT_VERSION = 'v3.7.0';
+const SCRIPT_VERSION = 'v3.7.1';
 
 const core = __nccwpck_require__(7484);
 const exec = __nccwpck_require__(5236);
@@ -46585,7 +46585,6 @@ const {execSync} = __nccwpck_require__(5317);
 const {GitHub, getOctokitOptions} = __nccwpck_require__(8006);
 const {paginateRest} = __nccwpck_require__(8082);
 
-const canBeSlim = __nccwpck_require__(112);
 const getConfigFile = __nccwpck_require__(8172);
 const getDownloadUrl = __nccwpck_require__(5287);
 const getGCFPath = __nccwpck_require__(3123);
@@ -46593,6 +46592,7 @@ const getInputs = __nccwpck_require__(3926);
 const getFileVersion = __nccwpck_require__(8568);
 const getObjectKeys = __nccwpck_require__(9773);
 const getSetupCommand = __nccwpck_require__(890);
+const isSlimSetupy = __nccwpck_require__(6073);
 const mergeConfig = __nccwpck_require__(7509);
 const parseSetupCommand = __nccwpck_require__(7013);
 const resolveVersionSpec = __nccwpck_require__(8771);
@@ -46654,8 +46654,8 @@ const main = async () => {
     // throw error if we cannot resolve a version
     if (!version) throw new Error(`Could not resolve "${spec}" into an installable version of Lando`);
 
-    // now that we have a version lets try to reevaluate slim since it should only be true in the >3.21 <4 range
-    if (inputs.slim) inputs.slim = inputs.slim && canBeSlim(version);
+    // now that we have a version lets try to reevaluate slim since it should only be true in the <3.24 range
+    if (inputs.slim) inputs.slim = inputs.slim && isSlimSetupy(version);
 
     // start by assuming that version is just the path to some locally installed version of lando
     let landoPath = version;
@@ -46756,10 +46756,10 @@ const main = async () => {
     }
 
     // if setup is non-false then we want to try to run it if we can
-    if (lmv === 'v3' && getSetupCommand(inputs.setup) !== false) {
+    if (isSlimSetupy(version) && getSetupCommand(inputs.setup) !== false) {
       // print warning if setup command does not exist and leave
       if (await exec.exec(landoPath, ['setup', '--help'], {ignoreReturnCode: true}) !== 0) {
-        core.warning('lando setup is only available in lando >=3.21 <4! Skipping!');
+        core.warning('lando setup is only available in lando <3.24! Skipping!');
 
       // if we get here then we should be G2G
       } else {

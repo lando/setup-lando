@@ -1,4 +1,4 @@
-SCRIPT_VERSION="v3.7.0"
+SCRIPT_VERSION="v3.7.1"
 #!/bin/bash
 set -u
 # Lando POSIX setup script.
@@ -190,8 +190,8 @@ Usage: ${tty_dim}[NONINTERACTIVE=1] [CI=1]${tty_reset} ${tty_bold}setup-lando.sh
 ${tty_green}Options:${tty_reset}
   --arch           installs for this arch ${tty_dim}[default: ${ARCH}]${tty_reset}
   --dest           installs in this directory ${tty_dim}[default: ${DEST}]${tty_reset}
-  --fat            installs fat binary ${tty_dim}3.21+ <4 only, not recommended${tty_reset}
-  --no-setup       installs without running lando setup ${tty_dim}3.21+ <4 only${tty_reset}
+  --fat            installs fat binary ${tty_dim}<3.24 only, not recommended${tty_reset}
+  --no-setup       installs without running lando setup ${tty_dim}<3.24 only${tty_reset}
   --os             installs for this os ${tty_dim}[default: ${OS}]${tty_reset}
   --syslink        installs symlink in /usr/local/bin ${tty_dim}[default: ${SYSLINK}]${tty_reset}
   --version        installs this version ${tty_dim}[default: ${VERSION}]${tty_reset}
@@ -585,16 +585,16 @@ fi
 
 # autoslim all v3 urls by default
 # @TODO: restrict this to 3 < 3.24.0 at some point?
-if [[ $URL != file://* ]] && [[ $LMV == '3' ]] && [[ $FAT != '1' ]]; then
+if [[ $URL != file://* ]] && [[ -z "${VERSION_DEV-}" ]] && [[ $FAT != '1' ]] && version_compare "3.23" "$SVERSION"; then
   URL="${URL}-slim"
   HRV="$VERSION-slim"
   debug "autoslimin url for lando 3 to $URL"
 fi
 
 # force setup to 0 if lando 4
-if [[ $SETUP == '1' ]] && [[ $LMV == '4' ]]; then
+if [[ $SETUP == '1' ]] && version_compare "$SVERSION" "3.23"; then
   SETUP=0
-  debug "disabled autosetup --setup=${SETUP}, not needed in v${LMV}"
+  debug "disabled autosetup --setup=${SETUP}, not needed in <3.24"
 fi
 
 # determine existing dir we need to check
