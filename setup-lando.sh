@@ -559,7 +559,6 @@ fi
 if [[ -z "${VERSION_DEV-}" ]]; then
   SVERSION="${VERSION#v}"
   LMV="$(major "$SVERSION")"
-  LCV="$(major_minor "$SVERSION")"
   HRV="$SVERSION"
   debug using "$SVERSION" for downstream version comparison purposes
 else
