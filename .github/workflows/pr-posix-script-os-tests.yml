@@ -23,11 +23,11 @@ jobs:
       - name: Run setup-lando.sh on ${{ matrix.os }}
         if: runner.os == 'Linux'
         shell: bash
-        run: ./setup-lando.sh
+        run: ./setup-lando.sh --version 3-edge && lando setup -y --debug
       - name: Run setup-lando.sh on ${{ matrix.os }}
         if: runner.os == 'macOS'
         shell: bash
-        run: ./setup-lando.sh --no-setup && lando setup -y --debug --skip-networking
+        run: ./setup-lando.sh --version 3-edge && lando setup -y --debug --skip-networking
       - name: Test
         shell: bash
         run: lando version --all

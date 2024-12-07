@@ -18,8 +18,8 @@ jobs:
           # - windows-2022
         lando-version:
           # - '3.14.0'
-          - '3-dev'
-          # - 'stable'
+          - '3-stable'
+          - '3-edge'
         node-version:
           - '20'
         setup-string:

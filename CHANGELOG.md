@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+* Removed `lando setup` and `-slim` functionality for upcoming Lando `>=3.24`
+
 ## v3.7.0 - [December 2, 2024](https://github.com/lando/setup-lando/releases/tag/v3.7.0)
 
 * Fixed bug causing terminal weirdness on `POSIX` after `CTRL-C`ing out of user acceptance prompts

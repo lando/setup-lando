@@ -16,7 +16,6 @@ const {execSync} = require('child_process');
 const {GitHub, getOctokitOptions} = require('@actions/github/lib/utils');
 const {paginateRest} = require('@octokit/plugin-paginate-rest');
 
-const canBeSlim = require('./utils/can-be-slim');
 const getConfigFile = require('./utils/get-config-file');
 const getDownloadUrl = require('./utils/get-download-url');
 const getGCFPath = require('./utils/get-gcf-path');
@@ -24,6 +23,7 @@ const getInputs = require('./utils/get-inputs');
 const getFileVersion = require('./utils/get-file-version');
 const getObjectKeys = require('./utils/get-object-keys');
 const getSetupCommand = require('./utils/get-setup-command');
+const isSlimSetupy = require('./utils/is-slim-setupy');
 const mergeConfig = require('./utils/merge-config');
 const parseSetupCommand = require('./utils/parse-setup-command');
 const resolveVersionSpec = require('./utils/resolve-version-spec');
@@ -85,8 +85,8 @@ const main = async () => {
     // throw error if we cannot resolve a version
     if (!version) throw new Error(`Could not resolve "${spec}" into an installable version of Lando`);
 
-    // now that we have a version lets try to reevaluate slim since it should only be true in the >3.21 <4 range
-    if (inputs.slim) inputs.slim = inputs.slim && canBeSlim(version);
+    // now that we have a version lets try to reevaluate slim since it should only be true in the <3.24 range
+    if (inputs.slim) inputs.slim = inputs.slim && isSlimSetupy(version);
 
     // start by assuming that version is just the path to some locally installed version of lando
     let landoPath = version;
@@ -187,10 +187,10 @@ const main = async () => {
     }
 
     // if setup is non-false then we want to try to run it if we can
-    if (lmv === 'v3' && getSetupCommand(inputs.setup) !== false) {
+    if (isSlimSetupy(version) && getSetupCommand(inputs.setup) !== false) {
       // print warning if setup command does not exist and leave
       if (await exec.exec(landoPath, ['setup', '--help'], {ignoreReturnCode: true}) !== 0) {
-        core.warning('lando setup is only available in lando >=3.21 <4! Skipping!');
+        core.warning('lando setup is only available in lando <3.24! Skipping!');
 
       // if we get here then we should be G2G
       } else {
