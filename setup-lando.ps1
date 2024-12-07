@@ -3,7 +3,7 @@
 Lando Windows Installer Script.
 
 .DESCRIPTION
-This script is used to download and install Lando on Windows. It will also run lando setup on >3.21 <4 but this can
+This script is used to download and install Lando on Windows. It will also run lando setup on <3.24 but this can
 be disabled with -NoSetup.
 
 Environment Variables:
@@ -26,9 +26,9 @@ param(
   # Installs in this directory. Defaults to "$env:USERPROFILE\.lando\bin".
   [ValidateNotNullOrEmpty()]
   [string]$Dest = "$env:USERPROFILE\.lando\bin",
-  # Installs the fat binary. 3.21+ <4 only, NOT RECOMMENDED!
+  # Installs the fat binary. <3.24 only, NOT RECOMMENDED!
   [switch]$Fat = $env:LANDO_INSTALLER_FAT -or $false,
-  # Installs without running lando setup. 3.21+ <4 only.
+  # Installs without running lando setup. <3.24 only.
   [switch]$NoSetup = $env:LANDO_INSTALLER_SETUP -eq 0 -or $false,
   # Installs this version. Defaults to "stable".
   [ValidateNotNullOrEmpty()]

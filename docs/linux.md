@@ -36,8 +36,8 @@ Usage: [NONINTERACTIVE=1] [CI=1] setup-lando.sh [options]
 Options:
   --arch           installs for this arch [default: x64]
   --dest           installs in this directory [default: ~/.lando/bin]
-  --fat            installs fat cli 3.21+ <4 only, not recommended
-  --no-setup       installs without running lando setup 3.21+ <4 only
+  --fat            installs fat cli <3.24 only, not recommended
+  --no-setup       installs without running lando setup <3.24 only
   --os             installs for this os [default: linux]
   --syslink        installs symlink in /usr/local/bin [default: auto]
   --version        installs this version [default: stable]
@@ -54,7 +54,6 @@ Some notes on advanced usage:
 
 * If you are running in `CI` then `--syslink` will be assumed
 * If you have an existing installation of `lando` in `/usr/local/bin` and can write to that location then `--syslink` will be assumed
-* If you want to customize the behavior of `lando setup` use `--no-setup` and then manually invoke [`lando setup`](https://docs.lando.dev/cli/setup.html) after install is complete.
 * If you run in a non-tty environment eg GitHub Actions then `--yes` will be assumed
 * If you use `--yes` it is equivalent to setting `NONINTERACTIVE=1`
 

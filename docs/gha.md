@@ -30,7 +30,7 @@ All inputs are optional. If you do nothing the latest `stable` Lando will be ins
 | `config` | A list of `.` delimited config. If set these have primacy over values in `config-file` | `null` | `engineConfig.port=2376` |
 | `config-file` | The path to a Lando global config file to use. | `null` | `/config/lando-global.yml` |
 
-* Note that `auto-setup` is only available in Lando 3 and in Lando 3.21+ specifically.
+* Note that `auto-setup` is only available in Lando `>=3.21 <3.24`.
 * Also note that if you customize the `auto-setup` command it _must_ contain `lando setup`.
 
 ## Outputs
