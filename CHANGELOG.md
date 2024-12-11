@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+* Fixed bug unintentionally disabling `lando setup` on `POSIX` for Lando `<3.24`
+
 ## v3.7.1 - [December 7, 2024](https://github.com/lando/setup-lando/releases/tag/v3.7.1)
 
 * Removed `lando setup` and `-slim` functionality for upcoming Lando `>=3.24`
