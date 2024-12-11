@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+## v3.7.2 - [December 11, 2024](https://github.com/lando/setup-lando/releases/tag/v3.7.2)
+
 * Fixed bug unintentionally disabling `lando setup` on `POSIX` for Lando `<3.24`
 
 ## v3.7.1 - [December 7, 2024](https://github.com/lando/setup-lando/releases/tag/v3.7.1)
