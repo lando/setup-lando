@@ -1,0 +1,27 @@
+name: Windows Script Destination Tests
+
+on:
+  pull_request:
+
+jobs:
+  setup-lando-windows-dest-test:
+    runs-on: windows-2022
+    env:
+      LANDO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        dest:
+          - $env:APPDATA\Lando\bin
+          - $env:USERPROFILE\My Lando\bin
+          - C:\tools
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install Lando at ${{ matrix.dest }}
+        shell: powershell
+        run: |
+          .\setup-lando.ps1 -Dest "${{ matrix.dest }}"
+          lando version --all
