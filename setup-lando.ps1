@@ -99,8 +99,8 @@ $resolvedVersion = $null
 #  -NewPath <path> : Path to add
 function Add-ToPath {
   param(
-		[Parameter(Mandatory, Position = 0)]
-		[string]$NewPath
+    [Parameter(Mandatory, Position = 0)]
+    [string]$NewPath
   )
   Write-Debug "Adding $NewPath to system PATH..."
   $regPath = "registry::HKEY_CURRENT_USER\Environment"
@@ -130,8 +130,8 @@ function Add-ToPath {
 
 function Add-WrapperScript {
   param(
-		[Parameter(Mandatory)]
-		[string]$Location,
+    [Parameter(Mandatory)]
+    [string]$Location,
     [string]$Symlink = $script:SYMLINKER
   )
 
@@ -187,11 +187,11 @@ function Confirm-Environment {
 
   # Set up our working directories
   if (-not (Test-Path "$LANDO_DATADIR" -ErrorAction SilentlyContinue)) {
-    Write-Debug "Creating destination directory $LANDO_DATADIR..."
+    Write-Debug "Creating data directory $LANDO_DATADIR..."
     New-Item -ItemType Directory -Path $LANDO_DATADIR -Force | Out-Null
   }
   if (-not (Test-Path "$LANDO_BINDIR" -ErrorAction SilentlyContinue)) {
-    Write-Debug "Creating destination directory $LANDO_BINDIR..."
+    Write-Debug "Creating bin directory $LANDO_BINDIR..."
     New-Item -ItemType Directory -Path $LANDO_BINDIR -Force | Out-Null
   }
 }
@@ -217,19 +217,19 @@ function Get-FriendlySize {
 function Get-Lando {
   param(
     [Parameter(Mandatory)]
-		[string]$Url,
-		[string]$Dest = "$script:LANDO_TMPDIR"
+    [string]$Url,
+    [string]$TmpDest = "$script:LANDO_TMPDIR"
   )
 
-  # Ensure dest exist
-  if (-not (Test-Path "$Dest" -ErrorAction SilentlyContinue)) {
-    Write-Debug "Creating destination directory $Dest..."
-    New-Item -ItemType Directory -Path $Dest -Force | Out-Null
+  # Ensure TmpDest exist
+  if (-not (Test-Path "$TmpDest" -ErrorAction SilentlyContinue)) {
+    Write-Debug "Creating temporary destination directory $TmpDest..."
+    New-Item -ItemType Directory -Path $TmpDest -Force | Out-Null
   }
 
   # Add the file part
-  $Dest = "$Dest\$(Get-Random).exe"
-  Write-Host "Fetching Lando $script:Version from $Url to $Dest..."
+  $TmpDest = "$TmpDest\$(Get-Random).exe"
+  Write-Host "Fetching Lando $script:Version from $Url to $TmpDest..."
 
   # Save current colors
   $Host.PrivateData.ProgressForegroundColor = "White";
@@ -238,14 +238,14 @@ function Get-Lando {
   # If file url then just move it and return
   if ($Url.StartsWith("file://")) {
     $Source = $Url.TrimStart("file://");
-    Copy-Item -Path "$Source" -Destination "$Dest"> -Force
-    Write-Debug("Moved local lando from $Source to $Dest");
-    return $Dest;
+    Copy-Item -Path "$Source" -Destination "$TmpDest"> -Force
+    Write-Debug("Moved local lando from $Source to $TmpDest");
+    return $TmpDest;
   }
 
   Write-Progress -Activity "Downloading Lando $script:Version" -Status "Preparing..." -PercentComplete 0
 
-  $outputFileStream = [System.IO.FileStream]::new($Dest, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
+  $outputFileStream = [System.IO.FileStream]::new($TmpDest, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
   try {
     Add-Type -AssemblyName System.Net.Http
     $httpClient = New-Object System.Net.Http.HttpClient
@@ -296,7 +296,7 @@ function Get-Lando {
   }
   Write-Progress -Activity "Downloading Lando $script:resolvedVersion" -Completed
 
-  return $Dest;
+  return $TmpDest;
 }
 
 # Runs the "lando setup" command if Lando is at least version 3.21.0
@@ -657,6 +657,8 @@ If ($Dest -eq $LANDO_BINDIR) {
 
 # Otherwise just move directly to dest and link
 } else {
+  # Create the destination directory if it doesn't exist
+  New-Item -ItemType Directory -Path (Split-Path -Path $LANDO -Parent) -Force | Out-Null
   Move-Item -Path "$LANDO_TMPFILE" -Destination "$LANDO" -Force
   Add-WrapperScript -Location "$LANDO"
 }
