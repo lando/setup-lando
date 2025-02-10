@@ -24,4 +24,5 @@ jobs:
         shell: powershell
         run: |
           .\setup-lando.ps1 -Dest "${{ matrix.dest }}"
-          lando version --all
+          $LANDO_EXE = "${{ matrix.dest }}\lando.exe"
+          & $LANDO_EXE version --all
