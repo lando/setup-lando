@@ -302,18 +302,17 @@ function Get-Lando {
 # Runs the "lando setup" command if Lando is at least version 3.21.0
 function Invoke-LandoSetup {
   param(
-		[string]$LandoBin = 'lando.cmd'
+    [string]$LandoBin = 'lando.cmd'
   )
 
-  # Start
-  $landoSetupCommand = "$LandoBin setup"
-  # Add -y if needed
-  if ($NONINTERACTIVE) {$landoSetupCommand += " -y"}
-  # Add debug if needed
-  if ($Debug) {$landoSetupCommand += " --debug"}
+  # Build arguments array
+  $arguments = @('setup')
+  if ($NONINTERACTIVE) { $arguments += '-y' }
+  if ($Debug) { $arguments += '--debug' }
 
   try {
-    Invoke-Expression "$landoSetupCommand"
+    Write-Debug "Running command: $LandoBin $($arguments -join ' ')"
+    & "$LandoBin" $arguments
     if ($LASTEXITCODE -ne 0) {
       throw "'lando setup' failed with exit code $LASTEXITCODE."
     }
@@ -384,7 +383,7 @@ function Resolve-Version {
   # If version is a path that exists then return `lando version` output
   if (Test-Path ($Version = Resolve-VersionPath -Version "$Version")) {
     try {
-      $result = Invoke-Expression "$Version version"
+      $result = & "$Version" version
       return $result.Trim();
     }
     catch {
@@ -666,7 +665,7 @@ Write-Host "Moved Lando $Version to $LANDO"
 
 # Do some special stuff on v3
 if ($Version.StartsWith("v3.")) {
-  $null = Invoke-Expression "$SYMLINKER --clear" | ForEach-Object { Write-Debug $_ }
+  $null = & "$SYMLINKER" --clear | ForEach-Object { Write-Debug $_ }
 }
 
 # Add $Dest and $LANDO_BIN to system PATH if not already present
@@ -676,11 +675,11 @@ Add-ToPath -NewPath "$LANDO_BINDIR"
 # Lando setup may have been interrupted by the reboot. Run it again.
 # @TODO: pass in lando?
 if ((Confirm-FattyOrSetupy -Version "$Version") -and -not $NoSetup) {
-  Invoke-LandoSetup -Lando "$Symlinker"
+  Invoke-LandoSetup -Lando "$SYMLINKER"
 }
 
 # Run lando shell env
-Invoke-Expression "$SYMLINKER shellenv --add"
+& "$SYMLINKER" shellenv --add
 
 if ($issueEncountered) {
   Write-Warning "Lando was installed but issues were encountered during installation. Please check the output above for details."
