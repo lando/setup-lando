@@ -1,5 +1,9 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+* Improved Windows setup script's handling of spaces in parameters and paths
+* Fixed issue where Windows setup script would fail if -Dest directory does not exist
+* Added automated tests for Windows setup script with -Dest parameter
+
 ## v3.7.2 - [December 11, 2024](https://github.com/lando/setup-lando/releases/tag/v3.7.2)
 
 * Fixed bug unintentionally disabling `lando setup` on `POSIX` for Lando `<3.24`
