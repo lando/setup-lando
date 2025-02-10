@@ -57,25 +57,27 @@ $Host.PrivateData.DebugBackgroundColor = $Host.UI.RawUI.BackgroundColor
 
 function Confirm-EnvIsSet {
   param(
-		[Parameter(Mandatory)]
-		[string]$Var
+    [Parameter(Mandatory)]
+    [string]$Var
   )
-	$value = [System.Environment]::GetEnvironmentVariable($Var);
-	return $value -and $value.Trim() -ne ""
+  $value = [System.Environment]::GetEnvironmentVariable($Var);
+  return $value -and $value.Trim() -ne ""
 }
 
 function Get-SystemArchitecture {
-	# Get from env
-	$arch = if ($env:PROCESSOR_ARCHITEW6432) {$env:PROCESSOR_ARCHITEW6432} else {$env:PROCESSOR_ARCHITECTURE}
+  # Get from env
+  $arch = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
 
-	# Normalize for our purposes
-	if ($arch -eq "AMD64") {
-		return "x64"
-	} elseif ($arch === "ARM64") {
-		return "arm64"
-	} else {
-		return $arch
-	}
+  # Normalize for our purposes
+  if ($arch -eq "AMD64") {
+    return "x64"
+  }
+  elseif ($arch = == "ARM64") {
+    return "arm64"
+  }
+  else {
+    return $arch
+  }
 }
 
 # Config of sorts
@@ -339,42 +341,43 @@ function Get-SemanticVersionInfo {
     $patch = [int]$Matches[3]
 
     return @{
-      Major = $major
-      Minor = $minor
-      Patch = $patch
+      Major      = $major
+      Minor      = $minor
+      Patch      = $patch
       PreRelease = $Matches[4]
-      Build = $Matches[5]
-      Version = "${major}.${minor}.${patch}"
-      Raw = "$Version"
+      Build      = $Matches[5]
+      Version    = "${major}.${minor}.${patch}"
+      Raw        = "$Version"
     }
-  } else {
+  }
+  else {
     throw "Invalid semantic version: $Version"
   }
 }
 
 function Resolve-Input {
-	param (
-		[Parameter(Mandatory)]
-		[string]$InputVar,
-		[Parameter(Mandatory)]
-		[string]$DefaultValue,
-		[string[]]$EnvVars=@()
-	)
+  param (
+    [Parameter(Mandatory)]
+    [string]$InputVar,
+    [Parameter(Mandatory)]
+    [string]$DefaultValue,
+    [string[]]$EnvVars = @()
+  )
 
-	# if the user has modified the input value from the default then just return inputvar
-	if ($InputVar -ne $DefaultValue) {
-		return $InputVar;
-	}
+  # if the user has modified the input value from the default then just return inputvar
+  if ($InputVar -ne $DefaultValue) {
+    return $InputVar;
+  }
 
-	# otherwise lets try to set it with an envvar if possible
-	foreach ($var in $EnvVars) {
-		Write-Debug "$var $(Confirm-EnvIsSet -Var "$var")"
-		if (Confirm-EnvIsSet -Var "$var") {
-			return [System.Environment]::GetEnvironmentVariable($var);
-		}
-	}
+  # otherwise lets try to set it with an envvar if possible
+  foreach ($var in $EnvVars) {
+    Write-Debug "$var $(Confirm-EnvIsSet -Var "$var")"
+    if (Confirm-EnvIsSet -Var "$var") {
+      return [System.Environment]::GetEnvironmentVariable($var);
+    }
+  }
 
-	return $DefaultValue
+  return $DefaultValue
 }
 
 function Resolve-Version {
@@ -441,10 +444,12 @@ function Resolve-VersionPath {
 
   if ([System.IO.Path]::IsPathRooted($Version)) {
     return $Version
-  } else {
+  }
+  else {
     try {
       return Resolve-Path $Version | ForEach-Object { $_.Path }
-    } catch {
+    }
+    catch {
       return $Version
     }
   }
@@ -546,7 +551,8 @@ function Wait-ForUser {
 
   if ($key.Key -eq "Enter") {
     Write-Debug "User confirmed. Continuing..."
-  } else {
+  }
+  else {
     Write-Debug "User cancelled with '$($key.Key)'. Exiting..."
     exit 0
   }
@@ -572,7 +578,7 @@ $Version = Resolve-Input -InputVar $Version -DefaultValue "stable" -EnvVars @("L
 
 # Resolve arch if auto
 if ($Arch -eq "auto") {
-	$Arch = $SYSTEM_ARCHITECTURE;
+  $Arch = $SYSTEM_ARCHITECTURE;
 }
 
 Write-Debug "Running script with resolved inputs:"
@@ -655,8 +661,9 @@ If ($Dest -eq $LANDO_BINDIR) {
   Move-Item -Path "$LANDO_TMPFILE" -Destination "$HIDDEN_LANDO" -Force
   Add-WrapperScript -Location "$HIDDEN_LANDO"
 
-# Otherwise just move directly to dest and link
-} else {
+  # Otherwise just move directly to dest and link
+}
+else {
   # Create the destination directory if it doesn't exist
   New-Item -ItemType Directory -Path (Split-Path -Path $LANDO -Parent) -Force | Out-Null
   Move-Item -Path "$LANDO_TMPFILE" -Destination "$LANDO" -Force
