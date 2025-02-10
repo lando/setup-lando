@@ -313,7 +313,7 @@ function Invoke-LandoSetup {
   if ($Debug) {$landoSetupCommand += " --debug"}
 
   try {
-    Invoke-Expression $landoSetupCommand
+    Invoke-Expression "$landoSetupCommand"
     if ($LASTEXITCODE -ne 0) {
       throw "'lando setup' failed with exit code $LASTEXITCODE."
     }
