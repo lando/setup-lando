@@ -1,5 +1,8 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+* Fixed various "space in path" issues with Windows installer script [#87](https://github.com/lando/setup-lando/issues/87) [#51](https://github.com/lando/setup-lando/issues/51)
+* Fixed issue where Windows setup script would fail if `-Dest` directory does not exist
+
 ## v3.7.2 - [December 11, 2024](https://github.com/lando/setup-lando/releases/tag/v3.7.2)
 
 * Fixed bug unintentionally disabling `lando setup` on `POSIX` for Lando `<3.24`
