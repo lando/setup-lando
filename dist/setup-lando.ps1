@@ -57,29 +57,31 @@ $Host.PrivateData.DebugBackgroundColor = $Host.UI.RawUI.BackgroundColor
 
 function Confirm-EnvIsSet {
   param(
-		[Parameter(Mandatory)]
-		[string]$Var
+    [Parameter(Mandatory)]
+    [string]$Var
   )
-	$value = [System.Environment]::GetEnvironmentVariable($Var);
-	return $value -and $value.Trim() -ne ""
+  $value = [System.Environment]::GetEnvironmentVariable($Var);
+  return $value -and $value.Trim() -ne ""
 }
 
 function Get-SystemArchitecture {
-	# Get from env
-	$arch = if ($env:PROCESSOR_ARCHITEW6432) {$env:PROCESSOR_ARCHITEW6432} else {$env:PROCESSOR_ARCHITECTURE}
+  # Get from env
+  $arch = if ($env:PROCESSOR_ARCHITEW6432) { $env:PROCESSOR_ARCHITEW6432 } else { $env:PROCESSOR_ARCHITECTURE }
 
-	# Normalize for our purposes
-	if ($arch -eq "AMD64") {
-		return "x64"
-	} elseif ($arch === "ARM64") {
-		return "arm64"
-	} else {
-		return $arch
-	}
+  # Normalize for our purposes
+  if ($arch -eq "AMD64") {
+    return "x64"
+  }
+  elseif ($arch = == "ARM64") {
+    return "arm64"
+  }
+  else {
+    return $arch
+  }
 }
 
 # Config of sorts
-$SCRIPT_VERSION = "v3.7.2"
+$SCRIPT_VERSION = "v3.7.3"
 
 $LANDO_DEFAULT_MV = "3"
 $LANDO_BINDIR = "$env:USERPROFILE\.lando\bin"
@@ -99,8 +101,8 @@ $resolvedVersion = $null
 #  -NewPath <path> : Path to add
 function Add-ToPath {
   param(
-		[Parameter(Mandatory, Position = 0)]
-		[string]$NewPath
+    [Parameter(Mandatory, Position = 0)]
+    [string]$NewPath
   )
   Write-Debug "Adding $NewPath to system PATH..."
   $regPath = "registry::HKEY_CURRENT_USER\Environment"
@@ -130,8 +132,8 @@ function Add-ToPath {
 
 function Add-WrapperScript {
   param(
-		[Parameter(Mandatory)]
-		[string]$Location,
+    [Parameter(Mandatory)]
+    [string]$Location,
     [string]$Symlink = $script:SYMLINKER
   )
 
@@ -187,11 +189,11 @@ function Confirm-Environment {
 
   # Set up our working directories
   if (-not (Test-Path "$LANDO_DATADIR" -ErrorAction SilentlyContinue)) {
-    Write-Debug "Creating destination directory $LANDO_DATADIR..."
+    Write-Debug "Creating data directory $LANDO_DATADIR..."
     New-Item -ItemType Directory -Path $LANDO_DATADIR -Force | Out-Null
   }
   if (-not (Test-Path "$LANDO_BINDIR" -ErrorAction SilentlyContinue)) {
-    Write-Debug "Creating destination directory $LANDO_BINDIR..."
+    Write-Debug "Creating bin directory $LANDO_BINDIR..."
     New-Item -ItemType Directory -Path $LANDO_BINDIR -Force | Out-Null
   }
 }
@@ -217,19 +219,19 @@ function Get-FriendlySize {
 function Get-Lando {
   param(
     [Parameter(Mandatory)]
-		[string]$Url,
-		[string]$Dest = "$script:LANDO_TMPDIR"
+    [string]$Url,
+    [string]$TmpDest = "$script:LANDO_TMPDIR"
   )
 
-  # Ensure dest exist
-  if (-not (Test-Path "$Dest" -ErrorAction SilentlyContinue)) {
-    Write-Debug "Creating destination directory $Dest..."
-    New-Item -ItemType Directory -Path $Dest -Force | Out-Null
+  # Ensure TmpDest exist
+  if (-not (Test-Path "$TmpDest" -ErrorAction SilentlyContinue)) {
+    Write-Debug "Creating temporary destination directory $TmpDest..."
+    New-Item -ItemType Directory -Path $TmpDest -Force | Out-Null
   }
 
   # Add the file part
-  $Dest = "$Dest\$(Get-Random).exe"
-  Write-Host "Fetching Lando $script:Version from $Url to $Dest..."
+  $TmpDest = "$TmpDest\$(Get-Random).exe"
+  Write-Host "Fetching Lando $script:Version from $Url to $TmpDest..."
 
   # Save current colors
   $Host.PrivateData.ProgressForegroundColor = "White";
@@ -238,14 +240,14 @@ function Get-Lando {
   # If file url then just move it and return
   if ($Url.StartsWith("file://")) {
     $Source = $Url.TrimStart("file://");
-    Copy-Item -Path "$Source" -Destination "$Dest"> -Force
-    Write-Debug("Moved local lando from $Source to $Dest");
-    return $Dest;
+    Copy-Item -Path "$Source" -Destination "$TmpDest"> -Force
+    Write-Debug("Moved local lando from $Source to $TmpDest");
+    return $TmpDest;
   }
 
   Write-Progress -Activity "Downloading Lando $script:Version" -Status "Preparing..." -PercentComplete 0
 
-  $outputFileStream = [System.IO.FileStream]::new($Dest, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
+  $outputFileStream = [System.IO.FileStream]::new($TmpDest, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write)
   try {
     Add-Type -AssemblyName System.Net.Http
     $httpClient = New-Object System.Net.Http.HttpClient
@@ -296,24 +298,23 @@ function Get-Lando {
   }
   Write-Progress -Activity "Downloading Lando $script:resolvedVersion" -Completed
 
-  return $Dest;
+  return $TmpDest;
 }
 
 # Runs the "lando setup" command if Lando is at least version 3.21.0
 function Invoke-LandoSetup {
   param(
-		[string]$LandoBin = 'lando.cmd'
+    [string]$LandoBin = 'lando.cmd'
   )
 
-  # Start
-  $landoSetupCommand = "$LandoBin setup"
-  # Add -y if needed
-  if ($NONINTERACTIVE) {$landoSetupCommand += " -y"}
-  # Add debug if needed
-  if ($Debug) {$landoSetupCommand += " --debug"}
+  # Build arguments array
+  $arguments = @('setup')
+  if ($NONINTERACTIVE) { $arguments += '-y' }
+  if ($Debug) { $arguments += '--debug' }
 
   try {
-    Invoke-Expression $landoSetupCommand
+    Write-Debug "Running command: $LandoBin $($arguments -join ' ')"
+    & "$LandoBin" $arguments
     if ($LASTEXITCODE -ne 0) {
       throw "'lando setup' failed with exit code $LASTEXITCODE."
     }
@@ -340,42 +341,43 @@ function Get-SemanticVersionInfo {
     $patch = [int]$Matches[3]
 
     return @{
-      Major = $major
-      Minor = $minor
-      Patch = $patch
+      Major      = $major
+      Minor      = $minor
+      Patch      = $patch
       PreRelease = $Matches[4]
-      Build = $Matches[5]
-      Version = "${major}.${minor}.${patch}"
-      Raw = "$Version"
+      Build      = $Matches[5]
+      Version    = "${major}.${minor}.${patch}"
+      Raw        = "$Version"
     }
-  } else {
+  }
+  else {
     throw "Invalid semantic version: $Version"
   }
 }
 
 function Resolve-Input {
-	param (
-		[Parameter(Mandatory)]
-		[string]$InputVar,
-		[Parameter(Mandatory)]
-		[string]$DefaultValue,
-		[string[]]$EnvVars=@()
-	)
+  param (
+    [Parameter(Mandatory)]
+    [string]$InputVar,
+    [Parameter(Mandatory)]
+    [string]$DefaultValue,
+    [string[]]$EnvVars = @()
+  )
 
-	# if the user has modified the input value from the default then just return inputvar
-	if ($InputVar -ne $DefaultValue) {
-		return $InputVar;
-	}
+  # if the user has modified the input value from the default then just return inputvar
+  if ($InputVar -ne $DefaultValue) {
+    return $InputVar;
+  }
 
-	# otherwise lets try to set it with an envvar if possible
-	foreach ($var in $EnvVars) {
-		Write-Debug "$var $(Confirm-EnvIsSet -Var "$var")"
-		if (Confirm-EnvIsSet -Var "$var") {
-			return [System.Environment]::GetEnvironmentVariable($var);
-		}
-	}
+  # otherwise lets try to set it with an envvar if possible
+  foreach ($var in $EnvVars) {
+    Write-Debug "$var $(Confirm-EnvIsSet -Var "$var")"
+    if (Confirm-EnvIsSet -Var "$var") {
+      return [System.Environment]::GetEnvironmentVariable($var);
+    }
+  }
 
-	return $DefaultValue
+  return $DefaultValue
 }
 
 function Resolve-Version {
@@ -384,7 +386,7 @@ function Resolve-Version {
   # If version is a path that exists then return `lando version` output
   if (Test-Path ($Version = Resolve-VersionPath -Version "$Version")) {
     try {
-      $result = Invoke-Expression "$Version version"
+      $result = & "$Version" version
       return $result.Trim();
     }
     catch {
@@ -442,10 +444,12 @@ function Resolve-VersionPath {
 
   if ([System.IO.Path]::IsPathRooted($Version)) {
     return $Version
-  } else {
+  }
+  else {
     try {
       return Resolve-Path $Version | ForEach-Object { $_.Path }
-    } catch {
+    }
+    catch {
       return $Version
     }
   }
@@ -547,7 +551,8 @@ function Wait-ForUser {
 
   if ($key.Key -eq "Enter") {
     Write-Debug "User confirmed. Continuing..."
-  } else {
+  }
+  else {
     Write-Debug "User cancelled with '$($key.Key)'. Exiting..."
     exit 0
   }
@@ -573,7 +578,7 @@ $Version = Resolve-Input -InputVar $Version -DefaultValue "stable" -EnvVars @("L
 
 # Resolve arch if auto
 if ($Arch -eq "auto") {
-	$Arch = $SYSTEM_ARCHITECTURE;
+  $Arch = $SYSTEM_ARCHITECTURE;
 }
 
 Write-Debug "Running script with resolved inputs:"
@@ -656,8 +661,11 @@ If ($Dest -eq $LANDO_BINDIR) {
   Move-Item -Path "$LANDO_TMPFILE" -Destination "$HIDDEN_LANDO" -Force
   Add-WrapperScript -Location "$HIDDEN_LANDO"
 
-# Otherwise just move directly to dest and link
-} else {
+  # Otherwise just move directly to dest and link
+}
+else {
+  # Create the destination directory if it doesn't exist
+  New-Item -ItemType Directory -Path (Split-Path -Path $LANDO -Parent) -Force | Out-Null
   Move-Item -Path "$LANDO_TMPFILE" -Destination "$LANDO" -Force
   Add-WrapperScript -Location "$LANDO"
 }
@@ -666,7 +674,7 @@ Write-Host "Moved Lando $Version to $LANDO"
 
 # Do some special stuff on v3
 if ($Version.StartsWith("v3.")) {
-  $null = Invoke-Expression "$SYMLINKER --clear" | ForEach-Object { Write-Debug $_ }
+  $null = & "$SYMLINKER" --clear | ForEach-Object { Write-Debug $_ }
 }
 
 # Add $Dest and $LANDO_BIN to system PATH if not already present
@@ -676,11 +684,11 @@ Add-ToPath -NewPath "$LANDO_BINDIR"
 # Lando setup may have been interrupted by the reboot. Run it again.
 # @TODO: pass in lando?
 if ((Confirm-FattyOrSetupy -Version "$Version") -and -not $NoSetup) {
-  Invoke-LandoSetup -Lando "$Symlinker"
+  Invoke-LandoSetup -Lando "$SYMLINKER"
 }
 
 # Run lando shell env
-Invoke-Expression "$SYMLINKER shellenv --add"
+& "$SYMLINKER" shellenv --add
 
 if ($issueEncountered) {
   Write-Warning "Lando was installed but issues were encountered during installation. Please check the output above for details."
