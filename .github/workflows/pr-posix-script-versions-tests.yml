@@ -28,7 +28,7 @@ jobs:
             check: 'v3.'
             os: ubuntu-24.04
           - version: '3-dev'
-            check: 'v3\..*\..*-.*-.*'
+            check: 'v3\..*\..*-.*-.*|v3\..*\..'
             os: ubuntu-24.04
           - version: 'stable'
             check: 'v3.'
@@ -82,7 +82,7 @@ jobs:
             check: 'v3.'
             os: ubuntu-24.04
           - version: '3-dev'
-            check: 'v3\..*\..*-.*-.*'
+            check: 'v3\..*\..*-.*-.*|v3\..*\..'
             os: ubuntu-24.04
           - version: 'stable'
             check: 'v3.'
