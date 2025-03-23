@@ -1,4 +1,4 @@
-SCRIPT_VERSION="v3.7.3"
+SCRIPT_VERSION="v3.7.4"
 #!/bin/bash
 set -u
 # Lando POSIX setup script.
@@ -78,11 +78,13 @@ set -u
 # DEFAULT VERSION
 LANDO_DEFAULT_MV="3"
 
+# GET THE LTF right away
+LANDO_TMPFILE="$(mktemp -t lando.XXXXXX)"
+
 # CONFIG
 LANDO_BINDIR="$HOME/.lando/bin"
 LANDO_DATADIR="${XDG_DATA_HOME:-$HOME/.data}/lando"
 LANDO_SYSDIR="/usr/local/bin"
-LANDO_TMPDIR=${TMPDIR:-/tmp}
 
 MACOS_OLDEST_SUPPORTED="12.0"
 REQUIRED_CURL_VERSION="7.41.0"
@@ -134,6 +136,12 @@ tty_reset="$(tty_escape 0)"
 tty_underline="$(tty_escape "4;39")"
 tty_yellow="$(tty_escape 33)"
 
+get_abs_dir() {
+  local file="$1"
+  cd "$(dirname "$file")" || exit 1
+  pwd
+}
+
 get_installer_arch() {
   local arch
   arch="$(/usr/bin/uname -m || /usr/bin/arch || uname -m || arch)"
@@ -178,6 +186,7 @@ SETUP="${LANDO_INSTALLER_SETUP:-1}"
 SYMLINKER="${LANDO_BINDIR}/lando"
 SYSLINK="${LANDO_INSTALLER_SYSLINK:-auto}"
 SYSLINKER="${LANDO_SYSDIR}/lando"
+LANDO_TMPDIR=$(get_abs_dir "$LANDO_TMPFILE")
 VERSION="${LANDO_VERSION:-${LANDO_INSTALLER_VERSION:-stable}}"
 
 # preserve originals OPTZ
@@ -365,6 +374,8 @@ debug raw SETUP="$SETUP"
 debug raw SYSLINK="$SYSLINK"
 debug raw USER="$USER"
 debug raw VERSION="$VERSION"
+debug raw TMPFILE="$LANDO_TMPFILE"
+debug raw TMPDIR="$LANDO_TMPDIR"
 
 #######################################################################  tool-verification
 
@@ -605,7 +616,6 @@ debug "resolved install destination ${DEST} to a perm check on ${PERM_DIR}"
 
 # we have enough to set LANDO stuff now
 LANDO="${DEST}/lando"
-LANDO_TMPFILE="${LANDO_TMPDIR}/${RANDOM}"
 HIDDEN_LANDO="${LANDO_DATADIR}/${VERSION}/lando"
 
 # resolve syslink=auto

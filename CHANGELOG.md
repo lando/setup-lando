@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+## v3.7.4 - [March 23, 2025](https://github.com/lando/setup-lando/releases/tag/v3.7.4)
+
 * Switched POSIX `LANDO_TMPFILE` to use `mktemp`. Fixes [#41](https://github.com/lando/setup-lando/issues/41).
 
 ## v3.7.3 - [February 16, 2025](https://github.com/lando/setup-lando/releases/tag/v3.7.3)
