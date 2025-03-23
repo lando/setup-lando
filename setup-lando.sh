@@ -77,11 +77,14 @@ set -u
 # DEFAULT VERSION
 LANDO_DEFAULT_MV="3"
 
+# GET THE LTF right away
+LANDO_TMPFILE="$(mktemp -t lando.XXXXXX)"
+
 # CONFIG
 LANDO_BINDIR="$HOME/.lando/bin"
 LANDO_DATADIR="${XDG_DATA_HOME:-$HOME/.data}/lando"
 LANDO_SYSDIR="/usr/local/bin"
-LANDO_TMPDIR=${TMPDIR:-/tmp}
+LANDO_TMPDIR=$(realpath "$(dirname "$LANDO_TMPFILE")")
 
 MACOS_OLDEST_SUPPORTED="12.0"
 REQUIRED_CURL_VERSION="7.41.0"
@@ -364,6 +367,8 @@ debug raw SETUP="$SETUP"
 debug raw SYSLINK="$SYSLINK"
 debug raw USER="$USER"
 debug raw VERSION="$VERSION"
+debug raw TMPFILE="$LANDO_TMPFILE"
+debug raw TMPDIR="$LANDO_TMPDIR"
 
 #######################################################################  tool-verification
 
@@ -604,7 +609,6 @@ debug "resolved install destination ${DEST} to a perm check on ${PERM_DIR}"
 
 # we have enough to set LANDO stuff now
 LANDO="${DEST}/lando"
-LANDO_TMPFILE="${LANDO_TMPDIR}/${RANDOM}"
 HIDDEN_LANDO="${LANDO_DATADIR}/${VERSION}/lando"
 
 # resolve syslink=auto
