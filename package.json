@@ -4,7 +4,7 @@
   "version": "3.7.4",
   "author": "Mike Pirog @pirog",
   "main": "setup-lando.js",
-  "license": "GPL-3.0",
+  "license": "MIT",
   "repository": "https://github.com/lando/setup-lando",
   "bugs": "https://github.com/lando/setup-lando/issues",
   "homepage": "https://github.com/lando/setup-lando",
