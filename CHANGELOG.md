@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+* Fixed bug causing release aliases to return outdated versions with new midcores
+
 ## v3.7.4 - [March 23, 2025](https://github.com/lando/setup-lando/releases/tag/v3.7.4)
 
 * Switched POSIX `LANDO_TMPFILE` to use `mktemp`. Fixes [#41](https://github.com/lando/setup-lando/issues/41).

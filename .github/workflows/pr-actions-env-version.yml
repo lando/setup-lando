@@ -1,10 +1,10 @@
-name: Actions Version Tests
+name: Actions Version Env Tests
 
 on:
   pull_request:
 
 jobs:
-  setup-lando-actions-versions-test:
+  setup-lando-actions-env-test:
     runs-on: ${{ matrix.os }}
     env:
       LANDO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -16,8 +16,6 @@ jobs:
         node-version:
           - '20'
         lando-version:
-          - '3.x'
-          - '>2'
           - '3'
           - '3.14'
           - '3.14.0'
@@ -27,19 +25,6 @@ jobs:
           - '3-stable-slim'
           - '3-edge'
           - '3-edge-slim'
-          - '3-latest'
-          - '3-dev'
-          - '3-dev-slim'
-          - 'stable'
-          - 'edge'
-          - 'latest'
-          - 'dev'
-          - 'pm-preview'
-          - 'https://github.com/lando/legacy-cli/releases/download/v3.18.0/lando-linux-x64-v3.18.0'
-          - '/home/runner/work/setup-lando/setup-lando/bin/lando'
-          - './bin/lando'
-          - ''
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -54,8 +39,8 @@ jobs:
         run: |
           npm clean-install --prefer-offline --frozen-lockfile
           npm run prepare
+          rm -f .lando-version
       - name: Setup Lando version ${{ matrix.lando-version }}
         uses: ./
-        with:
-          lando-version: ${{ matrix.lando-version }}
-          lando-version-file: false
+        env:
+          LANDO_VERSION: ${{ matrix.lando-version }}
