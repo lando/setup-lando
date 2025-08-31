@@ -1,4 +1,4 @@
-SCRIPT_VERSION="v3.7.4"
+SCRIPT_VERSION="v3.7.5"
 #!/bin/bash
 set -u
 # Lando POSIX setup script.
@@ -463,7 +463,7 @@ major_minor() {
   )"
 }
 
-# shellcheck disable=SC2317
+# shellcheck disable=SC2329
 test_curl() {
   if [[ ! -x "$1" ]]; then
     return 1

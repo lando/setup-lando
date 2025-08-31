@@ -44226,7 +44226,7 @@ module.exports = (spec, releases = [], dmv = 3, {os, architecture, slim = false}
     const mv = spec.split('-').length === 1 ? dmv : spec.split('-')[0];
     const includeEdge = spec.split('-').length === 1 ? spec.split('-')[0] === 'edge' : spec.split('-')[1] === 'edge';
     const fparts = getFilename('REPLACE', {os, architecture, slim}).split('REPLACE');
-    const assetmatcher = new RegExp(`^${fparts[0]}v[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.]+)${fparts[1]}$`);
+    const assetmatcher = new RegExp(`^${fparts[0]}v[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.]+)?${fparts[1]}$`);
 
     // filter based on release type and major version and validity etc
     releases = releases
@@ -46618,7 +46618,7 @@ var __webpack_exports__ = {};
 "use strict";
 
 
-const SCRIPT_VERSION = 'v3.7.4';
+const SCRIPT_VERSION = 'v3.7.5';
 
 const core = __nccwpck_require__(7484);
 const exec = __nccwpck_require__(5236);

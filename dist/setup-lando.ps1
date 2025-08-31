@@ -81,7 +81,7 @@ function Get-SystemArchitecture {
 }
 
 # Config of sorts
-$SCRIPT_VERSION = "v3.7.4"
+$SCRIPT_VERSION = "v3.7.5"
 
 $LANDO_DEFAULT_MV = "3"
 $LANDO_BINDIR = "$env:USERPROFILE\.lando\bin"

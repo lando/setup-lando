@@ -1,5 +1,7 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+## v3.7.5 - [August 31, 2025](https://github.com/lando/setup-lando/releases/tag/v3.7.5)
+
 * Fixed bug causing release aliases to return outdated versions with new midcores
 
 ## v3.7.4 - [March 23, 2025](https://github.com/lando/setup-lando/releases/tag/v3.7.4)
