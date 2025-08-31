@@ -462,7 +462,7 @@ major_minor() {
   )"
 }
 
-# shellcheck disable=SC2317
+# shellcheck disable=SC2329
 test_curl() {
   if [[ ! -x "$1" ]]; then
     return 1
