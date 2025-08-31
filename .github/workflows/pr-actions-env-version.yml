@@ -39,6 +39,7 @@ jobs:
         run: |
           npm clean-install --prefer-offline --frozen-lockfile
           npm run prepare
+          rm -f .lando-version
       - name: Setup Lando version ${{ matrix.lando-version }}
         uses: ./
         env:
