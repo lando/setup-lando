@@ -19,11 +19,11 @@ jobs:
           - pwsh
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Install node ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm
@@ -35,7 +35,7 @@ jobs:
         name: Invoke from pipeline with PowerShell 5.1
         shell: powershell
         run: |
-          Invoke-WebRequest "file://${{ github.workspace }}/dist/setup-lando.ps1" | Invoke-Expression
+          Get-Content "${{ github.workspace }}/dist/setup-lando.ps1" -Raw | Invoke-Expression
           Test-Path $env:LOCALAPPDATA\Lando\setup-lando.ps1
           lando version --all
 

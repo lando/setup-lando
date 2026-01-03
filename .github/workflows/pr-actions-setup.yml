@@ -12,8 +12,8 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          # - macos-13
           # - macos-14
+          # - macos-15
           - ubuntu-24.04
           # - windows-2022
         lando-version:
@@ -43,11 +43,11 @@ jobs:
           # - oihywpihgklnw
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Install node ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node-version }}
           cache: npm

@@ -823,7 +823,7 @@ wait_for_user() {
   local c
 
 # Trap to clean up on Ctrl-C or exit
-  trap 'stty sane; tput sgr0; echo; exit 1' SIGINT EXIT
+  trap 'stty sane; tput sgr0; echo; exit 1' SIGINT
 
   echo
   echo "Press ${tty_bold}RETURN${tty_reset}/${tty_bold}ENTER${tty_reset} to continue or any other key to abort:"

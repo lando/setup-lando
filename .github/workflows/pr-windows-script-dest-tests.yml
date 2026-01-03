@@ -17,7 +17,7 @@ jobs:
           - C:\tools
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - name: Install Lando at ${{ matrix.dest }}
