@@ -12,8 +12,8 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - macos-13
           - macos-14
+          - macos-15
           - ubuntu-24.04
     steps:
       - name: Checkout code
