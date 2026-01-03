@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   install-on-linux:
     machine:
-      image: ubuntu-2204:current
+      image: ubuntu-2404:current
     steps:
       - checkout
       - run:
@@ -14,7 +14,7 @@ jobs:
             lando config
   setup-on-linux:
     machine:
-      image: ubuntu-2204:current
+      image: ubuntu-2404:current
     steps:
       - checkout
       - run:
@@ -26,7 +26,7 @@ jobs:
 
   install-on-macos:
     macos:
-      xcode: "14.2.0"
+      xcode: "16.2.0"
     steps:
       - checkout
       - run:
@@ -37,7 +37,7 @@ jobs:
             lando config
   setup-on-macos:
     macos:
-      xcode: "14.2.0"
+      xcode: "16.2.0"
     steps:
       - checkout
       - run:
