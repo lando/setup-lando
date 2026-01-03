@@ -35,7 +35,7 @@ jobs:
         name: Invoke from pipeline with PowerShell 5.1
         shell: powershell
         run: |
-          Invoke-WebRequest "file://${{ github.workspace }}/dist/setup-lando.ps1" | Invoke-Expression
+          Get-Content "${{ github.workspace }}/dist/setup-lando.ps1" -Raw | Invoke-Expression
           Test-Path $env:LOCALAPPDATA\Lando\setup-lando.ps1
           lando version --all
 
