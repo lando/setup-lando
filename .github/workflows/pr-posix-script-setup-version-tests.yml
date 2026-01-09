@@ -1,0 +1,70 @@
+name: POSIX Script Setup Version Logic Tests
+
+on:
+  pull_request:
+
+jobs:
+  # Test that setup is NOT disabled for v3.24+ (where lando setup exists)
+  # This test will FAIL on main due to inverted SLIM_SETUPY logic
+  setup-enabled-for-v324-plus:
+    runs-on: ${{ matrix.os }}
+    env:
+      LANDO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: '3.24.0'
+            os: ubuntu-24.04
+          - version: '3-stable'
+            os: ubuntu-24.04
+          - version: '3-edge'
+            os: macos-14
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Run setup-lando with debug for v3.24+
+        id: setup
+        shell: bash
+        run: |
+          ./setup-lando.sh --version=${{ matrix.version }} --debug 2>&1 | tee setup-output.log
+          if grep -q "disabled autosetup" setup-output.log; then
+            echo "::error::BUG: Setup was incorrectly disabled for v3.24+"
+            exit 1
+          fi
+      - name: Verify lando installed
+        shell: bash
+        run: lando version
+
+  # Test that setup IS disabled for v3.23.x and below (where lando setup doesn't exist)
+  setup-disabled-for-pre-v324:
+    runs-on: ${{ matrix.os }}
+    env:
+      LANDO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - version: 'v3.23.0'
+            os: ubuntu-24.04
+          - version: 'v3.21.0-beta.10'
+            os: macos-14
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+      - name: Run setup-lando with debug for pre-v3.24
+        id: setup
+        shell: bash
+        run: |
+          ./setup-lando.sh --version=${{ matrix.version }} --debug 2>&1 | tee setup-output.log
+          if ! grep -q "disabled autosetup" setup-output.log; then
+            echo "::error::BUG: Setup was NOT disabled for pre-v3.24"
+            exit 1
+          fi
+      - name: Verify lando installed
+        shell: bash
+        run: lando version
