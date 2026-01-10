@@ -594,7 +594,7 @@ else
 fi
 
 # fatty slim
-SLIM_SETUPY=$(version_compare "$SVERSION" "3.23.999" && echo '1' || echo '0')
+SLIM_SETUPY=$(version_compare "$SVERSION" "3.24" && echo '1' || echo '0')
 
 # autoslim all v3 urls by default
 if [[ $URL != file://* ]] && [[ -z "${VERSION_DEV-}" ]] && [[ $FAT != '1' ]] && [[ $SLIM_SETUPY == '0' ]]; then
