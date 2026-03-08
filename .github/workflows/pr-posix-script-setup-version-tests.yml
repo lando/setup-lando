@@ -1,12 +1,11 @@
-name: POSIX Script Setup Version Logic Tests
+name: POSIX Script Slim URL Logic Tests
 
 on:
   pull_request:
 
 jobs:
-  # Test that setup is NOT disabled for v3.24+ (where lando setup exists)
-  # This test will FAIL on main due to inverted SLIM_SETUPY logic
-  setup-enabled-for-v324-plus:
+  # v3.24+ should NOT append -slim to URL (unified binary)
+  no-slim-suffix-for-v324-plus:
     runs-on: ${{ matrix.os }}
     env:
       LANDO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -22,24 +21,21 @@ jobs:
             os: macos-14
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: Run setup-lando with debug for v3.24+
-        id: setup
+        uses: actions/checkout@v4
+      - name: Verify no -slim suffix for v3.24+
         shell: bash
         run: |
           ./setup-lando.sh --version=${{ matrix.version }} --debug 2>&1 | tee setup-output.log
-          if grep -q "disabled autosetup" setup-output.log; then
-            echo "::error::BUG: Setup was incorrectly disabled for v3.24+"
+          if grep -q "autoslimin url" setup-output.log; then
+            echo "::error::BUG: -slim suffix incorrectly added for v3.24+"
             exit 1
           fi
       - name: Verify lando installed
         shell: bash
         run: lando version
 
-  # Test that setup IS disabled for v3.23.x and below (where lando setup doesn't exist)
-  setup-disabled-for-pre-v324:
+  # pre-v3.24 SHOULD append -slim to URL (separate slim/fat builds existed)
+  slim-suffix-for-pre-v324:
     runs-on: ${{ matrix.os }}
     env:
       LANDO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -53,16 +49,13 @@ jobs:
             os: macos-14
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      - name: Run setup-lando with debug for pre-v3.24
-        id: setup
+        uses: actions/checkout@v4
+      - name: Verify -slim suffix added for pre-v3.24
         shell: bash
         run: |
           ./setup-lando.sh --version=${{ matrix.version }} --debug 2>&1 | tee setup-output.log
-          if ! grep -q "disabled autosetup" setup-output.log; then
-            echo "::error::BUG: Setup was NOT disabled for pre-v3.24"
+          if ! grep -q "autoslimin url" setup-output.log; then
+            echo "::error::BUG: -slim suffix NOT added for pre-v3.24"
             exit 1
           fi
       - name: Verify lando installed
