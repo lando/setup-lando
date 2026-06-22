@@ -22,7 +22,7 @@ jobs:
             os: macos-14
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Run setup-lando with debug for v3.24+
@@ -53,7 +53,7 @@ jobs:
             os: macos-14
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
       - name: Run setup-lando with debug for pre-v3.24
