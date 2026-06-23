@@ -594,7 +594,7 @@ else
 fi
 
 # fatty slim
-SLIM_SETUPY=$(version_compare "3.23.0" "$SVERSION" && echo '1' || echo '0')
+SLIM_SETUPY=$(version_compare "$SVERSION" "3.24.0" && echo '0' || echo '1')
 
 # autoslim all v3 urls by default
 if [[ $URL != file://* ]] && [[ -z "${VERSION_DEV-}" ]] && [[ $FAT != '1' ]] && [[ $SLIM_SETUPY == '1' ]]; then
@@ -606,7 +606,7 @@ fi
 # force setup to 0 if lando 4
 if [[ $SETUP == '1' ]] && [[ $SLIM_SETUPY == '0' ]]; then
   SETUP=0
-  debug "disabled autosetup --setup=${SETUP}, not needed in <3.24"
+  debug "disabled autosetup --setup=${SETUP}, not needed in >=3.24"
 fi
 
 # determine existing dir we need to check
