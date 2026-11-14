@@ -1,0 +1,24 @@
+name: Installer Version Regression Tests
+
+on:
+  pull_request:
+
+jobs:
+  version-logic:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, macos-14, windows-2022]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+      - name: Generate distribution artifacts
+        run: npm run prepare
+      - name: Test version, slim, autosetup and successful-exit behavior without installing Lando
+        run: npm test

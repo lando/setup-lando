@@ -199,7 +199,7 @@ ${tty_green}Options:${tty_reset}
   --arch           installs for this arch ${tty_dim}[default: ${ARCH}]${tty_reset}
   --dest           installs in this directory ${tty_dim}[default: ${DEST}]${tty_reset}
   --fat            installs fat binary ${tty_dim}<3.24 only, not recommended${tty_reset}
-  --no-setup       installs without running lando setup ${tty_dim}<3.24 only${tty_reset}
+  --no-setup       installs without running lando setup ${tty_dim}Lando 3 only${tty_reset}
   --os             installs for this os ${tty_dim}[default: ${OS}]${tty_reset}
   --syslink        installs symlink in /usr/local/bin ${tty_dim}[default: ${SYSLINK}]${tty_reset}
   --version        installs this version ${tty_dim}[default: ${VERSION}]${tty_reset}
@@ -593,20 +593,22 @@ else
   debug "resolved v${LMV} version '${ORIGINAL_VERSION}' to ${VERSION} (${URL})"
 fi
 
-# fatty slim
-SLIM_SETUPY=$(version_compare "$SVERSION" "3.24.0" && echo '0' || echo '1')
+# Separate legacy slim assets from setup support: modern Lando 3 still needs setup.
+CAN_BE_SLIM=0
+if [[ $LMV == '3' ]] && [[ -z "${VERSION_DEV-}" ]] && ! version_compare "$SVERSION" "3.24"; then
+  CAN_BE_SLIM=1
+fi
 
-# autoslim all v3 urls by default
-if [[ $URL != file://* ]] && [[ -z "${VERSION_DEV-}" ]] && [[ $FAT != '1' ]] && [[ $SLIM_SETUPY == '1' ]]; then
+if [[ $URL != file://* ]] && [[ $FAT != '1' ]] && [[ $CAN_BE_SLIM == '1' ]]; then
   URL="${URL}-slim"
   HRV="$VERSION-slim"
   debug "autoslimin url for lando 3 to $URL"
 fi
 
-# force setup to 0 if lando 4
-if [[ $SETUP == '1' ]] && [[ $SLIM_SETUPY == '0' ]]; then
+# Lando 4 does not use the Lando 3 setup command.
+if [[ $SETUP == '1' ]] && [[ $LMV != '3' ]]; then
   SETUP=0
-  debug "disabled autosetup --setup=${SETUP}, not needed in >=3.24"
+  debug "disabled autosetup --setup=${SETUP}, not supported in Lando ${LMV}"
 fi
 
 # determine existing dir we need to check

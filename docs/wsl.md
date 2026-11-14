@@ -43,7 +43,7 @@ Options:
   --arch           installs for this arch [default: x64]
   --dest           installs in this directory [default: ~/.lando/bin]
   --fat            installs fat cli <3.24 only, not recommended
-  --no-setup       installs without running lando setup <3.24 only
+  --no-setup       installs without running lando setup Lando 3 only
   --os             installs for this os [default: linux]
   --syslink        installs symlink in /usr/local/bin [default: auto]
   --version        installs this version [default: stable]

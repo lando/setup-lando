@@ -5,7 +5,7 @@ description: Redirect for install instructions
 
 <script setup>
 
-import {useRouter} from 'vitepress';
+import {inBrowser, useRouter} from 'vitepress';
 import {UAParser} from 'ua-parser-js';
 
 const parser = new UAParser();
@@ -24,19 +24,21 @@ const router = useRouter();
 // Tizen, Ubuntu, Unix, VectorLinux, Viera, watchOS, WebOS, Windows [Phone/Mobile],
 // Zenwalk, ...
 // https://docs.uaparser.js.org/v2/api/ua-parser-js/get-os.html
-switch (os.name) {
-  case 'Mac OS':
-  case 'iOS':
-  case 'watchOS':
-    router.go('/install/macos');
-    break;
-  case 'Windows':
-  case 'Windows Phone':
-  case 'Windows Mobile':
-    router.go('/install/windows');
-    break;
-  default:
-    router.go('/install/linux');
-};
+if (inBrowser) {
+  switch (os.name) {
+    case 'Mac OS':
+    case 'iOS':
+    case 'watchOS':
+      router.go('/install/macos');
+      break;
+    case 'Windows':
+    case 'Windows Phone':
+    case 'Windows Mobile':
+      router.go('/install/windows');
+      break;
+    default:
+      router.go('/install/linux');
+  }
+}
 
 </script>

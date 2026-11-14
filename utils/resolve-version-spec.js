@@ -7,6 +7,7 @@ const semver = require('semver');
 const tc = require('@actions/tool-cache');
 
 const getFilename = require('./get-filename');
+const canBeSlim = require('./can-be-slim');
 const isValidUrl = require('./is-valid-url');
 const {s3Releases, gitHubReleases} = require('./get-convenience-aliases');
 
@@ -39,11 +40,8 @@ module.exports = (spec, releases = [], dmv = 3, {os, architecture, slim = false}
 
   // then attempt to resolve special "convenience" aliases to actual versions
   if (gitHubReleases.includes(spec)) {
-    const mv = spec.split('-').length === 1 ? dmv : spec.split('-')[0];
+    const mv = Number(spec.split('-').length === 1 ? (/^[34]$/.test(spec) ? spec : dmv) : spec.split('-')[0]);
     const includeEdge = spec.split('-').length === 1 ? spec.split('-')[0] === 'edge' : spec.split('-')[1] === 'edge';
-    const fparts = getFilename('REPLACE', {os, architecture, slim}).split('REPLACE');
-    const assetmatcher = new RegExp(`^${fparts[0]}v[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.]+)?${fparts[1]}$`);
-
     // filter based on release type and major version and validity etc
     releases = releases
       .filter(release => includeEdge ? true : release.prerelease === false)
@@ -52,11 +50,14 @@ module.exports = (spec, releases = [], dmv = 3, {os, architecture, slim = false}
       .filter(release => Array.isArray(release.assets))
       .map(release => ({
         ...release,
-        binaries: release.assets.map(asset => asset.name).filter(name => assetmatcher.test(name)),
+        binaries: release.assets.filter(asset => asset.name === getFilename(release.tag_name, {
+          os, architecture, slim: slim && canBeSlim(release.tag_name),
+        })),
       }))
       .filter(release => release.binaries.length > 0);
 
     // theoretically our spec should be at the top so reset to that
+    if (releases.length === 0) return null;
     spec = releases[0].tag_name;
 
     // debug

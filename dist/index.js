@@ -9845,6 +9845,22 @@ function charFromCodepoint(c) {
   );
 }
 
+// set a property of a literal object, while protecting against prototype pollution,
+// see https://github.com/nodeca/js-yaml/issues/164 for more details
+function setProperty(object, key, value) {
+  // used for this specific key only because Object.defineProperty is slow
+  if (key === '__proto__') {
+    Object.defineProperty(object, key, {
+      configurable: true,
+      enumerable: true,
+      writable: true,
+      value: value
+    });
+  } else {
+    object[key] = value;
+  }
+}
+
 var simpleEscapeCheck = new Array(256); // integer, for fast access
 var simpleEscapeMap = new Array(256);
 for (var i = 0; i < 256; i++) {
@@ -10023,7 +10039,7 @@ function mergeMappings(state, destination, source, overridableKeys) {
     key = sourceKeys[index];
 
     if (!_hasOwnProperty.call(destination, key)) {
-      destination[key] = source[key];
+      setProperty(destination, key, source[key]);
       overridableKeys[key] = true;
     }
   }
@@ -10083,17 +10099,7 @@ function storeMappingPair(state, _result, overridableKeys, keyTag, keyNode, valu
       throwError(state, 'duplicated mapping key');
     }
 
-    // used for this specific key only because Object.defineProperty is slow
-    if (keyNode === '__proto__') {
-      Object.defineProperty(_result, keyNode, {
-        configurable: true,
-        enumerable: true,
-        writable: true,
-        value: valueNode
-      });
-    } else {
-      _result[keyNode] = valueNode;
-    }
+    setProperty(_result, keyNode, valueNode);
     delete overridableKeys[keyNode];
   }
 
@@ -43731,6 +43737,34 @@ function wrappy (fn, cb) {
 
 /***/ }),
 
+/***/ 112:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const satisfies = __nccwpck_require__(8011);
+
+// Only legacy Lando 3 releases published separate slim assets.
+module.exports = version => satisfies(version, '>=3.21.0-0 <3.24.0-0', {includePrerelease: true, loose: true});
+
+
+/***/ }),
+
+/***/ 4656:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+"use strict";
+
+
+const satisfies = __nccwpck_require__(8011);
+
+// Call this with the installed binary's version, including for dev/local downloads.
+module.exports = version => satisfies(version, '>=3.21.0-0 <4.0.0-0', {includePrerelease: true, loose: true});
+
+
+/***/ }),
+
 /***/ 8172:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -44091,25 +44125,6 @@ module.exports = data => {
 
 /***/ }),
 
-/***/ 6073:
-/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
-
-"use strict";
-
-
-const satisfies = __nccwpck_require__(8011);
-const {s3Releases} = __nccwpck_require__(809);
-
-module.exports = version => {
-  // slim can be any v3 s3 alias
-  if (s3Releases.includes(version)) return false;
-  // or anything in the range
-  return satisfies(version, '>3.20 <=3.23.9999', {includePrerelease: true, loose: true});
-};
-
-
-/***/ }),
-
 /***/ 8015:
 /***/ ((module) => {
 
@@ -44191,6 +44206,7 @@ const semver = __nccwpck_require__(2088);
 const tc = __nccwpck_require__(3472);
 
 const getFilename = __nccwpck_require__(4350);
+const canBeSlim = __nccwpck_require__(112);
 const isValidUrl = __nccwpck_require__(8015);
 const {s3Releases, gitHubReleases} = __nccwpck_require__(809);
 
@@ -44223,11 +44239,8 @@ module.exports = (spec, releases = [], dmv = 3, {os, architecture, slim = false}
 
   // then attempt to resolve special "convenience" aliases to actual versions
   if (gitHubReleases.includes(spec)) {
-    const mv = spec.split('-').length === 1 ? dmv : spec.split('-')[0];
+    const mv = Number(spec.split('-').length === 1 ? (/^[34]$/.test(spec) ? spec : dmv) : spec.split('-')[0]);
     const includeEdge = spec.split('-').length === 1 ? spec.split('-')[0] === 'edge' : spec.split('-')[1] === 'edge';
-    const fparts = getFilename('REPLACE', {os, architecture, slim}).split('REPLACE');
-    const assetmatcher = new RegExp(`^${fparts[0]}v[0-9]+\\.[0-9]+\\.[0-9]+(?:-[a-z0-9.]+)?${fparts[1]}$`);
-
     // filter based on release type and major version and validity etc
     releases = releases
       .filter(release => includeEdge ? true : release.prerelease === false)
@@ -44236,11 +44249,14 @@ module.exports = (spec, releases = [], dmv = 3, {os, architecture, slim = false}
       .filter(release => Array.isArray(release.assets))
       .map(release => ({
         ...release,
-        binaries: release.assets.map(asset => asset.name).filter(name => assetmatcher.test(name)),
+        binaries: release.assets.filter(asset => asset.name === getFilename(release.tag_name, {
+          os, architecture, slim: slim && canBeSlim(release.tag_name),
+        })),
       }))
       .filter(release => release.binaries.length > 0);
 
     // theoretically our spec should be at the top so reset to that
+    if (releases.length === 0) return null;
     spec = releases[0].tag_name;
 
     // debug
@@ -46618,7 +46634,7 @@ var __webpack_exports__ = {};
 "use strict";
 
 
-const SCRIPT_VERSION = 'v3.7.5';
+let SCRIPT_VERSION;
 
 const core = __nccwpck_require__(7484);
 const exec = __nccwpck_require__(5236);
@@ -46641,7 +46657,8 @@ const getInputs = __nccwpck_require__(3926);
 const getFileVersion = __nccwpck_require__(8568);
 const getObjectKeys = __nccwpck_require__(9773);
 const getSetupCommand = __nccwpck_require__(890);
-const isSlimSetupy = __nccwpck_require__(6073);
+const canBeSlim = __nccwpck_require__(112);
+const canRunSetup = __nccwpck_require__(4656);
 const mergeConfig = __nccwpck_require__(7509);
 const parseSetupCommand = __nccwpck_require__(7013);
 const resolveVersionSpec = __nccwpck_require__(8771);
@@ -46704,7 +46721,7 @@ const main = async () => {
     if (!version) throw new Error(`Could not resolve "${spec}" into an installable version of Lando`);
 
     // now that we have a version lets try to reevaluate slim since it should only be true in the <3.24 range
-    if (inputs.slim) inputs.slim = inputs.slim && isSlimSetupy(version);
+    if (inputs.slim) inputs.slim = inputs.slim && canBeSlim(version);
 
     // start by assuming that version is just the path to some locally installed version of lando
     let landoPath = version;
@@ -46805,10 +46822,10 @@ const main = async () => {
     }
 
     // if setup is non-false then we want to try to run it if we can
-    if (isSlimSetupy(version) && getSetupCommand(inputs.setup) !== false) {
+    if (canRunSetup(version) && getSetupCommand(inputs.setup) !== false) {
       // print warning if setup command does not exist and leave
       if (await exec.exec(landoPath, ['setup', '--help'], {ignoreReturnCode: true}) !== 0) {
-        core.warning('lando setup is only available in lando <3.24! Skipping!');
+        core.warning('lando setup is unavailable in this binary. Skipping!');
 
       // if we get here then we should be G2G
       } else {
