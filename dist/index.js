@@ -46663,14 +46663,21 @@ const mergeConfig = __nccwpck_require__(7509);
 const parseSetupCommand = __nccwpck_require__(7013);
 const resolveVersionSpec = __nccwpck_require__(8771);
 
-// if there is no script version lets get it from git
+// Unstamped builds may run without Git or a checkout. Never inspect the consumer's cwd.
 if (!SCRIPT_VERSION) {
-  const output = execSync(`git describe --tags --always --abbrev=1`, {
-    maxBuffer: 1024 * 1024 * 10,
-    encoding: 'utf-8',
-    env: {...process.env, LANDO_DEBUG: 0},
-  });
-  SCRIPT_VERSION = typeof output === 'string' ? output.trim() : 'unknown';
+  SCRIPT_VERSION = 'development';
+  try {
+    const output = execSync('git describe --tags --always --abbrev=1', {
+      cwd: __dirname,
+      maxBuffer: 1024 * 1024 * 10,
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: {...process.env, LANDO_DEBUG: 0},
+    });
+    if (typeof output === 'string' && output.trim()) SCRIPT_VERSION = output.trim();
+  } catch {
+    // A development diagnostic must not make Git an installation prerequisite.
+  }
 }
 
 const main = async () => {

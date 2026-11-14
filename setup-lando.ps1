@@ -567,9 +567,18 @@ function Wait-ForUser {
   }
 }
 
-# reset to a git derived dev version of above is not set
+# Unstamped copies do not require Git or a checkout; only describe the script's own source.
 if ([string]::IsNullOrEmpty($SCRIPT_VERSION)) {
-  $SCRIPT_VERSION = Invoke-Expression "git describe --tags --always --abbrev=1"
+  $SCRIPT_VERSION = "development"
+  try {
+    $description = & git -C $PSScriptRoot describe --tags --always --abbrev=1 2>$null
+    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($description)) {
+      $SCRIPT_VERSION = $description.Trim()
+    }
+  }
+  catch {
+    # A development diagnostic must not make Git an installation prerequisite.
+  }
 }
 
 Write-Host "Lando Windows Installer" -ForegroundColor DarkMagenta

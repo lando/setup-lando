@@ -138,10 +138,14 @@ for (const file of ['setup-lando.js', 'dist/setup-lando.js']) {
         './utils/get-config-file': () => ({}),
         './utils/resolve-version-spec': () => version,
       };
-      const context = {process: {env: {...process.env}, cwd: () => root}, require: name => {
-        if (Object.hasOwn(mocks, name)) return mocks[name];
-        return name.startsWith('.') ? require(path.resolve(root, name)) : require(name);
-      }};
+      const context = {
+        __dirname: path.dirname(path.join(root, file)),
+        process: {env: {...process.env}, cwd: () => root},
+        require: name => {
+          if (Object.hasOwn(mocks, name)) return mocks[name];
+          return name.startsWith('.') ? require(path.resolve(root, name)) : require(name);
+        },
+      };
       await vm.runInNewContext(read(file), context);
       const actual = commands.some(([command]) => command.includes('"/task/cache/lando" setup'));
       assert.equal(actual, expected, JSON.stringify(commands));
