@@ -53,7 +53,7 @@ foreach ($Version in @('v3.23.11', 'v3.26.9', 'v4.0.0-alpha.1')) {
     if ($expected -and $script:called -ne $SYMLINKER) { throw 'wrong Lando binary' }
   }
 }
-Write-Output 'all Windows version decisions passed' 
+Write-Output 'all Windows version decisions passed'
 `], {encoding: 'utf8', env: {...process.env, TEST_INSTALLER: path.resolve(__dirname, '..', script)}});
       assert.equal(result.status, 0, result.stderr || result.stdout);
       assert.match(result.stdout, /all Windows version decisions passed/);
