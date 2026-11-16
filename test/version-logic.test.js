@@ -147,7 +147,7 @@ for (const file of ['setup-lando.js', 'dist/setup-lando.js']) {
         },
       };
       await vm.runInNewContext(read(file), context);
-      const actual = commands.some(([command]) => command.includes('"/task/cache/lando" setup'));
+      const actual = commands.some(([command]) => command.replace(/\\+/g, '/').includes('"/task/cache/lando" setup'));
       assert.equal(actual, expected, JSON.stringify(commands));
     });
   }
