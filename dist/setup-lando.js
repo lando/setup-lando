@@ -23,19 +23,27 @@ const getInputs = require('./utils/get-inputs');
 const getFileVersion = require('./utils/get-file-version');
 const getObjectKeys = require('./utils/get-object-keys');
 const getSetupCommand = require('./utils/get-setup-command');
-const isSlimSetupy = require('./utils/is-slim-setupy');
+const canBeSlim = require('./utils/can-be-slim');
+const canRunSetup = require('./utils/can-run-setup');
 const mergeConfig = require('./utils/merge-config');
 const parseSetupCommand = require('./utils/parse-setup-command');
 const resolveVersionSpec = require('./utils/resolve-version-spec');
 
-// if there is no script version lets get it from git
+// Unstamped builds may run without Git or a checkout. Never inspect the consumer's cwd.
 if (!SCRIPT_VERSION) {
-  const output = execSync(`git describe --tags --always --abbrev=1`, {
-    maxBuffer: 1024 * 1024 * 10,
-    encoding: 'utf-8',
-    env: {...process.env, LANDO_DEBUG: 0},
-  });
-  SCRIPT_VERSION = typeof output === 'string' ? output.trim() : 'unknown';
+  SCRIPT_VERSION = 'development';
+  try {
+    const output = execSync('git describe --tags --always --abbrev=1', {
+      cwd: __dirname,
+      maxBuffer: 1024 * 1024 * 10,
+      encoding: 'utf-8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: {...process.env, LANDO_DEBUG: 0},
+    });
+    if (typeof output === 'string' && output.trim()) SCRIPT_VERSION = output.trim();
+  } catch {
+    // A development diagnostic must not make Git an installation prerequisite.
+  }
 }
 
 const main = async () => {
@@ -86,7 +94,7 @@ const main = async () => {
     if (!version) throw new Error(`Could not resolve "${spec}" into an installable version of Lando`);
 
     // now that we have a version lets try to reevaluate slim since it should only be true in the <3.24 range
-    if (inputs.slim) inputs.slim = inputs.slim && isSlimSetupy(version);
+    if (inputs.slim) inputs.slim = inputs.slim && canBeSlim(version);
 
     // start by assuming that version is just the path to some locally installed version of lando
     let landoPath = version;
@@ -187,10 +195,10 @@ const main = async () => {
     }
 
     // if setup is non-false then we want to try to run it if we can
-    if (isSlimSetupy(version) && getSetupCommand(inputs.setup) !== false) {
+    if (canRunSetup(version) && getSetupCommand(inputs.setup) !== false) {
       // print warning if setup command does not exist and leave
       if (await exec.exec(landoPath, ['setup', '--help'], {ignoreReturnCode: true}) !== 0) {
-        core.warning('lando setup is only available in lando <3.24! Skipping!');
+        core.warning('lando setup is unavailable in this binary. Skipping!');
 
       // if we get here then we should be G2G
       } else {

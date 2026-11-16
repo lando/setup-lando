@@ -3,7 +3,7 @@
 Lando Windows Installer Script.
 
 .DESCRIPTION
-This script is used to download and install Lando on Windows. It will also run lando setup on <3.24 but this can
+This script is used to download and install Lando on Windows. It will also run lando setup on Lando 3 but this can
 be disabled with -NoSetup.
 
 Environment Variables:
@@ -28,7 +28,7 @@ param(
   [string]$Dest = "$env:USERPROFILE\.lando\bin",
   # Installs the fat binary. <3.24 only, NOT RECOMMENDED!
   [switch]$Fat = $env:LANDO_INSTALLER_FAT -or $false,
-  # Installs without running lando setup. <3.24 only.
+  # Installs without running lando setup. Lando 3 only.
   [switch]$NoSetup = $env:LANDO_INSTALLER_SETUP -eq 0 -or $false,
   # Installs this version. Defaults to "stable".
   [ValidateNotNullOrEmpty()]
@@ -198,10 +198,19 @@ function Confirm-Environment {
   }
 }
 
-function Confirm-FattyOrSetupy {
+function Confirm-CanBeSlim {
   param([string]$Version = "$script:Version")
   $Info = Get-SemanticVersionInfo -Version "$Version"
   return [Version]$Info.Version -lt [Version]"3.24.0" -and [Version]$Info.Version -ge [Version]"3.21.0";
+}
+
+# Setup is still required by modern Lando 3, independently of slim assets.
+function Confirm-CanRunSetup {
+  param([string]$Version = "$script:Version")
+  if ($Version -eq "3-dev") { return $true }
+  if ($Version -eq "4-dev") { return $false }
+  $Info = Get-SemanticVersionInfo -Version "$Version"
+  return $Info.Major -eq 3 -and [Version]$Info.Version -ge [Version]"3.21.0";
 }
 
 # Converts a byte size to a human-readable string
@@ -489,7 +498,7 @@ function Resolve-VersionUrl {
       return  "https://github.com/lando/core-next/releases/download/${Version}/lando-win-${Arch}-${Version}.exe"
     }
     "^v3\." {
-      if ((Confirm-FattyOrSetupy -Version "$Version") -and -not $Fat) {
+      if ((Confirm-CanBeSlim -Version "$Version") -and -not $Fat) {
         return "https://github.com/lando/core/releases/download/${Version}/lando-win-${Arch}-${Version}-slim.exe"
       }
       return "https://github.com/lando/core/releases/download/${Version}/lando-win-${Arch}-${Version}.exe"
@@ -558,9 +567,18 @@ function Wait-ForUser {
   }
 }
 
-# reset to a git derived dev version of above is not set
+# Unstamped copies do not require Git or a checkout; only describe the script's own source.
 if ([string]::IsNullOrEmpty($SCRIPT_VERSION)) {
-  $SCRIPT_VERSION = Invoke-Expression "git describe --tags --always --abbrev=1"
+  $SCRIPT_VERSION = "development"
+  try {
+    $description = & git -C $PSScriptRoot describe --tags --always --abbrev=1 2>$null
+    if ($LASTEXITCODE -eq 0 -and -not [string]::IsNullOrWhiteSpace($description)) {
+      $SCRIPT_VERSION = $description.Trim()
+    }
+  }
+  catch {
+    # A development diagnostic must not make Git an installation prerequisite.
+  }
 }
 
 Write-Host "Lando Windows Installer" -ForegroundColor DarkMagenta
@@ -626,7 +644,7 @@ if (-not $NONINTERACTIVE) {
   Write-Host "Download " -NoNewline -ForegroundColor DarkMagenta
   Write-Host "lando $Version to $Dest"
 
-  if ((Confirm-FattyOrSetupy -Version "$Version") -and -not $NoSetup) {
+  if ((Confirm-CanRunSetup -Version "$Version") -and -not $NoSetup) {
     Write-Host "- " -NoNewline
     Write-Host "Run " -NoNewline -ForegroundColor DarkBlue
     Write-Host "lando setup"
@@ -683,8 +701,8 @@ Add-ToPath -NewPath "$LANDO_BINDIR"
 
 # Lando setup may have been interrupted by the reboot. Run it again.
 # @TODO: pass in lando?
-if ((Confirm-FattyOrSetupy -Version "$Version") -and -not $NoSetup) {
-  Invoke-LandoSetup -Lando "$SYMLINKER"
+if ((Confirm-CanRunSetup -Version "$Version") -and -not $NoSetup) {
+  Invoke-LandoSetup -LandoBin "$SYMLINKER"
 }
 
 # Run lando shell env

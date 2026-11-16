@@ -15,7 +15,7 @@ The GitHub Actions quickstart is:
 If you are looking to customize your install then [advanced usage](#advanced) if for you.
 
 ::: tip Docker Desktop EULA
-Note that if you run this action on a Windows or macOS runner you are **implicitly accepting** the [Docker Desktop End User License Agreement](https://docs.docker.com/subscription/desktop-license/) so please be sure that is appropriate.
+Note that if you run this action on a Windows or macOS runner you are **implicitly accepting** the [Docker Desktop End User License Agreement](https://docs.docker.com/subscription-billing/desktop-license/) so please be sure that is appropriate.
 :::
 
 ## Inputs
@@ -30,7 +30,7 @@ All inputs are optional. If you do nothing the latest `stable` Lando will be ins
 | `config` | A list of `.` delimited config. If set these have primacy over values in `config-file` | `null` | `engineConfig.port=2376` |
 | `config-file` | The path to a Lando global config file to use. | `null` | `/config/lando-global.yml` |
 
-* Note that `auto-setup` is only available in Lando `>=3.21 <3.24`.
+* Note that `auto-setup` is only available in Lando `>=3.21 <4`.
 * Also note that if you customize the `auto-setup` command it _must_ contain `lando setup`.
 
 ## Outputs

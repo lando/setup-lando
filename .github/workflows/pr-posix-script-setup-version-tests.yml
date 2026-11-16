@@ -18,7 +18,7 @@ jobs:
           - version: '3-stable'
             os: ubuntu-24.04
           - version: '3-edge'
-            os: macos-14
+            os: macos-15
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -48,7 +48,7 @@ jobs:
           - version: 'v3.23.0'
             os: ubuntu-24.04
           - version: 'v3.21.0-beta.10'
-            os: macos-14
+            os: macos-15
     steps:
       - name: Checkout code
         uses: actions/checkout@v7

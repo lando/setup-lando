@@ -45,7 +45,7 @@ SYNTAX
     setup-lando.ps1 [[-Arch] <String>] [-Debug] [[-Dest] <String>] [-Fat] [-NoSetup] [[-Version] <String>] [-Yes] [-Help] [<CommonParameters>]
 
 DESCRIPTION
-    This script is used to download and install Lando on Windows. It will also run lando setup on <3.24 but this can
+    This script is used to download and install Lando on Windows. It will also run lando setup on Lando 3 but this can
     be disabled with -NoSetup.
 
     Environment Variables:
@@ -62,7 +62,7 @@ PARAMETERS
     -Fat [<SwitchParameter>]
         Installs the fat binary. <3.24 only, NOT RECOMMENDED!
     -NoSetup [<SwitchParameter>]
-        Installs without running lando setup. <3.24 only.
+        Installs without running lando setup. Lando 3 only.
     -Version <String>
         Installs this version. Defaults to "stable".
     -Yes [<SwitchParameter>]

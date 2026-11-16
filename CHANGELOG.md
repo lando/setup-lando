@@ -1,5 +1,11 @@
 ## {{ UNRELEASED_VERSION }} - [{{ UNRELEASED_DATE }}]({{ UNRELEASED_LINK }})
 
+* Fixed autosetup being skipped for Lando 3.24 and newer Lando 3 releases in the POSIX installer, Windows installer, and GitHub Action. Explicit setup opt-outs are preserved; Lando 4 skips autosetup.
+* Kept legacy slim downloads limited to Lando 3.21–3.23, and fixed Action slim aliases to resolve modern unified binaries instead of selecting outdated releases.
+* Fixed unstamped Action and Windows installer startup to use source-relative version discovery with a nonfatal development fallback when Git or checkout metadata is absent.
+* Fixed POSIX interactive installs reporting failure on successful exit (previously merged).
+* Updated the bundled production `js-yaml` dependency to 4.1.1 (previously merged).
+
 ## v3.7.5 - [August 31, 2025](https://github.com/lando/setup-lando/releases/tag/v3.7.5)
 
 * Fixed bug causing release aliases to return outdated versions with new midcores
