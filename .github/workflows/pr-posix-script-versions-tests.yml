@@ -17,7 +17,7 @@ jobs:
             os: ubuntu-24.04
           - version: 'v3.21.0-beta.10'
             check: 'v3.21.0-beta.10'
-            os: macos-14
+            os: macos-15
           - version: '3-stable'
             check: 'v3.'
             os: ubuntu-24.04
@@ -32,19 +32,19 @@ jobs:
             os: ubuntu-24.04
           - version: 'stable'
             check: 'v3.'
-            os: macos-14
+            os: macos-15
           - version: 'edge'
             check: 'v3.'
-            os: macos-14
+            os: macos-15
           - version: 'latest'
             check: 'v3.'
-            os: macos-14
+            os: macos-15
           - version: 'dev'
             check: 'v3.'
             os: ubuntu-24.04
           - version: 'bin/lando'
             check: 'v3.100.999-babylon.5'
-            os: macos-14
+            os: macos-15
 
     steps:
       - name: Checkout code
@@ -71,7 +71,7 @@ jobs:
             os: ubuntu-24.04
           - version: 'v3.21.0-beta.10'
             check: 'v3.21.0-beta.10'
-            os: macos-14
+            os: macos-15
           - version: '3-stable'
             check: 'v3.'
             os: ubuntu-24.04
@@ -86,19 +86,19 @@ jobs:
             os: ubuntu-24.04
           - version: 'stable'
             check: 'v3.'
-            os: macos-14
+            os: macos-15
           - version: 'edge'
             check: 'v3.'
-            os: macos-14
+            os: macos-15
           - version: 'latest'
             check: 'v3.'
-            os: macos-14
+            os: macos-15
           - version: 'dev'
             check: 'v3.'
             os: ubuntu-24.04
           - version: 'bin/lando'
             check: 'v3.100.999-babylon.5'
-            os: macos-14
+            os: macos-15
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
