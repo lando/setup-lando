@@ -6,13 +6,14 @@ on:
 jobs:
   setup-lando-actions-config-test:
     runs-on: ${{ matrix.os }}
+    # lando setup can hang on GitHub macOS runners; fail fast instead of holding the org macOS queue for 6h
+    timeout-minutes: 30
     env:
       LANDO_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     strategy:
       fail-fast: false
       matrix:
         os:
-          - macos-14
           - macos-15
           - ubuntu-24.04
           - windows-2022
